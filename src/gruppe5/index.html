@@ -14,9 +14,14 @@
 
 <body>
 <!--    <h2>Prosjektoppgave Rube Goldberg-maskin</h2>-->
+    <script src="static/lib/ammo/ammo.js"></script>
     <script type="module">
 		import {main} from "./script.js";
-		main();
+        //Ammojs Initialization
+        Ammo().then(async function (AmmoLib) {
+            Ammo = AmmoLib;
+            main();
+        });
     </script>
 </body>
 </html>
