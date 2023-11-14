@@ -176,7 +176,7 @@ function directionalLight() {
 }
 
 
-// Hentet fra kodeeksempel modul7/ammoShapes1
+// Hentet fra kodeeksempel modul7/ammoShapes1, modifisert
 function createAmmoRigidBody(shape, threeMesh, restitution=0.7, friction=0.8, position={x:0, y:50, z:0}, mass=1, useLocalScaling=true) {
 
     let transform = new Ammo.btTransform();
@@ -199,6 +199,13 @@ function createAmmoRigidBody(shape, threeMesh, restitution=0.7, friction=0.8, po
     let rigidBody = new Ammo.btRigidBody(rbInfo);
     rigidBody.setRestitution(restitution);
     rigidBody.setFriction(friction);
+
+    // All remaining work using rigidBody, no return needed
+    threeMesh.userData.physicsBody = rigidBody;
+    phy.ammoPhysicsWorld.addRigidBody(rigidBody);  // Add to ammo physics world:
+
+    phy.rigidBodies.push(threeMesh);
+    rigidBody.threeMesh = threeMesh;
 
     return rigidBody;
 }
@@ -247,6 +254,9 @@ function threeAmmoObjects() {
     const ballRadius = 2
     const ballMass = 10
     ball(ballPosition, ballRadius, ballMass)
+
+    const dominoPosition = {x: 10, y: 1, z: 10};
+    //domino(dominoPosition)
 }
 
 
@@ -256,7 +266,12 @@ function ground() {
 
     // THREE
     const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
-    const material = new THREE.MeshStandardMaterial({map: ri.textures.johnny, side: THREE.DoubleSide});
+    const texture = ri.textures.johnny;
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+    texture.repeat.set(10,10);
+    const material = new THREE.MeshStandardMaterial({
+        map: texture,
+        side: THREE.DoubleSide});
     const mesh = new THREE.Mesh(geometry, material);
 
     mesh.name = 'ground';
@@ -267,13 +282,7 @@ function ground() {
 
     // AMMO
     let shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
-    let rigidBody = createAmmoRigidBody(shape, mesh, 0.7, 0.8, position, 0);
-
-    mesh.userData.physicsBody = rigidBody;
-
-    phy.ammoPhysicsWorld.addRigidBody(rigidBody);  // Legger til ammo physics world:
-    phy.rigidBodies.push(mesh);
-    rigidBody.threeMesh = mesh; //Brukes til collision events:
+    createAmmoRigidBody(shape, mesh, 0.7, 0.8, position, 0);
 }
 
 
@@ -292,11 +301,10 @@ function ball(position, radius, mass) {
 
     // AMMO
     let shape = new Ammo.btSphereShape(radius);
-    let rigidBody = createAmmoRigidBody(shape, mesh, 0.7, 0.8, position, mass);
+    createAmmoRigidBody(shape, mesh, 0.7, 0.8, position, mass);
+}
 
-    mesh.userData.physicsBody = rigidBody;
 
-    phy.ammoPhysicsWorld.addRigidBody(rigidBody);  // Legger til ammo physics world:
-    phy.rigidBodies.push(mesh);
-    rigidBody.threeMesh = mesh;
+function domino(position) {
+
 }
