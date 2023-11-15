@@ -444,8 +444,8 @@ function domino(position) {
     dominoPositions.forEach(position => cube(position, dominoSize,position.rot , 'dominoPiece', 4, 0x303030))
 
     // Ball to start first domino:
-    const ballPosition = {x: position.x + 0, y: position.y + 5, z: position.z - 5.3}
-    ball(ballPosition, 0.45, 1)
+    //const ballPosition = {x: position.x + 0, y: position.y + 5, z: position.z - 5.3}
+    //ball(ballPosition, 0.45, 1)
 }
 
 
@@ -458,7 +458,7 @@ function plinko() {
     const materialJohnny = new THREE.MeshStandardMaterial({map: ri.textures.johnny, side: THREE.DoubleSide});
     const colorGrey = new THREE.MeshStandardMaterial({color: 0xffffff, side: THREE.DoubleSide});
     let plinkoMesh = new THREE.Group();
-    plinkoMesh.position.set(0,8,-2)
+    plinkoMesh.position.set(14.5,7,-31)
     plinkoMesh.rotateY(90*Math.PI/180);
     plinkoMesh.rotateX(-40*Math.PI/180);
 
@@ -544,6 +544,9 @@ function plinko() {
     createAmmoRigidBody(plinkoShape, plinkoMesh, 1, 1, plinkoMesh.position, 0);
     
     ri.scene.add(plinkoMesh);
+
+    const ballPosition = {x: 17, y: 12, z: -27};
+    ball(ballPosition, 0.25, 4.5)
     
 
 };
