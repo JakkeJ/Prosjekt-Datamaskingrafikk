@@ -3,6 +3,11 @@ import * as THREE from "three";
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import GUI from 'lil-gui'
 import {color} from "three/nodes";
+import {
+    createConvexTriangleShapeAddToCompound,
+    createTriangleShapeAddToCompound,
+    generateTriangleShape
+} from "./triangleMeshHelpers.js";
 
 const ri = {
     currentlyPressedKeys: [],
@@ -143,17 +148,17 @@ function ambientLight() {
 // Kode hentet fra oblig 3
 function directionalLight() {
     ri.directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    ri.directionalLight.position.set(1, 20, 0);
+    ri.directionalLight.position.set(1, 40, 0);
     ri.directionalLight.castShadow = true;
 
     ri.directionalLight.shadow.mapSize.width = 1024;
     ri.directionalLight.shadow.mapSize.height = 1024;
     ri.directionalLight.shadow.camera.near = 0;
     ri.directionalLight.shadow.camera.far = 50;
-    ri.directionalLight.shadow.camera.left = -15;
-    ri.directionalLight.shadow.camera.right = 15;
-    ri.directionalLight.shadow.camera.top = 15;
-    ri.directionalLight.shadow.camera.bottom = -15;
+    ri.directionalLight.shadow.camera.left = -50;
+    ri.directionalLight.shadow.camera.right = 50;
+    ri.directionalLight.shadow.camera.top = 50;
+    ri.directionalLight.shadow.camera.bottom = -50;
 
     const directionalLightHelper = new THREE.DirectionalLightHelper(ri.directionalLight, 10, 0xff7777);
     const directionalLightCameraHelper = new THREE.CameraHelper(ri.directionalLight.shadow.camera)
@@ -252,7 +257,7 @@ function createMesh(geometry, material, parent, name = "", translateY = 0, trans
 function threeAmmoObjects() {
     ground()
 
-    const ballPosition = {x: 0, y: 20, z: 0};
+    const ballPosition = {x: 1, y: 10, z: 0.1};
     const ballRadius = 2
     const ballMass = 10
     ball(ballPosition, ballRadius, ballMass)
@@ -263,6 +268,15 @@ function threeAmmoObjects() {
     domino(dominoPosition)
 
     plinko();
+    // const position = {x: 10, y: 3, z: 10};
+    const position = {x: 15, y: 5, z: -10};
+    funnel(position)
+
+
+    createCoffeeCupTriangleMesh(
+        20000,
+        0x00FF09,
+        {x:-10, y:10, z:-10});
 
 
 }
@@ -270,7 +284,7 @@ function threeAmmoObjects() {
 
 function ground() {
     const position = {x: 0, y: 0, z: 0};
-    const size = {x: 50, y:1, z: 50};
+    const size = {x: 100, y:5, z: 100};
 
     // THREE
     const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
@@ -337,8 +351,54 @@ function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0x
 }
 
 
+function funnel(position) {
+    //Ammo-container:
+    let compoundShape = new Ammo.btCompoundShape();
+
+    const material = new THREE.MeshStandardMaterial({
+        color: 0xFFFFFF,
+        side: THREE.DoubleSide,
+        metalness: 0.5,
+        roughness: 0.3});
+
+    let points = [
+        new THREE.Vector2(0.5, 0),
+        new THREE.Vector2(0.5, 0.3),
+        new THREE.Vector2(0.7, 0.4),
+        new THREE.Vector2(0.9, 0.5),
+        new THREE.Vector2(1.1, 0.6),
+        new THREE.Vector2(1.3, 0.7),
+        new THREE.Vector2(1.45, 0.8),
+        new THREE.Vector2(1.6, 0.9),
+        new THREE.Vector2(1.7, 1.0),
+
+        new THREE.Vector2(2.7, 2.0),
+    ];
+
+    let geometry = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
+
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = 'funnel';
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    // mesh.updateMatrix();
+    // mesh.updateMatrixWorld(true);
+
+    ri.scene.add(mesh);
+
+
+    createTriangleShapeAddToCompound(compoundShape, mesh);
+
+    createAmmoRigidBody(compoundShape, mesh, 0.4, 0.6, position, 0);
+
+    // Ball to test funnel
+    const ballPosition = {x: position.x + 0.5, y: position.y + 5, z: position.z + 2}
+    ball(ballPosition, 0.45, 1)
+}
+
+
 function domino(position) {
-    //const tablePosition = {x: 1, y: 3, z: 0};
     const tableSize = {x: 5, y: 0.05, z: 10};
     cube(position, tableSize,0, 'table',0, 0x823c17)
 
@@ -354,7 +414,7 @@ function domino(position) {
         {x: position.x - 2.0, y: position.y + 0.5, z: position.z - 1.4, rot: -10},
         {x: position.x - 2.1, y: position.y + 0.5, z: position.z - 0.7, rot: 0},
         {x: position.x - 2.1, y: position.y + 0.5, z: position.z + 0.0, rot: 10},
-        {x: position.x - 1.8, y: position.y + 0.5, z: position.z + 0.6, rot: 30},
+        {x: position.x - 1.85, y: position.y + 0.5, z: position.z + 0.55, rot: 30},
         {x: position.x - 1.5, y: position.y + 0.5, z: position.z + 1.0, rot: 70},
         {x: position.x - 0.9, y: position.y + 0.5, z: position.z + 1.1, rot: 90},
         {x: position.x - 0.1, y: position.y + 0.5, z: position.z + 1.1, rot: 90},
@@ -384,11 +444,10 @@ function domino(position) {
     dominoPositions.forEach(position => cube(position, dominoSize,position.rot , 'dominoPiece', 4, 0x303030))
 
     // Ball to start first domino:
-    const ballPosition = {x: position.x + 0, y: position.y + 2, z: position.z - 5.3}
-
+    const ballPosition = {x: position.x + 0, y: position.y + 5, z: position.z - 5.3}
     ball(ballPosition, 0.45, 1)
-
 }
+
 
 function plinko() {
     let boardValues = {x: 20, y: 0.2, z: 12};
@@ -488,3 +547,80 @@ function plinko() {
     
 
 };
+
+
+// testing. Hentet fra eksempel
+function createCoffeeCupTriangleMesh(
+    mass = 100,
+    color=0x00FF09,
+    position={x:-20, y:50, z:20},
+    ) {
+    //Ammo-container:
+    let compoundShape = new Ammo.btCompoundShape();
+    //Three-container:
+    let groupMesh = new THREE.Group();
+    groupMesh.userData.tag = 'cup';
+    groupMesh.position.x = 10
+    groupMesh.position.y = 25;
+    groupMesh.position.z = -15;
+    groupMesh.scale.set(0.1,0.1,0.1);
+    createCupParts(groupMesh, compoundShape);
+
+    ri.scene.add(groupMesh);
+
+    // Sett samme transformasjon på compoundShape som på bottomMesh:
+    createAmmoRigidBody(compoundShape, groupMesh, 0.4, 0.6, position, mass);
+
+}
+
+// testing. Hentet fra eksempel
+function createCupParts(groupMesh, compoundShape) {
+
+    let cupMaterial = new THREE.MeshPhongMaterial({color :0xFFFFFF , side: THREE.DoubleSide});	//NB! MeshPhongMaterial
+
+    // Bunnen/sylinder:
+    let bottomGeometry = new THREE.CylinderGeometry( 8, 8, 1, 32 );
+    let bottomMesh = new THREE.Mesh( bottomGeometry, cupMaterial );
+    bottomMesh.castShadow = true;
+    bottomMesh.receiveShadow = true;
+
+    groupMesh.add( bottomMesh );
+    createConvexTriangleShapeAddToCompound(compoundShape, bottomMesh);
+
+    // Hanken/Torus:
+    let torusGeometry = new THREE.TorusGeometry( 9.2, 2, 16, 100, Math.PI );
+    let torusMesh = new THREE.Mesh( torusGeometry, cupMaterial );
+    torusMesh.rotation.z = -Math.PI/2 - Math.PI/14;
+    torusMesh.position.x = 15.8;
+    torusMesh.position.y = 15;
+    torusMesh.castShadow = true;
+    torusMesh.receiveShadow = true;
+    groupMesh.add( torusMesh );
+    createConvexTriangleShapeAddToCompound(compoundShape, torusMesh);
+
+    //Koppen/Lathe:
+    let points = [];
+    for (let x = 0; x < 1; x=x+0.1) {
+        let y = Math.pow(x,5)*2;
+        points.push(new THREE.Vector2(x*20,y*13));
+    }
+    let latheGeometry = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
+
+    let latheMesh = new THREE.Mesh(latheGeometry, cupMaterial);
+    latheMesh.castShadow = true;
+    latheMesh.receiveShadow = true;
+    // latheMesh.updateMatrix();
+    // latheMesh.updateMatrixWorld(true);
+    groupMesh.add( latheMesh );
+    createConvexTriangleShapeAddToCompound(compoundShape, latheMesh);
+
+    // Kaffen, sylinder:
+    let coffeeGeometry = new THREE.CylinderGeometry( 18, 18, 0.2, 32 );
+    let coffeeMaterial = new THREE.MeshPhongMaterial({color:0x7F4600});
+    let coffeeMesh = new THREE.Mesh( coffeeGeometry, coffeeMaterial );
+    coffeeMesh.position.x = 0;
+    coffeeMesh.position.y = 24;
+    coffeeMesh.position.z = 0;
+    groupMesh.add( coffeeMesh );
+    createConvexTriangleShapeAddToCompound(compoundShape, coffeeMesh);
+}
