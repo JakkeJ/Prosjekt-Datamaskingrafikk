@@ -449,108 +449,91 @@ function domino(position) {
 }
 
 
+function createAmmoMesh(shapeType, geometry, geoValues, meshPosition, meshRotation, texture, parentMesh, parentShape) {
+    let shape;
+    
+    if (shapeType == 'box') {
+
+        shape = new Ammo.btBoxShape(new Ammo.btVector3(geoValues.x/2, geoValues.y/2, geoValues.z/2));
+
+    } else if (shapeType == 'cylinder') {
+        shape = new Ammo.btCylinderShape(new Ammo.btVector3(geoValues.x, geoValues.y, geoValues.z/2));
+    }
+
+    let mesh = new THREE.Mesh(geometry, texture);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.position.set(meshPosition.x, meshPosition.y, meshPosition.z);
+    mesh.rotateX(meshRotation.x);
+    mesh.rotateY(meshRotation.y);
+    mesh.rotateZ(meshRotation.z);
+
+    
+    let rotation = new THREE.Quaternion();
+    if (meshRotation.x != 0) {
+        rotation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), meshRotation.x);}; 
+    if (meshRotation.y != 0) {
+        rotation.setFromAxisAngle(new THREE.Vector3(0, 1, 0), meshRotation.y);};
+    if (meshRotation.z != 0) {
+        rotation.setFromAxisAngle(new THREE.Vector3(0, 0, 1), meshRotation.z);};
+
+    let transform = new Ammo.btTransform();
+    transform.setIdentity();
+    transform.setOrigin(new Ammo.btVector3(meshPosition.x, meshPosition.y, meshPosition.z));
+    transform.setRotation(new Ammo.btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+
+    parentMesh.add(mesh);
+    parentShape.addChildShape(transform, shape);
+
+};
+
 function plinko() {
+
     let boardValues = {x: 20, y: 0.2, z: 12};
     let pegValues = {x: 0.08, y: 0.04, z: 0.5};
     let fenceValues = {x: 0.2, y: 0.8, z: 13};
     let rampValues = {x: 0.2, y: 0.8, z: 20};
-    
+
     const materialJohnny = new THREE.MeshStandardMaterial({map: ri.textures.johnny, side: THREE.DoubleSide});
     const colorGrey = new THREE.MeshStandardMaterial({color: 0xffffff, side: THREE.DoubleSide});
     let plinkoMesh = new THREE.Group();
     plinkoMesh.position.set(14.5,7,-31)
     plinkoMesh.rotateY(90*Math.PI/180);
     plinkoMesh.rotateX(-40*Math.PI/180);
+    let plinkoShape = new Ammo.btCompoundShape();
 
     let boardGeo = new THREE.BoxGeometry(boardValues.x, boardValues.y, boardValues.z);
+    let plinkoBoard = createAmmoMesh('box', boardGeo, boardValues, {x:-5, y: 0, z:0}, {x: 0, y: 0, z: 0}, colorGrey, plinkoMesh, plinkoShape);
+    
     let fenceGeo = new THREE.BoxGeometry(fenceValues.x, fenceValues.y, fenceValues.z);
+    let fence = createAmmoMesh('box', fenceGeo, fenceValues, {x:0.2, y: 0.4, z: 1.2}, {x: 0, y: -45*Math.PI/180, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+    let secondFence = createAmmoMesh('box', fenceGeo, fenceValues, {x:-10.2, y: 0.4, z: 1.2}, {x: 0, y: 45*Math.PI/180, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+
     let rampGeo = new THREE.BoxGeometry(rampValues.x, rampValues.y, rampValues.z);
+    let ramp = createAmmoMesh('box', rampGeo, rampValues, {x:-5.05, y: 0.4, z: -4.65}, {x: 0, y: 83*Math.PI/180, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
     let pegGeo = new THREE.CylinderGeometry(pegValues.x, pegValues.y, pegValues.z, 36, 1);
-    
-    let boardMesh = new THREE.Mesh(boardGeo, colorGrey);
-    boardMesh.position.set(-5, 0, 0);
-    plinkoMesh.add(boardMesh);
-
-    let fenceMesh = new THREE.Mesh(fenceGeo, materialJohnny);
-    fenceMesh.position.set(0.2, 0.4, 1.2);
-    fenceMesh.rotateY(-45*Math.PI/180);
-    plinkoMesh.add(fenceMesh);
-
-    let fenceMesh2 = new THREE.Mesh(fenceGeo, materialJohnny);
-    fenceMesh2.position.set(-10.2, 0.4, 1.2);
-    fenceMesh2.rotateY(45*Math.PI/180);
-    plinkoMesh.add(fenceMesh2);
-
-    let rampMesh = new THREE.Mesh(rampGeo, materialJohnny);
-    rampMesh.position.set(-5.05, 0.4, -4.65);
-    rampMesh.rotateY(83*Math.PI/180);
-    plinkoMesh.add(rampMesh);
-
-    let plinkoShape = new Ammo.btCompoundShape();
-    let boardShape = new Ammo.btBoxShape(new Ammo.btVector3(boardValues.x/2, boardValues.y/2, boardValues.z/2));
-    let pegShape = new Ammo.btCylinderShape(new Ammo.btVector3(pegValues.x, pegValues.y, pegValues.z/2));
-    let fenceShape = new Ammo.btBoxShape(new Ammo.btVector3(fenceValues.x/2, fenceValues.y/2, fenceValues.z/2));
-    let fenceShape2 = new Ammo.btBoxShape(new Ammo.btVector3(fenceValues.x/2, fenceValues.y/2, fenceValues.z/2));
-    let rampShape = new Ammo.btBoxShape(new Ammo.btVector3(rampValues.x/2, rampValues.y/2, rampValues.z/2));
-
-    let transformBoard = new Ammo.btTransform();
-    transformBoard.setIdentity();
-    transformBoard.setOrigin(new Ammo.btVector3(boardMesh.position.x, boardMesh.position.y, boardMesh.position.z));
-    plinkoShape.addChildShape(transformBoard, boardShape);
-    
-    let transformFence = new Ammo.btTransform();
-    transformFence.setIdentity();
-    transformFence.setOrigin(new Ammo.btVector3(fenceMesh.position.x, fenceMesh.position.y, fenceMesh.position.z));
-    let fenceQuaterion = new THREE.Quaternion();
-    fenceQuaterion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -45*Math.PI/180);
-    transformFence.setRotation(new Ammo.btQuaternion(fenceQuaterion.x, fenceQuaterion.y, fenceQuaterion.z, fenceQuaterion.w));
-    plinkoShape.addChildShape(transformFence, fenceShape);
-
-    let transformFence2 = new Ammo.btTransform();
-    transformFence2.setIdentity();
-    transformFence2.setOrigin(new Ammo.btVector3(fenceMesh2.position.x, fenceMesh2.position.y, fenceMesh2.position.z));
-    let fenceQuaterion2 = new THREE.Quaternion();
-    fenceQuaterion2.setFromAxisAngle(new THREE.Vector3(0, 1, 0), 45*Math.PI/180);
-    transformFence2.setRotation(new Ammo.btQuaternion(fenceQuaterion2.x, fenceQuaterion2.y, fenceQuaterion2.z, fenceQuaterion2.w));
-    plinkoShape.addChildShape(transformFence2, fenceShape2);
-
-    let transformRamp = new Ammo.btTransform();
-    transformRamp.setIdentity();
-    transformRamp.setOrigin(new Ammo.btVector3(rampMesh.position.x, rampMesh.position.y, rampMesh.position.z));
-    let rampQuaterion = new THREE.Quaternion();
-    rampQuaterion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), 83*Math.PI/180);
-    transformRamp.setRotation(new Ammo.btQuaternion(rampQuaterion.x, rampQuaterion.y, rampQuaterion.z, rampQuaterion.w));
-    plinkoShape.addChildShape(transformRamp, rampShape);
 
     let x = -5;
     let y = 0;
     let count = 1;
     for (let i = 0; i < 18; i++){
         for (let j = 0; j < count; j++) {
-            let pegMesh = new THREE.Mesh(pegGeo, materialJohnny);
-            pegMesh.position.set(x+j, 0.4, 5.5+y);
-            plinkoMesh.add(pegMesh);
-            let transformPeg = new Ammo.btTransform();
-            transformPeg.setIdentity();
-            transformPeg.setOrigin(new Ammo.btVector3(x+j, 0.4, 5.5+y));
-            plinkoShape.addChildShape(transformPeg, pegShape);
+            let peg = createAmmoMesh('cylinder', pegGeo, pegValues, {x: x+j, y: 0.4, z: 5.5+y}, {x: 0, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+            
         }
         count +=1
         x += -0.5;
         y += -0.5;
-    }
+    };
 
-    
     createAmmoRigidBody(plinkoShape, plinkoMesh, 1, 1, plinkoMesh.position, 0);
     
     ri.scene.add(plinkoMesh);
 
     const ballPosition = {x: 17, y: 12, z: -27};
-    ball(ballPosition, 0.25, 4.5)
-    
+    ball(ballPosition, 0.20, 4.5)
 
-};
-
+}
 
 // testing. Hentet fra eksempel
 function createCoffeeCupTriangleMesh(
