@@ -326,7 +326,7 @@ function ball(position, radius, mass) {
 
     // AMMO
     let shape = new Ammo.btSphereShape(radius);
-    createAmmoRigidBody(shape, mesh, 0.5, 0.8, position, mass);
+    createAmmoRigidBody(shape, mesh, 0.7, 0.8, position, mass);
 }
 
 function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0xFFFFFF) {
@@ -493,13 +493,17 @@ function plinko() {
     let pegValues = {x: 0.08, y: 0.04, z: 0.5};
     let fenceValues = {x: 0.2, y: 0.8, z: 13};
     let rampValues = {x: 0.2, y: 0.8, z: 20};
+    let topFrameValues = {x: 20.01, y: 0.8, z: 0.2};
+    let sideFrameValues = {x: 0.8, y: 0.4, z: 9.28};
+    let backFrameValues = {x: 0.8, y: 8.5, z: 0.8};
+    let frontBottomFrameValues = {x: 20.01, y: 0.4, z: 0.2};
 
     const materialJohnny = new THREE.MeshStandardMaterial({map: ri.textures.johnny, side: THREE.DoubleSide});
     const colorGrey = new THREE.MeshStandardMaterial({color: 0xffffff, side: THREE.DoubleSide});
     let plinkoMesh = new THREE.Group();
-    plinkoMesh.position.set(14.5,7,-31)
-    plinkoMesh.rotateY(90*Math.PI/180);
-    plinkoMesh.rotateX(-40*Math.PI/180);
+    plinkoMesh.position.set( 14, 7.05,-30.5);
+    plinkoMesh.rotateY(90*Math.PI/180); 
+    plinkoMesh.rotateX(-45*Math.PI/180); 
     let plinkoShape = new Ammo.btCompoundShape();
 
     let boardGeo = new THREE.BoxGeometry(boardValues.x, boardValues.y, boardValues.z);
@@ -511,6 +515,21 @@ function plinko() {
 
     let rampGeo = new THREE.BoxGeometry(rampValues.x, rampValues.y, rampValues.z);
     let ramp = createAmmoMesh('box', rampGeo, rampValues, {x:-5.05, y: 0.4, z: -4.65}, {x: 0, y: 83*Math.PI/180, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+
+    let topFrameGeo = new THREE.BoxGeometry(topFrameValues.x, topFrameValues.y, topFrameValues.z);
+    let topFrame = createAmmoMesh('box', topFrameGeo, topFrameValues, {x: -5, y: -0.24, z: 6.206}, {x: -45*Math.PI/180, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+
+    let frontBottomFrameGeo = new THREE.BoxGeometry(frontBottomFrameValues.x, frontBottomFrameValues.y, frontBottomFrameValues.z);
+    let bottomFrontFrame = createAmmoMesh('box', frontBottomFrameGeo, frontBottomFrameValues, {x: -5, y: -0.075, z: -6.075}, {x: -135*Math.PI/180, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+
+    let bottomFrameGeo = new THREE.BoxGeometry(sideFrameValues.x, sideFrameValues.y, sideFrameValues.z);
+    let bottomLeftFrame = createAmmoMesh('box', bottomFrameGeo, sideFrameValues, {x: 4.602, y: -3.3, z: -2.85}, {x: 45*Math.PI/180, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+    let bottomRightFrame = createAmmoMesh('box', bottomFrameGeo, sideFrameValues, {x: -14.602, y: -3.3, z: -2.85}, {x: 45*Math.PI/180, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+    
+    let backFrameGeo = new THREE.BoxGeometry(backFrameValues.x, backFrameValues.y, backFrameValues.z);
+    let backLeftFrame = createAmmoMesh('box', backFrameGeo, sideFrameValues, {x: 4.602, y: -3.2, z: 3.245}, {x: 45*Math.PI/180, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+    let backRightFrame = createAmmoMesh('box', backFrameGeo, sideFrameValues, {x: -14.602, y: -3.2, z: 3.245}, {x: 45*Math.PI/180, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+
     let pegGeo = new THREE.CylinderGeometry(pegValues.x, pegValues.y, pegValues.z, 36, 1);
 
     let x = -5;
@@ -530,8 +549,11 @@ function plinko() {
     
     ri.scene.add(plinkoMesh);
 
-    const ballPosition = {x: 17, y: 12, z: -27};
-    ball(ballPosition, 0.20, 4.5)
+    const ballPosition = {x: 18.8, y: 11.5, z: -26}; //x: 17, y: 12, z: -27
+    ball(ballPosition, 0.25, 4.5)
+
+    const ballPosition2 = {x: 19, y: 20, z: -26}; 
+    ball(ballPosition2, 0.20, 4.5)
 
 }
 
