@@ -8,6 +8,7 @@ import {
     createTriangleShapeAddToCompound,
     generateTriangleShape
 } from "./triangleMeshHelpers.js";
+import {Vector3} from "three";
 
 const ri = {
     currentlyPressedKeys: [],
@@ -51,9 +52,9 @@ function createThreeScene() {
     ri.lilGui = new GUI();
 
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    ri.camera.position.set( 20, 10, 0 );
+    ri.camera.position.set( 10, 5, -15 );
     // ri.camera.position.set( 2, 15, -4 ); // Temp position
-    ri.camera.lookAt( 0, 0, 0 );
+
     ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
 }
 
@@ -89,7 +90,11 @@ function handleKeyDown(event) {
 
 
 function renderCamera() {
-    ri.renderer.render(ri.scene, ri.camera)
+    let object = ri.scene.getObjectByName("cradleMesh");
+
+    ri.camera.lookAt( object.position.x, object.position.y, object.position.z );
+    ri.renderer.render(ri.scene, ri.camera);
+
 }
 
 
@@ -99,6 +104,7 @@ function addToScene() {
     ri.textures = {};
 
     ri.textures.johnny = loader.load('static/johnny.png');
+    ri.textures.darkGrey = loader.load('static/darkGreyTexture.png')
 
     manager.onLoad = () => {
         addLights()
@@ -268,19 +274,20 @@ function threeAmmoObjects() {
     const dominoPosition = {x: 10, y: 3, z: -10};
     domino(dominoPosition)
 
-    plinko();
+    //plinko();
     //spring();
-    golfclub();
+    //golfclub();
+    newtonCradle();
     
     // const position = {x: 10, y: 3, z: 10};
-    const position = {x: 15, y: 5, z: -10};
-    funnel(position)
+    //const position = {x: 15, y: 5, z: -10};
+    //funnel(position)
 
 
-    createCoffeeCupTriangleMesh(
-        20000,
-        0x00FF09,
-        {x:-10, y:10, z:-10});
+    //createCoffeeCupTriangleMesh(
+    //    20000,
+    //    0x00FF09,
+    //    {x:-10, y:10, z:-10});
 
 
 }
@@ -457,11 +464,11 @@ function createAmmoMesh(shapeType, geometry, geoValues, meshPosition, meshRotati
     let shape;
     
     if (shapeType == 'box') {
-
         shape = new Ammo.btBoxShape(new Ammo.btVector3(geoValues.x/2, geoValues.y/2, geoValues.z/2));
-
     } else if (shapeType == 'cylinder') {
         shape = new Ammo.btCylinderShape(new Ammo.btVector3(geoValues.x, geoValues.y, geoValues.z/2));
+    } else if (shapeType == 'sphere') {
+        shape = new Ammo.btSphereShape(geoValues.radius);
     }
 
     let mesh = new THREE.Mesh(geometry, texture);
@@ -471,15 +478,14 @@ function createAmmoMesh(shapeType, geometry, geoValues, meshPosition, meshRotati
     mesh.rotateX(meshRotation.x);
     mesh.rotateY(meshRotation.y);
     mesh.rotateZ(meshRotation.z);
-
     
     let rotation = new THREE.Quaternion();
     if (meshRotation.x != 0) {
-        rotation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), meshRotation.x);}; 
+        rotation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), meshRotation.x)}
     if (meshRotation.y != 0) {
-        rotation.setFromAxisAngle(new THREE.Vector3(0, 1, 0), meshRotation.y);};
+        rotation.setFromAxisAngle(new THREE.Vector3(0, 1, 0), meshRotation.y)}
     if (meshRotation.z != 0) {
-        rotation.setFromAxisAngle(new THREE.Vector3(0, 0, 1), meshRotation.z);};
+        rotation.setFromAxisAngle(new THREE.Vector3(0, 0, 1), meshRotation.z)}
 
     let transform = new Ammo.btTransform();
     transform.setIdentity();
@@ -637,46 +643,6 @@ function createCupParts(groupMesh, compoundShape) {
     createConvexTriangleShapeAddToCompound(compoundShape, coffeeMesh);
 }
 
-function golfclub() {
-    let handleBarValues = {x: 0.2, y: 0.1, z: 4};
-    let shaftValues = {x: 0.1, y: 0.1, z: 10};
-    let connectorValues = {x: 0.15, y: 0.15, z: 0.4};
-    let clubValues = {x: 0.3, y: 0.5, z: 1.5};
-    
-    const materialJohnny = new THREE.MeshStandardMaterial({map: ri.textures.johnny, side: THREE.DoubleSide});
-    const colorGrey = new THREE.MeshStandardMaterial({color: 0xffffff, side: THREE.DoubleSide});
-
-    let golfClubMesh = new THREE.Group();
-    golfClubMesh.position.set( 0, 15, -20);
-    let golfClubShape = new Ammo.btCompoundShape();
-
-    let handleBarGeo = new THREE.CylinderGeometry(handleBarValues.x, handleBarValues.y, handleBarValues.z, 36, 1);
-    let handleBar = createAmmoMesh('cylinder', handleBarGeo, handleBarValues, {x: 0, y: 7, z: 0}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubMesh, golfClubShape);
-    let shaftGeo = new THREE.CylinderGeometry(shaftValues.x, shaftValues.y, shaftValues.z, 36, 1);
-    let shaft = createAmmoMesh('cylinder', shaftGeo, handleBarValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, colorGrey, golfClubMesh, golfClubShape);
-    let connectorGeo = new THREE.CylinderGeometry(connectorValues.x, connectorValues.y, connectorValues.z, 36, 1);
-    let connector = createAmmoMesh('cylinder', connectorGeo, connectorValues, {x: 0, y: -5, z: 0}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubMesh, golfClubShape);
-    let clubGeo = new THREE.BoxGeometry(clubValues.x, clubValues.y, clubValues.z);
-    let club = createAmmoMesh('box', clubGeo, clubValues, {x: 0, y: -5.4, z: 0.6}, {x: 0, y: 0, z: 0}, colorGrey, golfClubMesh, golfClubShape);
-    
-    let golfClubRigid = createAmmoRigidBody(golfClubShape, golfClubMesh, 1, 1, golfClubMesh.position, 10);
-
-
-    let golfClubStandMesh = new THREE.Group();
-    golfClubStandMesh.position.set( 0, 15, -20);
-    let golfClubStandShape = new Ammo.btCompoundShape();
-    
-    let hingeValues = {x: 1, y: 1, z: 2}; //her lag cylinder som hinge 23x
-    let hingeGeo = new THREE.CylinderGeometry(hingeValues.x, hingeValues.y, hingeValues.z, 36, 1);
-    let hinge = createAmmoMesh('cylinder', hingeGeo, hingeValues, {x: 0, y: -5.4, z: 0.6}, {x: 0, y: 0, z: 90*Math.PI/180}, colorGrey, golfClubStandMesh, golfClubStandShape);
-    let golfClubStandRigid = createAmmoRigidBody(golfClubStandShape, golfClubStandMesh, 1, 1, golfClubStandMesh.position, 0);
-    
-    createHinge(golfClubStandRigid, golfClubRigid);
-    
-    ri.scene.add(golfClubStandMesh);
-    ri.scene.add(golfClubMesh);
-}
-
 /*
 function spring() {
     //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra: https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/springGeneric6DofSpringConstraint.js?ref_type=heads
@@ -769,6 +735,126 @@ function spring() {
 
 };*/
 
+function golfclub() {
+    let handleBarValues = {x: 0.2, y: 0.1, z: 4};
+    let shaftValues = {x: 0.1, y: 0.1, z: 10};
+    let connectorValues = {x: 0.15, y: 0.15, z: 0.4};
+    let clubValues = {x: 0.3, y: 0.5, z: 1.5};
+
+    const materialJohnny = new THREE.MeshStandardMaterial({map: ri.textures.johnny, side: THREE.DoubleSide});
+    const colorGrey = new THREE.MeshStandardMaterial({color: 0xffffff, side: THREE.DoubleSide});
+
+    let golfClubMesh = new THREE.Group();
+    golfClubMesh.position.set( 0, 15, -20);
+    let golfClubShape = new Ammo.btCompoundShape();
+
+    let handleBarGeo = new THREE.CylinderGeometry(handleBarValues.x, handleBarValues.y, handleBarValues.z, 36, 1);
+    let handleBar = createAmmoMesh('cylinder', handleBarGeo, handleBarValues, {x: 0, y: 7, z: 0}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubMesh, golfClubShape);
+    let shaftGeo = new THREE.CylinderGeometry(shaftValues.x, shaftValues.y, shaftValues.z, 36, 1);
+    let shaft = createAmmoMesh('cylinder', shaftGeo, handleBarValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, colorGrey, golfClubMesh, golfClubShape);
+    let connectorGeo = new THREE.CylinderGeometry(connectorValues.x, connectorValues.y, connectorValues.z, 36, 1);
+    let connector = createAmmoMesh('cylinder', connectorGeo, connectorValues, {x: 0, y: -5, z: 0}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubMesh, golfClubShape);
+    let clubGeo = new THREE.BoxGeometry(clubValues.x, clubValues.y, clubValues.z);
+    let club = createAmmoMesh('box', clubGeo, clubValues, {x: 0, y: -5.4, z: 0.6}, {x: 0, y: 0, z: 0}, colorGrey, golfClubMesh, golfClubShape);
+
+    let golfClubRigid = createAmmoRigidBody(golfClubShape, golfClubMesh, 1, 1, golfClubMesh.position, 10);
+
+
+    let golfClubStandMesh = new THREE.Group();
+    golfClubStandMesh.position.set( 0, 15, -20);
+    let golfClubStandShape = new Ammo.btCompoundShape();
+
+    let hingeValues = {x: 1, y: 1, z: 2}; //her lag cylinder som hinge 23x
+    let hingeGeo = new THREE.CylinderGeometry(hingeValues.x, hingeValues.y, hingeValues.z, 36, 1);
+    let hinge = createAmmoMesh('cylinder', hingeGeo, hingeValues, {x: 0, y: -5.4, z: 0.6}, {x: 0, y: 0, z: 90*Math.PI/180}, colorGrey, golfClubStandMesh, golfClubStandShape);
+    let golfClubStandRigid = createAmmoRigidBody(golfClubStandShape, golfClubStandMesh, 1, 1, golfClubStandMesh.position, 0);
+
+    createHinge(golfClubStandRigid, golfClubRigid);
+
+    ri.scene.add(golfClubStandMesh);
+    ri.scene.add(golfClubMesh);
+}
+
+function newtonCradle() {
+    const materialDarkGrey = new THREE.MeshStandardMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
+    const colorGrey = new THREE.MeshStandardMaterial({color: 0xffffff, side: THREE.DoubleSide});
+
+    let topBoxValues = {x: 0.25, y: 0.25, z: 5};
+    let bottomBoxConnectorValues = {x: 2, y: 0.25, z: 0.25};
+    let riserBoxValues = {x: 0.25, y: 4, z: 0.25};
+
+    let cradleMesh = new THREE.Group();
+    cradleMesh.name = "cradleMesh";
+    cradleMesh.position.set( 0, 0, -20);
+    let cradleTopBarPosition1 = {x: 1, y: 6-0.125, z: 0};
+    let cradleTopBarPosition2 = {x: -1, y: 6-0.125, z: 0};
+    let cradleShape = new Ammo.btCompoundShape();
+
+    let cradleBottomGeo = new THREE.BoxGeometry(topBoxValues.x, topBoxValues.y, topBoxValues.z);
+    let cradleTopBar1 = createAmmoMesh('box', cradleBottomGeo, topBoxValues, cradleTopBarPosition1, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
+    let cradleTopBar2 = createAmmoMesh('box', cradleBottomGeo, topBoxValues, cradleTopBarPosition2, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
+
+    let cradleConnectorGeo = new THREE.BoxGeometry(bottomBoxConnectorValues.x, bottomBoxConnectorValues.y, bottomBoxConnectorValues.z);
+    let cradleConnectorBar1 = createAmmoMesh('box', cradleConnectorGeo, bottomBoxConnectorValues, {x: 0, y: 2+0.125, z: 2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
+    let cradleConnectorBar2 = createAmmoMesh('box', cradleConnectorGeo, bottomBoxConnectorValues, {x: 0, y: 2+0.125, z: -2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
+
+    let cradleRiserGeo = new THREE.BoxGeometry(riserBoxValues.x, riserBoxValues.y, riserBoxValues.z);
+    let cradleRiserBar1  = createAmmoMesh('box', cradleRiserGeo, riserBoxValues, {x: 1, y: 4, z: 2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
+    let cradleRiserBar2  = createAmmoMesh('box', cradleRiserGeo, riserBoxValues, {x: 1, y: 4, z: -2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
+    let cradleRiserBar3  = createAmmoMesh('box', cradleRiserGeo, riserBoxValues, {x: -1, y: 4, z: 2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
+    let cradleRiserBar4  = createAmmoMesh('box', cradleRiserGeo, riserBoxValues, {x: -1, y: 4, z: -2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
+
+    let cradleRigid = createAmmoRigidBody(cradleShape, cradleMesh, 0.1, 1, cradleMesh.position, 1);
+    ri.scene.add(cradleMesh);
+
+
+    let ballPosition = {x: cradleMesh.position.x, y: cradleMesh.position.y, z: cradleMesh.position.z+1};
+    let ballMeshPosition =  {x: 0, y: 4, z: 0};
+    for (let i = 0; i < 7; ++i) {
+        let ballMesh = new THREE.Group();
+        ballMesh.name = "ball" + i;
+        let ballShape = new Ammo.btCompoundShape();
+        let ballValues = {radius: 0.2, segments: 32}
+        // THREE
+        let ballGeo = new THREE.SphereGeometry(ballValues.radius, ballValues.segments, ballValues.segments);
+        let ball = createAmmoMesh('sphere', ballGeo, ballValues, ballMeshPosition, {x: 0, y: 0, z: 0}, materialDarkGrey, ballMesh, ballShape);
+        let ballRigid = createAmmoRigidBody(ballShape, ballMesh, 0,1, ballPosition, 0);
+        ri.scene.add(ballMesh);
+        addLineBetweenObjects(ballPosition, "cradleMesh", ballMeshPosition, cradleTopBarPosition1, i)
+        ballPosition.z = ballPosition.z - ballValues.radius*2
+    }
+}
+
+//Werner sin funksjon
+function addLineBetweenObjects(nameMeshStart, nameMeshEnd, meshPositionStart, meshPositionEnd, i) {
+    ri.scene.updateMatrixWorld(true);
+    let lineMeshStartPosition = ri.scene.getObjectByName(nameMeshStart);
+    let lineMeshEndPosition = ri.scene.getObjectByName(nameMeshEnd);
+
+    // Wire / Line:
+    // Definerer Line-meshet (beståemde av to punkter):
+    const lineMaterial = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 30 } );
+    const points = [];
+    // Finner start- og endepunktmesh:
+    const startPoint = new THREE.Vector3();
+    const endPoint = new THREE.Vector3();
+    // NB! Bruker world-position:
+    lineMeshStartPosition.getWorldPosition(startPoint);
+    startPoint.set(startPoint.x + meshPositionStart.x, startPoint.y + meshPositionStart.y, startPoint.z + meshPositionStart.z);
+    console.log(startPoint);
+    lineMeshEndPosition.getWorldPosition(endPoint);
+    endPoint.set(endPoint.x + meshPositionEnd.x, endPoint.y + meshPositionEnd.y, endPoint.z + meshPositionEnd.z);
+    console.log(endPoint);
+    points.push(startPoint);
+    points.push(endPoint);
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints( points );
+    const springLineMesh = new THREE.Line( lineGeometry, lineMaterial );
+    springLineMesh.name = "springLineMesh" + i;
+    // NB! Linemeshet legges til scene-objektet.
+    ri.scene.add(springLineMesh);
+}
+
+
 function createHinge(rigidObject, rigidObject2) {
     //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/armHingeConstraint.js?ref_type=heads
     let objectPiviot = new Ammo.btVector3(0, 0, 1);
@@ -781,3 +867,4 @@ function createHinge(rigidObject, rigidObject2) {
     hinge.enableAngularMotor(true, 0, 0.5);
     phy.ammoPhysicsWorld.addConstraint(hinge, false);
 }
+
