@@ -1,15 +1,11 @@
+// noinspection JSPotentiallyInvalidConstructorUsage
+
 import './style.css';
 import * as THREE from "three";
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import GUI from 'lil-gui'
-import {color} from "three/nodes";
-import {
-    createConvexTriangleShapeAddToCompound,
-    createTriangleShapeAddToCompound,
-    generateTriangleShape
-} from "./triangleMeshHelpers.js";
-import {Vector3} from "three";
-import {degToRad, radToDeg} from "three/src/math/MathUtils.js";
+import {createConvexTriangleShapeAddToCompound, createTriangleShapeAddToCompound} from "./triangleMeshHelpers.js";
+import {degToRad} from "three/src/math/MathUtils.js";
 
 const ri = {
     currentlyPressedKeys: [],
@@ -91,11 +87,7 @@ function handleKeyDown(event) {
 
 
 function renderCamera() {
-    let object = ri.scene.getObjectByName("cradleMesh");
-
-    ri.camera.lookAt( object.position.x, object.position.y, object.position.z );
     ri.renderer.render(ri.scene, ri.camera);
-
 }
 
 
@@ -127,8 +119,8 @@ function animate(currentTime) {
     let delta = ri.clock.getDelta();
 
     updatePhysics(delta)
-
-    renderCamera()
+    updateLines();
+    renderCamera();
 }
 
 
@@ -591,18 +583,19 @@ function domino(position, rotation = 0, starter = false) {
 }
 
 
-function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, texture, groupMesh, compoundShape) {
+function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, texture, groupMesh, compoundShape, name = "") {
     let shape;
     
     if (shapeType == 'box') {
-        shape = new Ammo.btBoxShape(new Ammo.btVector3(geoValues.x/2, geoValues.y/2, geoValues.z/2));
+        shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
     } else if (shapeType == 'cylinder') {
-        shape = new Ammo.btCylinderShape(new Ammo.btVector3(geoValues.x, geoValues.y, geoValues.z/2));
+        shape = new Ammo.btCylinderShape(new Ammo.btVector3(size.x, size.z/2, size.y));
     } else if (shapeType == 'sphere') {
-        shape = new Ammo.btSphereShape(geoValues.radius);
+        shape = new Ammo.btSphereShape(size.radius);
     }
 
     let mesh = new THREE.Mesh(geometry, texture);
+    mesh.name = name
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.position.set(meshPosition.x, meshPosition.y, meshPosition.z);
@@ -626,7 +619,10 @@ function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, t
     groupMesh.add(mesh);
     compoundShape.addChildShape(transform, shape);
 
-};
+    return {
+        mesh
+    }
+}
 
 function plinko() {
 
@@ -917,14 +913,14 @@ function newtonCradle() {
 
     let cradleMesh = new THREE.Group();
     cradleMesh.name = "cradleMesh";
-    cradleMesh.position.set( 0, 0, -20);
+    cradleMesh.position.set( 0, -riserBoxValues.y, -20);
     let cradleTopBarPosition1 = {x: 1, y: 6-0.125, z: 0};
     let cradleTopBarPosition2 = {x: -1, y: 6-0.125, z: 0};
     let cradleShape = new Ammo.btCompoundShape();
 
     let cradleBottomGeo = new THREE.BoxGeometry(topBoxValues.x, topBoxValues.y, topBoxValues.z);
-    let cradleTopBar1 = createAmmoMesh('box', cradleBottomGeo, topBoxValues, cradleTopBarPosition1, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
-    let cradleTopBar2 = createAmmoMesh('box', cradleBottomGeo, topBoxValues, cradleTopBarPosition2, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
+    let cradleTopBar1 = createAmmoMesh('box', cradleBottomGeo, topBoxValues, cradleTopBarPosition1, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape, "cradleTopBar1");
+    let cradleTopBar2 = createAmmoMesh('box', cradleBottomGeo, topBoxValues, cradleTopBarPosition2, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape, "cradleTopBar2");
 
     let cradleConnectorGeo = new THREE.BoxGeometry(bottomBoxConnectorValues.x, bottomBoxConnectorValues.y, bottomBoxConnectorValues.z);
     let cradleConnectorBar1 = createAmmoMesh('box', cradleConnectorGeo, bottomBoxConnectorValues, {x: 0, y: 2+0.125, z: 2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
@@ -936,12 +932,11 @@ function newtonCradle() {
     let cradleRiserBar3  = createAmmoMesh('box', cradleRiserGeo, riserBoxValues, {x: -1, y: 4, z: 2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
     let cradleRiserBar4  = createAmmoMesh('box', cradleRiserGeo, riserBoxValues, {x: -1, y: 4, z: -2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
 
-    let cradleRigid = createAmmoRigidBody(cradleShape, cradleMesh, 0.1, 1, cradleMesh.position, 1);
+    let cradleRigid = createAmmoRigidBody(cradleShape, cradleMesh, 0.1, 1, cradleMesh.position, 100000);
     ri.scene.add(cradleMesh);
 
-
-    let ballPosition = {x: cradleMesh.position.x, y: cradleMesh.position.y, z: cradleMesh.position.z+1};
-    let ballMeshPosition =  {x: 0, y: 4, z: 0};
+    let ballPosition = {x: cradleMesh.position.x, y: cradleTopBar1.mesh.position.y/3, z: cradleMesh.position.z + 1};
+    let ballMeshPosition =  {x: 0, y: 0.0, z: 0};
     for (let i = 0; i < 7; ++i) {
         let ballMesh = new THREE.Group();
         ballMesh.name = "ball" + i;
@@ -950,18 +945,29 @@ function newtonCradle() {
         // THREE
         let ballGeo = new THREE.SphereGeometry(ballValues.radius, ballValues.segments, ballValues.segments);
         let ball = createAmmoMesh('sphere', ballGeo, ballValues, ballMeshPosition, {x: 0, y: 0, z: 0}, materialDarkGrey, ballMesh, ballShape);
-        let ballRigid = createAmmoRigidBody(ballShape, ballMesh, 0,1, ballPosition, 0);
+        let ballRigid = createAmmoRigidBody(ballShape, ballMesh, 0,1, ballPosition, 1);
         ri.scene.add(ballMesh);
-        addLineBetweenObjects(ballPosition, "cradleMesh", ballMeshPosition, cradleTopBarPosition1, i)
-        ballPosition.z = ballPosition.z - ballValues.radius*2
+        addLineBetweenObjects("ball" + i, "cradleMesh", ballPosition, cradleTopBarPosition1, i, cradleTopBar1.mesh.name, "lineToTopBar1_" + i);
+        addLineBetweenObjects("ball" + i, "cradleMesh", ballPosition, cradleTopBarPosition2, i, cradleTopBar2.mesh.name, "lineToTopBar2_" + i);
+        let ballPivot = new Ammo.btVector3(0, 0, ballValues.radius);
+        console.log(1.4-ballValues.radius-i*0.4);
+        let framePivot = new Ammo.btVector3(0, cradleTopBar1.mesh.position.y/2, 1.4-ballValues.radius-i*0.4);
+        let axis = new Ammo.btVector3(0, 1, 0);
+        let hinge = new Ammo.btHingeConstraint(ballRigid, cradleRigid, ballPivot, framePivot, axis, axis, false);
+        hinge.setLimit(-Math.PI / 2, Math.PI / 2, 1, 0.1, 0.01);
+        hinge.enableAngularMotor(true, 0, 0.5);
+
+        phy.ammoPhysicsWorld.addConstraint(hinge, false);
+        ballPosition.z = ballPosition.z - ballValues.radius*2;
+
     }
 }
 
-//Werner sin funksjon
-function addLineBetweenObjects(nameMeshStart, nameMeshEnd, meshPositionStart, meshPositionEnd, i) {
+//Werner sin funksjon en gang i tida...
+function addLineBetweenObjects(nameMeshStart, nameMeshEnd, meshPositionStart, meshPositionEnd, i, childName, lineName) {
     ri.scene.updateMatrixWorld(true);
     let lineMeshStartPosition = ri.scene.getObjectByName(nameMeshStart);
-    let lineMeshEndPosition = ri.scene.getObjectByName(nameMeshEnd);
+    let lineMeshEndPosition = ri.scene.getObjectByName(nameMeshEnd).getObjectByName(childName);
 
     // Wire / Line:
     // Definerer Line-meshet (beståemde av to punkter):
@@ -972,29 +978,65 @@ function addLineBetweenObjects(nameMeshStart, nameMeshEnd, meshPositionStart, me
     const endPoint = new THREE.Vector3();
     // NB! Bruker world-position:
     lineMeshStartPosition.getWorldPosition(startPoint);
+    //console.log(lineMeshStartPosition.userData.physicsBody.threeMesh.position.y)
     startPoint.set(startPoint.x + meshPositionStart.x, startPoint.y + meshPositionStart.y, startPoint.z + meshPositionStart.z);
-    console.log(startPoint);
+    //console.log(startPoint);
     lineMeshEndPosition.getWorldPosition(endPoint);
-    endPoint.set(endPoint.x + meshPositionEnd.x, endPoint.y + meshPositionEnd.y, endPoint.z + meshPositionEnd.z);
-    console.log(endPoint);
+    endPoint.set(endPoint.x, meshPositionEnd.y - endPoint.y, meshPositionStart.z);
+    //console.log(endPoint);
     points.push(startPoint);
     points.push(endPoint);
     const lineGeometry = new THREE.BufferGeometry().setFromPoints( points );
     const springLineMesh = new THREE.Line( lineGeometry, lineMaterial );
-    springLineMesh.name = "springLineMesh" + i;
+    springLineMesh.name = lineName;
     // NB! Linemeshet legges til scene-objektet.
     ri.scene.add(springLineMesh);
 }
 
+function updateLines() {
+    for (let i = 0; i < 7; ++i) {
+        let ballMesh = ri.scene.getObjectByName("ball" + i);
+        if (ballMesh && ballMesh.userData.physicsBody) {
+            let ballPhysicsBody = ballMesh.userData.physicsBody;
+            let ballMotionState = ballPhysicsBody.getMotionState();
+
+            if (ballMotionState) {
+                let ballTransform = new Ammo.btTransform();
+                ballMotionState.getWorldTransform(ballTransform);
+                let ballPosition = ballTransform.getOrigin();
+
+                // Update the line connected to this ball
+                let line1 = ri.scene.getObjectByName("lineToTopBar1_" + i);
+                let line2 = ri.scene.getObjectByName("lineToTopBar2_" + i);
+                if (line1) {
+                    let points = line1.geometry.attributes.position.array;
+                    points[0] = ballPosition.x();
+                    points[1] = ballPosition.y();
+                    points[2] = ballPosition.z();
+                    line1.geometry.attributes.position.needsUpdate = true;
+                }
+                if (line2) {
+                    let points = line2.geometry.attributes.position.array;
+                    points[0] = ballPosition.x();
+                    points[1] = ballPosition.y();
+                    points[2] = ballPosition.z();
+                    line2.geometry.attributes.position.needsUpdate = true;
+                }
+
+                Ammo.destroy(ballTransform);
+            }
+        }
+    }
+}
 
 function createHinge(rigidObject, rigidObject2) {
     //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/armHingeConstraint.js?ref_type=heads
-    let objectPiviot = new Ammo.btVector3(0, 0, 1);
+    let objectPivot = new Ammo.btVector3(0, 0, 1);
     let objectAxis = new Ammo.btVector3(0, 0, 1);
-    let object2Piviot = new Ammo.btVector3(0, 9.5, 1);
+    let object2Pivot = new Ammo.btVector3(0, 9.5, 1);
     let object2Axis = new Ammo.btVector3(0, 0, 1);
 
-    let hinge = new Ammo.btHingeConstraint(rigidObject, rigidObject2, objectPiviot, object2Piviot, objectAxis, object2Axis, false);
+    let hinge = new Ammo.btHingeConstraint(rigidObject, rigidObject2, objectPivot, object2Pivot, objectAxis, object2Axis, false);
     hinge.setLimit(-Math.PI, Math.PI, 1, 1, 1);
     hinge.enableAngularMotor(true, 0, 0.5);
     phy.ammoPhysicsWorld.addConstraint(hinge, false);
