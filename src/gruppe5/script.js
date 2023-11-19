@@ -87,6 +87,9 @@ function handleKeyDown(event) {
 
 
 function renderCamera() {
+    let object = ri.scene.getObjectByName("cradleMesh");
+
+    // ri.camera.lookAt( object.position.x, object.position.y, object.position.z );
     ri.renderer.render(ri.scene, ri.camera);
 }
 
@@ -257,10 +260,17 @@ function createMesh(geometry, material, parent, name = "", translateY = 0, trans
 function threeAmmoObjects() {
     ground()
 
-    let ballPosition = {x: 1, y: 10, z: 0.1};
-    let ballRadius = 2
+    let ballPosition = {x: 0, y: 3.5, z: 0};
+    let ballRadius = 0.5
     let ballMass = 10
     ball(ballPosition, ballRadius, ballMass)
+
+    // testing av raila
+    ballPosition = {x: 0.2, y: 3, z: -0.2};
+    rails(ballPosition, 45, 10)
+
+    ballPosition = {x: -2.2, y: 0.5, z: 2.2};
+    rails(ballPosition, 45, -20)
 
 
     // Kan flyttes hvor som helst, kan ikke roteres
@@ -270,7 +280,7 @@ function threeAmmoObjects() {
     // dominoPosition = {x: 10, y: 8, z: 10};
     // domino(dominoPosition, 30, true)
 
-    //plinko();
+    // plinko();
     //spring();
     //golfclub();
     newtonCradle();
@@ -430,7 +440,7 @@ function funnel(position) {
     //Ammo-container:
     let compoundShape = new Ammo.btCompoundShape();
 
-    const material = new THREE.MeshStandardMaterial({
+    let material = new THREE.MeshStandardMaterial({
         color: 0xFFFFFF,
         side: THREE.DoubleSide,
         metalness: 0.5,
@@ -452,7 +462,7 @@ function funnel(position) {
 
     let geometry = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
 
-    const mesh = new THREE.Mesh(geometry, material);
+    let mesh = new THREE.Mesh(geometry, material);
     mesh.name = 'funnel';
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -467,26 +477,29 @@ function funnel(position) {
 
     createAmmoRigidBody(compoundShape, mesh, 0.4, 0.6, position, 0);
 
-    // Ball to test funnel
-    const ballPosition = {x: position.x + 0.5, y: position.y + 5, z: position.z + 2}
+    // Ball+rail to test funnel
+    let railPosition = {x: position.x + 1.6, y: position.y + 3, z: position.z + 6.8}
+    rails(railPosition, -90, 10, 5)
+    let ballPosition = {x: railPosition.x, y: railPosition.y + 0.6, z: railPosition.z - 0.2}
     ball(ballPosition, 0.45, 1)
 }
 
 
-function rails(position, rotation = 0, tilt = 10, length = 4) {
+function rails(position, rotation = 180, tilt =20, length = 4) {
     let material = new THREE.MeshStandardMaterial({
         color: 0xFFFFFF,
         metalness: 0.5,
         roughness: 0.3});
 
     let groupMesh = new THREE.Group();
+    groupMesh.rotateY(degToRad(rotation));
     groupMesh.rotateZ(degToRad(90 + tilt));
-    groupMesh.rotateX(degToRad(rotation));
+
     groupMesh.name = 'rails';
 
     let compoundShape = new Ammo.btCompoundShape();
 
-    position.x -= length/2
+
 
     let width = 0.1;
     width = 0.05;
@@ -496,17 +509,20 @@ function rails(position, rotation = 0, tilt = 10, length = 4) {
 
     // let rotation = {x: 0, y: 0, z: 0};
     let size = {x: width, y: width, z: length}
+    size = {radius1: width, radius2: width, height: length}
 
     let railPosition = {x: 0, y: length/2, z: 0};
+    // let railPosition = {x: 0, y: 0, z: 0};
+
 
 
 
     // Rail 1:
-    railPosition = {x: 0, y: 0, z: distance/2};
+    railPosition.z = distance/2;
     createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
 
     // rail 2:
-    railPosition = {x: 0, y: 0, z: -distance/2};
+    railPosition.z = -distance/2;
     createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
 
 
@@ -588,8 +604,16 @@ function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, t
     
     if (shapeType == 'box') {
         shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
+        
     } else if (shapeType == 'cylinder') {
-        shape = new Ammo.btCylinderShape(new Ammo.btVector3(size.x, size.z/2, size.y));
+        if (size.radius1){
+            console.log('r1 exists')
+            shape = new Ammo.btCylinderShape(new Ammo.btVector3(size.radius1, size.height/2, size.radius2));
+        }
+        else{
+            shape = new Ammo.btCylinderShape(new Ammo.btVector3(size.x, size.z/2, size.y));
+        }
+
     } else if (shapeType == 'sphere') {
         shape = new Ammo.btSphereShape(size.radius);
     }
