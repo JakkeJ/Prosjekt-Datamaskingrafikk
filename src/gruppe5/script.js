@@ -282,7 +282,7 @@ function threeAmmoObjects() {
 
     // plinko();
     //spring();
-    //golfclub();
+    golfclub();
     newtonCradle();
     
     // let position = {x: 10, y: 3, z: 10};
@@ -796,7 +796,7 @@ function createCupParts(groupMesh, compoundShape) {
 }
 
 function golfclub() {
-    let position = {x: 40, y: 19.01, z: 40};
+    let position = {x: 40, y: 16.51, z: 40};
     let handleBarValues = {x: 0.2, y: 0.1, z: 4};
     let shaftValues = {x: 0.1, y: 0.1, z: 10};
     let connectorValues = {x: 0.15, y: 0.15, z: 0.4};
@@ -962,19 +962,6 @@ function spring() {
     return { shape, mesh, transform}
 
 };*/
-
-function createHinge(rigidBody1, rigidBody2) {
-    //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/armHingeConstraint.js?ref_type=heads
-    let piviot1 = new Ammo.btVector3(0, 0, 0);
-    let axis1 = new Ammo.btVector3(0, 0, 1);
-    let piviot2 = new Ammo.btVector3(0, 9.35, 0);
-    let axis2 = new Ammo.btVector3(0, 0, 1);
-
-    let hinge = new Ammo.btHingeConstraint(rigidBody1, rigidBody2, piviot1, piviot2, axis1, axis2, false);
-    hinge.setLimit(-Math.PI/2, Math.PI/2, 1, 1, 1);
-    hinge.enableAngularMotor(true, 0, 4);
-    phy.ammoPhysicsWorld.addConstraint(hinge, true);
-}
 
 function newtonCradle() {
     const materialDarkGrey = new THREE.MeshStandardMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
