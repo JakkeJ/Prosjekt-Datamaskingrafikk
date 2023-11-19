@@ -93,7 +93,7 @@ function handleKeyDown(event) {
 function renderCamera() {
     let object = ri.scene.getObjectByName("cradleMesh");
 
-    ri.camera.lookAt( object.position.x, object.position.y, object.position.z );
+    // ri.camera.lookAt( object.position.x, object.position.y, object.position.z );
     ri.renderer.render(ri.scene, ri.camera);
 
 }
@@ -278,7 +278,7 @@ function threeAmmoObjects() {
     // dominoPosition = {x: 10, y: 8, z: 10};
     // domino(dominoPosition, 30, true)
 
-    //plinko();
+    // plinko();
     //spring();
     //golfclub();
     newtonCradle();
@@ -595,11 +595,11 @@ function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, t
     let shape;
     
     if (shapeType == 'box') {
-        shape = new Ammo.btBoxShape(new Ammo.btVector3(geoValues.x/2, geoValues.y/2, geoValues.z/2));
+        shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
     } else if (shapeType == 'cylinder') {
-        shape = new Ammo.btCylinderShape(new Ammo.btVector3(geoValues.x, geoValues.y, geoValues.z/2));
+        shape = new Ammo.btCylinderShape(new Ammo.btVector3(size.x, size.z/2, size.y));
     } else if (shapeType == 'sphere') {
-        shape = new Ammo.btSphereShape(geoValues.radius);
+        shape = new Ammo.btSphereShape(size.radius);
     }
 
     let mesh = new THREE.Mesh(geometry, texture);
@@ -952,7 +952,7 @@ function newtonCradle() {
         let ball = createAmmoMesh('sphere', ballGeo, ballValues, ballMeshPosition, {x: 0, y: 0, z: 0}, materialDarkGrey, ballMesh, ballShape);
         let ballRigid = createAmmoRigidBody(ballShape, ballMesh, 0,1, ballPosition, 0);
         ri.scene.add(ballMesh);
-        addLineBetweenObjects(ballPosition, "cradleMesh", ballMeshPosition, cradleTopBarPosition1, i)
+        // addLineBetweenObjects(ballPosition, "cradleMesh", ballMeshPosition, cradleTopBarPosition1, i)
         ballPosition.z = ballPosition.z - ballValues.radius*2
     }
 }
@@ -971,8 +971,9 @@ function addLineBetweenObjects(nameMeshStart, nameMeshEnd, meshPositionStart, me
     const startPoint = new THREE.Vector3();
     const endPoint = new THREE.Vector3();
     // NB! Bruker world-position:
-    lineMeshStartPosition.getWorldPosition(startPoint);
+
     startPoint.set(startPoint.x + meshPositionStart.x, startPoint.y + meshPositionStart.y, startPoint.z + meshPositionStart.z);
+    lineMeshStartPosition.getWorldPosition(startPoint);
     console.log(startPoint);
     lineMeshEndPosition.getWorldPosition(endPoint);
     endPoint.set(endPoint.x + meshPositionEnd.x, endPoint.y + meshPositionEnd.y, endPoint.z + meshPositionEnd.z);
