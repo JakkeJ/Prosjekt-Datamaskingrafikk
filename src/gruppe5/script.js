@@ -9,6 +9,7 @@ import {
     generateTriangleShape
 } from "./triangleMeshHelpers.js";
 import {Vector3} from "three";
+import {degToRad, radToDeg} from "three/src/math/MathUtils.js";
 
 const ri = {
     currentlyPressedKeys: [],
@@ -264,37 +265,47 @@ function createMesh(geometry, material, parent, name = "", translateY = 0, trans
 function threeAmmoObjects() {
     ground()
 
-    const ballPosition = {x: 1, y: 10, z: 0.1};
-    const ballRadius = 2
-    const ballMass = 10
+    let ballPosition = {x: 1, y: 10, z: 0.1};
+    let ballRadius = 2
+    let ballMass = 10
     ball(ballPosition, ballRadius, ballMass)
 
 
     // Kan flyttes hvor som helst, kan ikke roteres
-    const dominoPosition = {x: 10, y: 3, z: -10};
-    domino(dominoPosition)
+    let dominoPosition = {x: 10, y: 3, z: -10};
+    domino(dominoPosition, 0)
+
+    // dominoPosition = {x: 10, y: 8, z: 10};
+    // domino(dominoPosition, 30, true)
 
     //plinko();
     //spring();
     //golfclub();
     newtonCradle();
     
-    // const position = {x: 10, y: 3, z: 10};
-    //const position = {x: 15, y: 5, z: -10};
-    //funnel(position)
+    // let position = {x: 10, y: 3, z: 10};
+    let position = {x: 15, y: 5, z: -10};
+    funnel(position)
+
+    position = {x: 18, y: 3, z: -10};
+    rails(position, 0, -10)
 
 
-    //createCoffeeCupTriangleMesh(
-    //    20000,
-    //    0x00FF09,
-    //    {x:-10, y:10, z:-10});
+    // createCoffeeCupTriangleMesh(
+    //     20000,
+    //     0x00FF09,
+    //     {x:-10, y:10, z:-10});
 
-
+    // tableTest()
+    ballPosition = {x: 10, y: 3, z: 4};
+    ballRadius = 0.5
+    ballMass = 0
+    // ball(ballPosition, ballRadius, ballMass)
 }
 
 
 function ground() {
-    const position = {x: 0, y: 0, z: 0};
+    const position = {x: 0, y: -2.5, z: 0};
     const size = {x: 100, y:5, z: 100};
 
     // THREE
@@ -362,6 +373,67 @@ function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0x
 }
 
 
+function tableMesh(groupMesh, compoundShape, size, rotation, height, name = 'table', color = 0xFFFFFF) {
+    let material = new THREE.MeshStandardMaterial({
+        color: color,
+        side: THREE.DoubleSide});
+
+    groupMesh.name = name;
+    // groupMesh.castShadow = true;
+    // groupMesh.receiveShadow = true;
+
+    let position = {x: 0, y: 0, z: 0};
+
+    // tabletop
+    let geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+    createAmmoMesh('box', geometry, size, position, rotation, material, groupMesh, compoundShape );
+
+    // legs
+    let width = (size.x + size.z) / 2 / 20;
+    position.y = -height/2;
+    let xOffset = size.x/2 - width;
+    let zOffset = size.z/2 - width;
+    let legSize = {x: width, y: height, z: width};
+
+    position.x = xOffset;
+    position.z = zOffset;
+    geometry = new THREE.BoxGeometry(width, height, width);
+    createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
+
+    position.x = -xOffset;
+    geometry = new THREE.BoxGeometry(width, height, width);
+    createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
+
+    position.z = -zOffset;
+    geometry = new THREE.BoxGeometry(width, height, width);
+    createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
+
+    position.x = xOffset;
+    geometry = new THREE.BoxGeometry(width, height, width);
+    createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
+}
+
+function tableTest() {
+    let position = {x: 20, y: 5, z: 4};
+    let size = {x: 6, y: 0.3, z: 10};
+    let rotation = {x: 0, y: 0, z: 0};
+
+    let groupMesh = new THREE.Group();
+    groupMesh.rotateY(degToRad(0));
+    let compoundShape = new Ammo.btCompoundShape();
+
+    tableMesh(groupMesh, compoundShape, size, rotation, position.y, 'tableTest',  0x823c17)
+
+    ri.scene.add(groupMesh);
+
+    createAmmoRigidBody(compoundShape, groupMesh, 0.5, 0.5, position, 20);
+
+    // position.y += 15
+    // position.x += 0
+    // ball(position, 1, 30)
+}
+
+
 function funnel(position) {
     //Ammo-container:
     let compoundShape = new Ammo.btCompoundShape();
@@ -409,9 +481,65 @@ function funnel(position) {
 }
 
 
-function domino(position) {
+function rails(position, rotation = 0, tilt = 10, length = 4) {
+    let material = new THREE.MeshStandardMaterial({
+        color: 0xFFFFFF,
+        metalness: 0.5,
+        roughness: 0.3});
+
+    let groupMesh = new THREE.Group();
+    groupMesh.rotateZ(degToRad(90 + tilt));
+    groupMesh.rotateX(degToRad(rotation));
+    groupMesh.name = 'rails';
+
+    let compoundShape = new Ammo.btCompoundShape();
+
+    position.x -= length/2
+
+    let width = 0.1;
+    width = 0.05;
+    let distance = 0.4;
+
+    let geometry = new THREE.CylinderGeometry(width, width, length, 36, 1);
+
+    // let rotation = {x: 0, y: 0, z: 0};
+    let size = {x: width, y: width, z: length}
+
+    let railPosition = {x: 0, y: length/2, z: 0};
+
+
+
+    // Rail 1:
+    railPosition = {x: 0, y: 0, z: distance/2};
+    createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
+
+    // rail 2:
+    railPosition = {x: 0, y: 0, z: -distance/2};
+    createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
+
+
+
+    ri.scene.add(groupMesh);
+
+    createAmmoRigidBody(compoundShape, groupMesh, 0.1, 0.8, position, 0);
+}
+
+
+
+function domino(position, rotation = 0, starter = false) {
     const tableSize = {x: 5, y: 0.05, z: 10};
-    cube(position, tableSize,0, 'table',0, 0x823c17)
+    // let rotation = {x: 0, y: 0, z: 0};
+    let groupMesh = new THREE.Group();
+    groupMesh.rotateY(degToRad(rotation));
+    let compoundShape = new Ammo.btCompoundShape();
+
+    tableMesh(groupMesh, compoundShape, tableSize, {x: 0, y: 0, z: 0}, position.y, 'dominoTable',  0x823c17)
+
+    ri.scene.add(groupMesh);
+
+    createAmmoRigidBody(compoundShape, groupMesh, 0.5, 0.5, position, 0);
+
+    // cube(position, tableSize, rotation, 'table',0, 0x823c17)
 
     const dominoSize = {x: 0.4, y: 0.8, z: 0.08};
     const dominoPositions = [
@@ -452,15 +580,18 @@ function domino(position) {
         {x: position.x + 0, y: position.y + 0.5, z: position.z + 4.9, rot: 0},
     ]
 
-    dominoPositions.forEach(position => cube(position, dominoSize,position.rot , 'dominoPiece', 4, 0x303030))
+    dominoPositions.forEach(position => cube(position, dominoSize, position.rot , 'dominoPiece', 20, 0x303030))
 
     // Ball to start first domino:
-    //const ballPosition = {x: position.x + 0, y: position.y + 5, z: position.z - 5.3}
-    //ball(ballPosition, 0.45, 1)
+    if (starter){
+        const ballPosition = {x: position.x + 0, y: position.y + 3, z: position.z - 5.3}
+        ball(ballPosition, 0.45, 10)
+    }
+
 }
 
 
-function createAmmoMesh(shapeType, geometry, geoValues, meshPosition, meshRotation, texture, parentMesh, parentShape) {
+function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, texture, groupMesh, compoundShape) {
     let shape;
     
     if (shapeType == 'box') {
@@ -492,8 +623,8 @@ function createAmmoMesh(shapeType, geometry, geoValues, meshPosition, meshRotati
     transform.setOrigin(new Ammo.btVector3(meshPosition.x, meshPosition.y, meshPosition.z));
     transform.setRotation(new Ammo.btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
 
-    parentMesh.add(mesh);
-    parentShape.addChildShape(transform, shape);
+    groupMesh.add(mesh);
+    compoundShape.addChildShape(transform, shape);
 
 };
 
@@ -578,10 +709,11 @@ function createCoffeeCupTriangleMesh(
     //Three-container:
     let groupMesh = new THREE.Group();
     groupMesh.userData.tag = 'cup';
-    groupMesh.position.x = 10
-    groupMesh.position.y = 25;
-    groupMesh.position.z = -15;
+    // groupMesh.position.x = 10
+    // groupMesh.position.y = 25;
+    // groupMesh.position.z = -15;
     groupMesh.scale.set(0.1,0.1,0.1);
+    // groupMesh.rotateX(100 * Math.PI/180)
     createCupParts(groupMesh, compoundShape);
 
     ri.scene.add(groupMesh);
