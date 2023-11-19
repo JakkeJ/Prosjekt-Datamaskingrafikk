@@ -266,7 +266,7 @@ function threeAmmoObjects() {
 
     // Kan flyttes hvor som helst, kan ikke roteres
     const dominoPosition = {x: 10, y: 3, z: -10};
-    //domino(dominoPosition)
+    domino(dominoPosition)
 
     plinko();
     //spring();
@@ -506,7 +506,7 @@ function plinko() {
     const materialJohnny = new THREE.MeshStandardMaterial({map: ri.textures.johnny, side: THREE.DoubleSide});
     const colorGrey = new THREE.MeshStandardMaterial({color: 0xffffff, side: THREE.DoubleSide});
     let plinkoMesh = new THREE.Group();
-    plinkoMesh.position.set( 14, 7.05,-30.5);
+    plinkoMesh.position.set(14, 7.05, -30.5);
     plinkoMesh.rotateY(90*Math.PI/180); 
     plinkoMesh.rotateX(-45*Math.PI/180); 
     let plinkoShape = new Ammo.btCompoundShape();
@@ -554,11 +554,11 @@ function plinko() {
     
     ri.scene.add(plinkoMesh);
 
-    const ballPosition = {x: 18.8, y: 11.5, z: -26}; //x: 17, y: 12, z: -27
-    ball(ballPosition, 0.2, 4.5)
+    const ballPosition = {x: 18.8, y: 11.5, z: -25.5}; //x: 17, y: 12, z: -27 
+    ball(ballPosition, 0.2, 5)
 
-    const ballPosition2 = {x: 19, y: 20, z: -26}; 
-    ball(ballPosition2, 0.20, 4.5)
+    const ballPosition2 = {x: 18.9, y: 20, z: -25.5}; //x: 19, y: 20, z: -26
+    ball(ballPosition2, 0.20, 3)
 
 }
 
@@ -639,7 +639,7 @@ function createCupParts(groupMesh, compoundShape) {
 }
 
 function golfclub() {
-    let position = {x: 30, y: 19, z: 0};
+    let position = {x: 40, y: 19.01, z: 40};
     let handleBarValues = {x: 0.2, y: 0.1, z: 4};
     let shaftValues = {x: 0.1, y: 0.1, z: 10};
     let connectorValues = {x: 0.15, y: 0.15, z: 0.4};
@@ -679,36 +679,34 @@ function golfclub() {
     let leftLegGeo = new THREE.BoxGeometry(LegValues.x, LegValues.y, LegValues.z);
     let leftLeg = createAmmoMesh('box', leftLegGeo, LegValues, {x: 0, y: -8, z: -4}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubStandMesh, golfClubStandShape);
     let rightLeg = createAmmoMesh('box', leftLegGeo, LegValues, {x: 0, y: -8, z: 4}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubStandMesh, golfClubStandShape);
-    let backLeg = createAmmoMesh('box', leftLegGeo, LegValues, {x: 6, y: -8, z: -4}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubStandMesh, golfClubStandShape);
+    let backLeftLeg = createAmmoMesh('box', leftLegGeo, LegValues, {x: 6, y: -8, z: -4}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubStandMesh, golfClubStandShape);
+    let backRightLeg = createAmmoMesh('box', leftLegGeo, LegValues, {x: 6, y: -8, z: 4}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubStandMesh, golfClubStandShape);
     let topBarGeo = new THREE.CylinderGeometry(topBarValues.x, topBarValues.y, topBarValues.z, 36, 1);
-    let topBar = createAmmoMesh('cylinder', topBarGeo, topBarValues, {x: 2.5, y: 0, z: -4}, {x: 0, y: 0, z: 90*Math.PI/180}, colorGrey, golfClubStandMesh, golfClubStandShape);
+    let topLeftBar = createAmmoMesh('cylinder', topBarGeo, topBarValues, {x: 2.5, y: 0, z: -4}, {x: 0, y: 0, z: 90*Math.PI/180}, colorGrey, golfClubStandMesh, golfClubStandShape);
+    let topRightBar = createAmmoMesh('cylinder', topBarGeo, topBarValues, {x: 2.5, y: 0, z: 4}, {x: 0, y: 0, z: 90*Math.PI/180}, colorGrey, golfClubStandMesh, golfClubStandShape);
     let stopperHingeGeo = new THREE.CylinderGeometry(stopperHingeValues.x, stopperHingeValues.y, stopperHingeValues.z, 36, 1);
-    let stopperHinge = createAmmoMesh('cylinder', stopperHingeGeo, stopperHingeValues, {x: 7, y: -7.5, z: -4}, {x: 0, y: 0, z: 90*Math.PI/180}, colorGrey, golfClubStandMesh, golfClubStandShape);
+    let stopperLeftHinge = createAmmoMesh('cylinder', stopperHingeGeo, stopperHingeValues, {x: 7, y: -7.5, z: -4}, {x: 0, y: 0, z: 90*Math.PI/180}, colorGrey, golfClubStandMesh, golfClubStandShape);
+    let stopperRightHinge = createAmmoMesh('cylinder', stopperHingeGeo, stopperHingeValues, {x: 7, y: -7.5, z: 4}, {x: 0, y: 0, z: 90*Math.PI/180}, colorGrey, golfClubStandMesh, golfClubStandShape);
 
     let golfClubStandRigid = createAmmoRigidBody(golfClubStandShape, golfClubStandMesh, 0, 1, golfClubStandMesh.position, 0);
-    createHinge(golfClubStandRigid, golfClubRigid);
+    //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/armHingeConstraint.js?ref_type=heads
+    let piviotStand = new Ammo.btVector3(0, 0, 0);
+    let axisStand = new Ammo.btVector3(0, 0, 1);
+    let piviotClub = new Ammo.btVector3(0, 9.35, 0);
+    let axisClub = new Ammo.btVector3(0, 0, 1);
+    let ClubHinge = new Ammo.btHingeConstraint(golfClubStandRigid, golfClubRigid, piviotStand, piviotClub, axisStand, axisClub, false);
+    ClubHinge.setLimit(-Math.PI/2, Math.PI/2, 1, 1, 1);
+    ClubHinge.enableAngularMotor(true, 0, 4);
+    phy.ammoPhysicsWorld.addConstraint(ClubHinge, true);
 
     let golfClubStopperMesh = new THREE.Group();
-    golfClubStandMesh.position.set(position.x, position.y, position.z);
+    golfClubStopperMesh.position.set(position.x + 7.2, position.y -7, position.z);
     let golfClubStopperShape = new Ammo.btCompoundShape();
-
-    let stopperValues = {x: 0.5, y: 6, z: 0.5};
-    let stopperGeo = new THREE.BoxGeometry(stopperValues.x, stopperValues.y, stopperValues.z);
-    let stopperTop = createAmmoMesh('box', stopperGeo, stopperValues, {x: 7.2, y: 7.5, z: -4}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubStopperMesh, golfClubStopperShape);
-    let stopperBottom = createAmmoMesh('box', stopperGeo, stopperValues, {x: 7.2, y: 10.5, z: -4+2.75}, {x: 90*Math.PI/180, y: 0, z: 0}, materialJohnny, golfClubStopperMesh, golfClubStopperShape);
+    let stopperValues = {x: 0.2, y: 0.2, z: 10}; 
+    let stopperGeo = new THREE.CylinderGeometry(stopperValues.x, stopperValues.y, stopperValues.z, 36, 1);
+    let stopper = createAmmoMesh('cylinder', stopperGeo, stopperValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, colorGrey, golfClubStopperMesh, golfClubStopperShape);
+    let golfClubStopperRigid = createAmmoRigidBody(golfClubStopperShape, golfClubStopperMesh, 0, 0, golfClubStopperMesh.position, 5);
     
-
-    let golfClubStopperRigid = createAmmoRigidBody(golfClubStopperShape, golfClubStopperMesh, 0, 1, golfClubStopperMesh.position, 10);
-    
-    let piviot1 = new Ammo.btVector3(0, 10.5, -4);
-    let axis1 = new Ammo.btVector3(1, 0, 0);
-    let piviot2 = new Ammo.btVector3(0, -7.5, -4);
-    let axis2 = new Ammo.btVector3(1, 0, 0);
-
-    let Stopperhinge = new Ammo.btHingeConstraint(golfClubStopperRigid, golfClubStandRigid,  piviot1, piviot2, axis1, axis2, false);
-    Stopperhinge.setLimit(-Math.PI/2, 0, 0, 0, 1);
-    Stopperhinge.enableAngularMotor(true, 0, 0);
-    phy.ammoPhysicsWorld.addConstraint(Stopperhinge, true);
     
     ri.scene.add(golfClubStopperMesh);
     ri.scene.add(golfClubStandMesh);
