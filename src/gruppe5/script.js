@@ -1044,57 +1044,31 @@ function newtonCradle() {
         addLineBetweenObjects("arm" + i + "MeshAmmo", "cradleMesh", {x: armPosition.x, y: armPosition.y, z: armPosition.z}, cradleTopBarPosition1, cradleTopBar1.mesh.name, "lineToTopBar1_" + i);
         addLineBetweenObjects("arm" + i + "MeshAmmo", "cradleMesh", {x: armPosition.x, y: armPosition.y, z: armPosition.z}, cradleTopBarPosition2, cradleTopBar2.mesh.name, "lineToTopBar2_" + i);
 
-        let ballPivot = new Ammo.btVector3(0, 4, 0);
-        let cradlePivot = new Ammo.btVector3(0, (cradleMesh.position.y + 5 - 0.125)*1.42, 0);
+        let ballPivot = new Ammo.btVector3(0, 4, armPosition.z);
+        let cradlePivot = new Ammo.btVector3(0, (cradleMesh.position.y + 5 - 0.125)*1.42, armPosition.z);
+
+        let ballPivotMarker = createPivotMarker(ballPivot);
+        let cradlePivotMarker = createPivotMarker(cradlePivot);
+        ri.scene.add(ballPivotMarker, cradlePivotMarker);
+
         console.log("Mordi",cradleMesh.position.z + rodInitialPosition)
         let axis = new Ammo.btVector3(1, 0, 0);
         let hinge = new Ammo.btHingeConstraint(ballRigid, rodRigid, cradlePivot, ballPivot, axis, axis, false);
-        hinge.setLimit(-Math.PI/4, Math.PI/4, 0.9, 0.3, 1);
+        hinge.setLimit(-Math.PI/1, Math.PI/1, 0.9, 0.3, 1);
         hinge.enableAngularMotor(false, 5, 5);
         phy.ammoPhysicsWorld.addConstraint(hinge, true);
 
         rodInitialPosition = rodInitialPosition - (ballValues.radius * 2);
     }
+}
 
-
-
-
-
-    //let rodRigid = createAmmoRigidBody(rodShape, rod1Mesh, 0.1, 1, cradleMesh.position, 0);
-
-
-    let ballPosition = {x: cradleMesh.position.x, y: cradleTopBar1.mesh.position.y/3, z: cradleMesh.position.z + 1.4};
-
-
-
-    let hingePosition = {x: 0, y: 2, z: 0};
-    let hingeCylinderValues = {radius1: 0.1, height: 2, radius2: 0.1};
-/*
-    for (let i = 0; i < 7; ++i) {
-        let ballMesh = new THREE.Group();
-        ballMesh.name = "ball" + i;
-        let ballShape = new Ammo.btCompoundShape();
-        // THREE
-        let ballGeo = new THREE.SphereGeometry(ballValues.radius, ballValues.segments, ballValues.segments);
-        let cylinderGeo = new THREE.CylinderGeometry(hingeCylinderValues.radius1, hingeCylinderValues.radius2, hingeCylinderValues.height, 32, 32, false);
-        let cylinder = createAmmoMesh('cylinder', cylinderGeo, hingeCylinderValues, hingePosition,{x: 0, y: 0, z: 0}, materialDarkGrey, ballMesh, ballShape);
-        let ball = createAmmoMesh('sphere', ballGeo, ballValues, ballMeshPosition, {x: 0, y: 0, z: 0}, materialDarkGrey, ballMesh, ballShape);
-        let ballRigid = createAmmoRigidBody(ballShape, ballMesh, 0,1, ballPosition, 1);
-        ri.scene.add(ballMesh);
-
-        let ballPivot = new Ammo.btVector3(0, 0, ballValues.radius);
-        let framePivot = new Ammo.btVector3(0, cradleTopBar1.mesh.position.y/2, ballValues.radius-(i*0.4));
-        let axis = new Ammo.btVector3(0, 1, 0);
-        let hinge = new Ammo.btHingeConstraint(cradleRigid, ballRigid, framePivot, ballPivot, axis, axis, false);
-        hinge.setLimit(-Math.PI, Math.PI, 1, 0.1, 0.01);
-        hinge.enableAngularMotor(true, 0, 0);
-
-        phy.ammoPhysicsWorld.addConstraint(hinge, false);
-        ballPosition.z = ballPosition.z - ballValues.radius*2;
-
-    }*/
-
-
+function createPivotMarker(ammoVector, color = 0xff0000) {
+    let position = new THREE.Vector3(ammoVector.x(), ammoVector.y(), ammoVector.z());
+    let geometry = new THREE.SphereGeometry(0.1, 32, 32);
+    let material = new THREE.MeshBasicMaterial({ color: color });
+    let marker = new THREE.Mesh(geometry, material);
+    marker.position.copy(position);
+    return marker;
 }
 
 //Werner sin funksjon en gang i tida...
