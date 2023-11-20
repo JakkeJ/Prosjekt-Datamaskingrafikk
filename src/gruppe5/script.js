@@ -5,7 +5,7 @@ import * as THREE from "three";
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import GUI from 'lil-gui'
 import {createConvexTriangleShapeAddToCompound, createTriangleShapeAddToCompound} from "./triangleMeshHelpers.js";
-import {degToRad} from "three/src/math/MathUtils.js";
+import {degToRad, radToDeg} from "three/src/math/MathUtils.js";
 
 const ri = {
     currentlyPressedKeys: [],
@@ -53,7 +53,7 @@ function createThreeScene() {
 
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     ri.camera.position.set( 10, 5, -15 );
-    // ri.camera.position.set( 2, 15, -4 ); // Temp position
+    // ri.camera.position.set( 20, 10, -20 ); // Temp position
 
     ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
 }
@@ -277,13 +277,6 @@ function threeAmmoObjects() {
     let ballMass = 10
     ball(ballPosition, ballRadius, ballMass)
 
-    // testing av raila
-    ballPosition = {x: 0.2, y: 3, z: -0.2};
-    rails(ballPosition, 45, 10)
-
-    ballPosition = {x: -2.2, y: 0.5, z: 2.2};
-    rails(ballPosition, 45, -20)
-
 
     // Kan flyttes hvor som helst, kan ikke roteres
     let dominoPosition = {x: 10, y: 3, z: -10};
@@ -301,8 +294,15 @@ function threeAmmoObjects() {
     let position = {x: 15, y: 5, z: -10};
     funnel(position)
 
-    position = {x: 18, y: 3, z: -10};
-    rails(position, 0, -10)
+    position.x -= 1
+    position.y -= 1
+    // position = {x: 15, y: 3, z: -10};
+    rails(position, 180, 10, 7)
+
+
+    position.x += 6
+    position.y -= 1.5
+    rails(position, 180, -5, 15)
 
 
     // createCoffeeCupTriangleMesh(
@@ -448,28 +448,37 @@ function tableTest() {
 }
 
 
-function funnel(position) {
+function funnel(position, upperRadius = 2.7, lowerRadius = 0.5, height = 2) {
+    // let rotation = {x: 0, z: 0};
+
     //Ammo-container:
     let compoundShape = new Ammo.btCompoundShape();
 
     let material = new THREE.MeshStandardMaterial({
         color: 0xFFFFFF,
         side: THREE.DoubleSide,
-        metalness: 0.5,
+        metalness: 0.4,
         roughness: 0.3});
 
-    let points = [
-        new THREE.Vector2(0.5, 0),
-        new THREE.Vector2(0.5, 0.3),
-        new THREE.Vector2(0.7, 0.4),
-        new THREE.Vector2(0.9, 0.5),
-        new THREE.Vector2(1.1, 0.6),
-        new THREE.Vector2(1.3, 0.7),
-        new THREE.Vector2(1.45, 0.8),
-        new THREE.Vector2(1.6, 0.9),
-        new THREE.Vector2(1.7, 1.0),
+    // Old points list
+    // let points = [
+    //     new THREE.Vector2(0.5, 0),
+    //     new THREE.Vector2(0.5, 0.3),
+    //     new THREE.Vector2(0.7, 0.4),
+    //     new THREE.Vector2(0.9, 0.5),
+    //     new THREE.Vector2(1.1, 0.6),
+    //     new THREE.Vector2(1.3, 0.7),
+    //     new THREE.Vector2(1.45, 0.8),
+    //     new THREE.Vector2(1.6, 0.9),
+    //     new THREE.Vector2(1.7, 1.0),
+    //
+    //     new THREE.Vector2(2.7, 2.0),
+    // ];
 
-        new THREE.Vector2(2.7, 2.0),
+    let points = [
+        new THREE.Vector2(lowerRadius, 0),
+        new THREE.Vector2(lowerRadius, height * 0.3),
+        new THREE.Vector2(upperRadius, height),
     ];
 
     let geometry = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
@@ -479,25 +488,24 @@ function funnel(position) {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
 
-    // mesh.updateMatrix();
-    // mesh.updateMatrixWorld(true);
+    mesh.material.transparent = true;
+    mesh.material.opacity = 0.5;
 
     ri.scene.add(mesh);
-
 
     createTriangleShapeAddToCompound(compoundShape, mesh);
 
     createAmmoRigidBody(compoundShape, mesh, 0.4, 0.6, position, 0);
 
     // Ball+rail to test funnel
-    let railPosition = {x: position.x + 1.6, y: position.y + 3, z: position.z + 6.8}
+    let railPosition = {x: position.x + upperRadius*0.9, y: position.y + height + 1, z: position.z + 5}
     rails(railPosition, -90, 10, 5)
     let ballPosition = {x: railPosition.x, y: railPosition.y + 0.6, z: railPosition.z - 0.2}
-    ball(ballPosition, 0.45, 1)
+    ball(ballPosition, lowerRadius*0.9, 1)
 }
 
 
-function rails(position, rotation = 180, tilt =20, length = 4) {
+function rails(position, rotation = 180, tilt = 20, length = 4) {
     let material = new THREE.MeshStandardMaterial({
         color: 0xFFFFFF,
         metalness: 0.5,
@@ -506,44 +514,28 @@ function rails(position, rotation = 180, tilt =20, length = 4) {
     let groupMesh = new THREE.Group();
     groupMesh.rotateY(degToRad(rotation));
     groupMesh.rotateZ(degToRad(90 + tilt));
-
     groupMesh.name = 'rails';
 
-    let compoundShape = new Ammo.btCompoundShape();
-
-
-
-    let width = 0.1;
-    width = 0.05;
+    let width = 0.05;
     let distance = 0.4;
+    let size = {radius1: width, radius2: width, height: length};
 
+    let compoundShape = new Ammo.btCompoundShape();
     let geometry = new THREE.CylinderGeometry(width, width, length, 36, 1);
 
-    // let rotation = {x: 0, y: 0, z: 0};
-    let size = {x: width, y: width, z: length}
-    size = {radius1: width, radius2: width, height: length}
-
-    let railPosition = {x: 0, y: length/2, z: 0};
-    // let railPosition = {x: 0, y: 0, z: 0};
-
-
-
+    let railPosition = {x: 0, y: length/2, z: distance/2};
 
     // Rail 1:
-    railPosition.z = distance/2;
     createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
 
-    // rail 2:
+    // Rail 2:
     railPosition.z = -distance/2;
     createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
-
-
 
     ri.scene.add(groupMesh);
 
     createAmmoRigidBody(compoundShape, groupMesh, 0.1, 0.8, position, 0);
 }
-
 
 
 function domino(position, rotation = 0, starter = false) {
