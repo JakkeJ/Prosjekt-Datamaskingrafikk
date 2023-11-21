@@ -5,7 +5,11 @@ import * as THREE from "three";
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import GUI from 'lil-gui'
 import * as TWEEN from '@tweenjs/tween.js'   // HUSK: npm install @tweenjs/tween.js
-import {createConvexTriangleShapeAddToCompound, createTriangleShapeAddToCompound} from "./triangleMeshHelpers.js";
+import {
+    createConvexTriangleShapeAddToCompound,
+    createTriangleShapeAddToCompound,
+    traverseModel
+} from "./triangleMeshHelpers.js";
 import {degToRad, radToDeg} from "three/src/math/MathUtils.js";
 import {createMovable, moveRigidBody} from "./movable.js";
 
@@ -63,7 +67,7 @@ function createThreeScene() {
     ri.lilGui = new GUI();
 
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    ri.camera.position.set( 5, 5, -0 );
+    ri.camera.position.set( 25, 10, -0 );
     // ri.camera.position.set( 20, 10, -20 ); // Temp position
 
     ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
@@ -339,7 +343,7 @@ function createMesh(geometry, material, parent, name = "", translateY = 0, trans
 function threeAmmoObjects() {
     ground()
 
-    let ballPosition = {x: 0, y: 3.5, z: 0};
+    let ballPosition = {x: -10, y: 3.5, z: 10};
     let ballRadius = 0.5
     let ballMass = 10
     ball(ballPosition, ballRadius, ballMass, 0.1, 0.5)
@@ -375,13 +379,13 @@ function threeAmmoObjects() {
 
     position.y += 1
     position.x += 5
-    ball(position, 0.5, 5)
+    //ball(position, 0.5, 5)
 
     position.x += 1
-    ball(position, 0.5, 5)
+    //ball(position, 0.5, 5)
 
     position.x += 1
-    ball(position, 0.5, 5)
+    //ball(position, 0.5, 5)
 
     position.x += 1
     ball(position, 0.5, 5)
@@ -398,7 +402,7 @@ function threeAmmoObjects() {
     ballMass = 0
     // ball(ballPosition, ballRadius, ballMass)
 
-    arrow()
+    //arrow()
 }
 
 
@@ -783,7 +787,7 @@ function plinko() {
         count +=1
         x += -0.5;
         y += -0.5;
-    };
+    }
 
     createAmmoRigidBody(plinkoShape, plinkoMesh, 1, 1, plinkoMesh.position, 0);
     
@@ -951,8 +955,8 @@ function golfclub() {
 
 function spring() {
     //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra: https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/springGeneric6DofSpringConstraint.js?ref_type=heads
-    let position = {x: 10, y: 10, z: 10};
-    let rotationDegree = 0*Math.PI/180;
+    let position = {x: 0, y: 10, z: 10};
+    let rotationDegree = 90*Math.PI/180;
     let bottomSpringValues = {x: 1, y: 1, z: 0.2};
     let topSpringValues = {x: 1, y: 1, z: 0.2};
     //createAmmoMesh('cylinder', pegGeo, pegValues, {x: x+j, y: 0.4, z: 5.5+y}, {x: 0, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
@@ -998,6 +1002,7 @@ function spring() {
 
     //cannonbody
     let cannonBodyShape = new Ammo.btCompoundShape();
+
     let material = new THREE.MeshStandardMaterial({
         color: 0xFFFFFF,
         side: THREE.DoubleSide,
@@ -1006,17 +1011,17 @@ function spring() {
 
     
     let height = 10;
-    let raidus = 1.5;
+    let radius = 1.5;
     let points = [
-        new THREE.Vector2(raidus*0.9, height*0),
-        new THREE.Vector2(raidus, height*0.1),
-        new THREE.Vector2(raidus, height*0.3),
-        new THREE.Vector2(raidus*0.8, height*0.5),
-        new THREE.Vector2(raidus*0.8, height*0.6),
-        new THREE.Vector2(raidus*0.8, height*0.8),
-        new THREE.Vector2(raidus*0.9, height*0.8),
-        new THREE.Vector2(raidus*0.9, height*0.9),
-        new THREE.Vector2(raidus*0.4, height*0.9),
+        new THREE.Vector2(radius*0.9, 0),
+        new THREE.Vector2(radius, height*0.1),
+        new THREE.Vector2(radius, height*0.3),
+        new THREE.Vector2(radius*0.8, height*0.5),
+        new THREE.Vector2(radius*0.8, height*0.6),
+        new THREE.Vector2(radius*0.8, height*0.8),
+        new THREE.Vector2(radius*0.9, height*0.8),
+        new THREE.Vector2(radius*0.9, height*0.9),
+        new THREE.Vector2(radius*0.4, height*0.9),
     ];
 
     let cannonBodyGeo = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
@@ -1039,7 +1044,7 @@ function spring() {
 
     createTriangleShapeAddToCompound(cannonBodyShape, cannonBodyMesh);
 
-    createAmmoRigidBody(cannonBodyShape, cannonBodyMesh, 0.4, 0.6, {x: 0, y: -0.2, z: 0}, 0);
+    createAmmoRigidBody(cannonBodyShape, cannonBodyMesh, 0.4, 0.6, {x: 0, y: 0, z: 0}, 0);
 
     bottomSpringMesh.add(cannonBodyMesh);
     bottomSpringShape.addChildShape(transform, cannonBodyShape);
@@ -1047,12 +1052,12 @@ function spring() {
     //cannonEnd
     let cannonEndValues = {radius: 1.35, segments: 32}
     let cannonEndGeo = new THREE.SphereGeometry(cannonEndValues.radius, cannonEndValues.segments, cannonEndValues.segments, 0 , Math.PI);
-    let cannonEnd = createAmmoMesh('sphere', cannonEndGeo, cannonEndValues, {x: 0, y: -0.2, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, material, bottomSpringMesh, bottomSpringShape);
+    let cannonEnd = createAmmoMesh('sphere', cannonEndGeo, cannonEndValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, material, bottomSpringMesh, bottomSpringShape);
 
     ri.scene.add(bottomSpringMesh);
     ri.scene.add(topSpringMesh);
 
-    let ballPosition = {x: 10, y: 15, z: 10};
+    let ballPosition = {x: position.x, y: 15, z: position.z+1};
     let ballRadius = 0.5
     let ballMass = 10
     ball(ballPosition, ballRadius, ballMass);
@@ -1068,7 +1073,7 @@ function newtonCradle() {
     let bottomBoxConnectorValues = {x: 2, y: 0.25, z: 0.25};
     let riserBoxValues = {x: 0.25, y: 4, z: 0.25};
     let ballValues = {radius: 0.3, segments: 32};
-    let cradleMeshPosition = {x: 0, y: -2, z: 0};
+    let cradleMeshPosition = {x: 10, y: -2, z: 0};
     let cradleMesh = new THREE.Group();
     cradleMesh.name = "cradleMesh";
     cradleMesh.position.set( cradleMeshPosition.x, cradleMeshPosition.y, cradleMeshPosition.z);
