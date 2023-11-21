@@ -8,6 +8,7 @@ Installer og bruk følgende kommandoer:
 # ... til å installere avhengigheter, kjøres kun føste gang:
 npm install
 npm install --save lil-gui
+npm install @tweenjs/tween.js
 
 # ... til å starte server (på egen maskin) for kjøring av applikasjonen: 
 npm run dev
