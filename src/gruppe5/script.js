@@ -187,6 +187,7 @@ function animate(currentTime) {
 
     updatePhysics(delta)
     updateLines();
+    renderCamera();
     keyPresses();
 
     TWEEN.update(currentTime);
