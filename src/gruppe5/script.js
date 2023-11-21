@@ -4,6 +4,7 @@ import './style.css';
 import * as THREE from "three";
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import GUI from 'lil-gui'
+import * as TWEEN from '@tweenjs/tween.js'   // HUSK: npm install @tweenjs/tween.js
 import {createConvexTriangleShapeAddToCompound, createTriangleShapeAddToCompound} from "./triangleMeshHelpers.js";
 import {degToRad, radToDeg} from "three/src/math/MathUtils.js";
 
@@ -190,6 +191,8 @@ function animate(currentTime) {
     updateLines();
     renderCamera();
     keyPresses();
+
+    TWEEN.update(currentTime);
 }
 
 
@@ -384,6 +387,8 @@ function threeAmmoObjects() {
     ballRadius = 0.5
     ballMass = 0
     // ball(ballPosition, ballRadius, ballMass)
+
+    arrow()
 }
 
 
@@ -1182,3 +1187,63 @@ function createHinge(rigidObject, rigidObject2) {
     phy.ammoPhysicsWorld.addConstraint(hinge, false);
 }
 
+
+function arrow(position = {x:0, y:10, z:0}) {
+    // THREE
+    let width = 2;
+    let height = 4;
+    let depth = 0.3;
+    let shape = new THREE.Shape();
+    shape.moveTo( 0,0 );
+    shape.lineTo(width/2, height/3);
+    shape.lineTo(width/4, height/3);
+    shape.lineTo(width/4, height);
+    shape.lineTo(-width/4, height);
+    shape.lineTo(-width/4, height/3);
+    shape.lineTo(-width/2, height/3);
+
+    const extrudeSettings = {
+        depth: depth,
+        bevelEnabled: true,
+        bevelThickness: 0.1,
+        bevelSize: 0.1,
+        bevelOffset: 0.3,
+        bevelSegments: 4
+    };
+
+
+    let geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
+    let material = new THREE.MeshStandardMaterial({
+        color: 0xd10000,
+        metalness: 0.5,
+        roughness: 0.3});
+    let mesh = new THREE.Mesh(geometry, material);
+
+    mesh.name = 'arrow';
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.position.set(position.x, position.y, position.z);
+
+    ri.scene.add(mesh);
+
+    let tween1 = new TWEEN.Tween({y: 0})
+        .to({y: 3}, 2000)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .yoyo(true)
+        .repeat(Infinity)
+        .onUpdate(function (newPosition) {
+            mesh.position.y = position.y + newPosition.y
+        });
+
+    let tween2 = new TWEEN.Tween({r:0})
+        .to({r: Math.PI}, 3000)
+        // .easing(TWEEN.Easing.Cubic.InOut)
+        // .yoyo(true)
+        .repeat(Infinity)
+        .onUpdate(function (newPosition) {
+            mesh.rotation.set(0, newPosition.r, 0)
+        });
+
+    tween1.start();
+    tween2.start();
+}
