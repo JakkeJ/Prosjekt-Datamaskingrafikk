@@ -1190,9 +1190,12 @@ function createHinge(rigidObject, rigidObject2) {
 
 function arrow(position = {x:0, y:10, z:0}) {
     // THREE
+    let groupMesh = new THREE.Group();
+
     let width = 2;
     let height = 4;
     let depth = 0.3;
+
     let shape = new THREE.Shape();
     shape.moveTo( 0,0 );
     shape.lineTo(width/2, height/3);
@@ -1211,7 +1214,6 @@ function arrow(position = {x:0, y:10, z:0}) {
         bevelSegments: 4
     };
 
-
     let geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
     let material = new THREE.MeshStandardMaterial({
         color: 0xd10000,
@@ -1219,12 +1221,14 @@ function arrow(position = {x:0, y:10, z:0}) {
         roughness: 0.3});
     let mesh = new THREE.Mesh(geometry, material);
 
-    mesh.name = 'arrow';
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.position.set(position.x, position.y, position.z);
+    groupMesh.name = 'arrow';
+    groupMesh.castShadow = true;
+    groupMesh.receiveShadow = true;
+    groupMesh.position.set(position.x, position.y, position.z);
+    mesh.position.set(0, 0, -depth/2)
+    groupMesh.add(mesh)
 
-    ri.scene.add(mesh);
+    ri.scene.add(groupMesh);
 
     let tween1 = new TWEEN.Tween({y: 0})
         .to({y: 3}, 2000)
@@ -1232,16 +1236,14 @@ function arrow(position = {x:0, y:10, z:0}) {
         .yoyo(true)
         .repeat(Infinity)
         .onUpdate(function (newPosition) {
-            mesh.position.y = position.y + newPosition.y
+            groupMesh.position.y = position.y + newPosition.y
         });
 
     let tween2 = new TWEEN.Tween({r:0})
-        .to({r: Math.PI}, 3000)
-        // .easing(TWEEN.Easing.Cubic.InOut)
-        // .yoyo(true)
+        .to({r: 2 * Math.PI}, 6000)
         .repeat(Infinity)
         .onUpdate(function (newPosition) {
-            mesh.rotation.set(0, newPosition.r, 0)
+            groupMesh.rotation.set(0, newPosition.r, 0)
         });
 
     tween1.start();
