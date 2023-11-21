@@ -100,7 +100,7 @@ function handleKeyDown(event) {
 
 function keyPresses() {
     if (ri.currentlyPressedKeys['KeyQ']) {
-        ri.springs.cannonSpring.setEquilibriumPoint(0, 5);
+        ri.springs.cannonSpring.enableSpring(1, true);;
     }
     
 }
@@ -935,51 +935,108 @@ function golfclub() {
 
 function spring() {
     //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra: https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/springGeneric6DofSpringConstraint.js?ref_type=heads
-    let position = {x: -14, y: 1, z: 0};
-    let boxValues = {x: 0.2, y: 1, z: 1};
-    let box2Values = {x: 0.2, y: 1, z: 1};
+    let position = {x: 10, y: 10, z: 10};
+    let rotationDegree = 0*Math.PI/180;
+    let bottomSpringValues = {x: 1, y: 1, z: 0.2};
+    let topSpringValues = {x: 1, y: 1, z: 0.2};
     //createAmmoMesh('cylinder', pegGeo, pegValues, {x: x+j, y: 0.4, z: 5.5+y}, {x: 0, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
 
     const materialJohnny = new THREE.MeshStandardMaterial({map: ri.textures.johnny, side: THREE.DoubleSide});
     const colorGrey = new THREE.MeshStandardMaterial({color: 0xffffff, side: THREE.DoubleSide});
 
-    let boxMesh = new THREE.Group();
-    boxMesh.position.set(position.x, position.y ,position.z);
-    let boxShape = new Ammo.btCompoundShape();
+    let bottomSpringMesh = new THREE.Group();
+    bottomSpringMesh.position.set(position.x, position.y ,position.z);
+    bottomSpringMesh.rotateX(rotationDegree)
+    let bottomSpringShape = new Ammo.btCompoundShape();
     
-    let box2Shape = new Ammo.btCompoundShape();
-    let boxGeo = new THREE.BoxGeometry(boxValues.x, boxValues.y, boxValues.z);
-    let box = createAmmoMesh('box', boxGeo, boxValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, materialJohnny, boxMesh, boxShape);
+    let bottomSpringGeo = new THREE.CylinderGeometry(bottomSpringValues.x, bottomSpringValues.y, bottomSpringValues.z, 36, 1);
+    let bottomSpring = createAmmoMesh('cylinder', bottomSpringGeo, bottomSpringValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, materialJohnny, bottomSpringMesh, bottomSpringShape);
 
-    let box2Mesh = new THREE.Group();
-    box2Mesh.position.set(position.x+0.2, position.y ,position.z);
-    let box2Geo = new THREE.BoxGeometry(box2Values.x, box2Values.y, box2Values.z);
-    let box2 = createAmmoMesh('box', box2Geo, box2Values, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, colorGrey, box2Mesh, box2Shape);
+    let topSpringMesh = new THREE.Group();
+    topSpringMesh.position.set(position.x, position.y+0.1 ,position.z);
+    topSpringMesh.rotateX(rotationDegree)
+    let topSpringShape = new Ammo.btCompoundShape();
+    let topSpringGeo = new THREE.CylinderGeometry(topSpringValues.x, topSpringValues.y, topSpringValues.z, 36, 1);
+    let topSpring2 = createAmmoMesh('cylinder', topSpringGeo, topSpringValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, colorGrey, topSpringMesh, topSpringShape);
 
-    let rigidBox = createAmmoRigidBody(boxShape, boxMesh, 1, 1, boxMesh.position, 1000);
-    let rigidBox2 = createAmmoRigidBody(box2Shape, box2Mesh, 1, 1, box2Mesh.position, 0);
-    rigidBox.setActivationState(4);
-    rigidBox2.setActivationState(4);
+    let rigidTopSpring = createAmmoRigidBody(bottomSpringShape, bottomSpringMesh, 1, 1, bottomSpringMesh.position, 0);
+    let rigidBottomSpring = createAmmoRigidBody(topSpringShape, topSpringMesh, 1, 1, topSpringMesh.position, 10);
+    rigidTopSpring.setActivationState(4);
+    rigidBottomSpring.setActivationState(4);
     
-    let spring = new Ammo.btGeneric6DofSpringConstraint(rigidBox, rigidBox2, box.transform, box2.transform, true);
+    let spring = new Ammo.btGeneric6DofSpringConstraint(rigidTopSpring, rigidBottomSpring, bottomSpring.transform, topSpring2.transform, true);
     spring.name = "cannonSpring";
 
-    spring.setLinearLowerLimit(new Ammo.btVector3(1, 0, 0));
+    spring.setLinearLowerLimit(new Ammo.btVector3(0, 1, 0));
     spring.setLinearUpperLimit(new Ammo.btVector3(0, 0, 0));
     spring.setAngularLowerLimit(new Ammo.btVector3(0, 0, 0));
     spring.setAngularUpperLimit(new Ammo.btVector3(0, 0, 0));
 
-    spring.enableSpring(0, true);
-    spring.setStiffness(0, 18000);
-    spring.setDamping(0, 10);
-    spring.setEquilibriumPoint(0, 0);
+    spring.enableSpring(1, false);
+    spring.setStiffness(1, 18000);
+    spring.setDamping(1, 10);
+    spring.setEquilibriumPoint(1, 4);
     
     phy.ammoPhysicsWorld.addConstraint(spring, false);
     ri.springs.cannonSpring = spring;
-    ri.scene.add(boxMesh);
-    ri.scene.add(box2Mesh);
 
-    let ballPosition = {x: -20, y: 0.1, z: 0};
+    //cannonbody
+    let cannonBodyShape = new Ammo.btCompoundShape();
+    let material = new THREE.MeshStandardMaterial({
+        color: 0xFFFFFF,
+        side: THREE.DoubleSide,
+        metalness: 0.4,
+        roughness: 0.3});
+
+    
+    let height = 10;
+    let raidus = 1.5;
+    let points = [
+        new THREE.Vector2(raidus*0.9, height*0),
+        new THREE.Vector2(raidus, height*0.1),
+        new THREE.Vector2(raidus, height*0.3),
+        new THREE.Vector2(raidus*0.8, height*0.5),
+        new THREE.Vector2(raidus*0.8, height*0.6),
+        new THREE.Vector2(raidus*0.8, height*0.8),
+        new THREE.Vector2(raidus*0.9, height*0.8),
+        new THREE.Vector2(raidus*0.9, height*0.9),
+        new THREE.Vector2(raidus*0.4, height*0.9),
+    ];
+
+    let cannonBodyGeo = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
+
+    let cannonBodyMesh = new THREE.Mesh(cannonBodyGeo, material);
+    cannonBodyMesh.name = 'cannonBody';
+    cannonBodyMesh.castShadow = true;
+    cannonBodyMesh.receiveShadow = true;
+
+    cannonBodyMesh.material.transparent = true;
+    cannonBodyMesh.material.opacity = 1;
+
+    let rotation = new THREE.Quaternion();
+    rotation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), rotationDegree)
+    
+    let transform = new Ammo.btTransform();
+    transform.setIdentity();
+    transform.setOrigin(new Ammo.btVector3(0, 0, 0));
+    transform.setRotation(new Ammo.btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+
+    createTriangleShapeAddToCompound(cannonBodyShape, cannonBodyMesh);
+
+    createAmmoRigidBody(cannonBodyShape, cannonBodyMesh, 0.4, 0.6, {x: 0, y: -0.2, z: 0}, 0);
+
+    bottomSpringMesh.add(cannonBodyMesh);
+    bottomSpringShape.addChildShape(transform, cannonBodyShape);
+
+    //cannonEnd
+    let cannonEndValues = {radius: 1.35, segments: 32}
+    let cannonEndGeo = new THREE.SphereGeometry(cannonEndValues.radius, cannonEndValues.segments, cannonEndValues.segments, 0 , Math.PI);
+    let cannonEnd = createAmmoMesh('sphere', cannonEndGeo, cannonEndValues, {x: 0, y: -0.2, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, material, bottomSpringMesh, bottomSpringShape);
+
+    ri.scene.add(bottomSpringMesh);
+    ri.scene.add(topSpringMesh);
+
+    let ballPosition = {x: 10, y: 15, z: 10};
     let ballRadius = 0.5
     let ballMass = 10
     ball(ballPosition, ballRadius, ballMass);
