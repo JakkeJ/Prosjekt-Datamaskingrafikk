@@ -5,11 +5,17 @@ import * as THREE from "three";
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import GUI from 'lil-gui'
 import {createConvexTriangleShapeAddToCompound, createTriangleShapeAddToCompound} from "./triangleMeshHelpers.js";
-import {degToRad} from "three/src/math/MathUtils.js";
+import {degToRad, radToDeg} from "three/src/math/MathUtils.js";
 
 const ri = {
     currentlyPressedKeys: [],
-    
+    springs: {
+        cannonSpring: undefined,
+    },
+    camera: undefined,
+    raycaster: undefined,
+    mouse: undefined,
+    balls: []
 }
 
 let phy = {
@@ -26,10 +32,16 @@ export function main() {
     // Clock for animation
     ri.clock = new THREE.Clock();
 
+    // For clicking on target
+    ri.raycaster = new THREE.Raycaster();
+    ri.mouse = new THREE.Vector2();
+
     // Event listeners
     window.addEventListener('resize', onWindowResize, false);
     document.addEventListener('keyup', handleKeyUp, false);
     document.addEventListener('keydown', handleKeyDown, false);
+    document.addEventListener('mousedown', onDocumentMouseDown, false);
+    document.addEventListener('touchstart', onDocumentTouchStart, false);
 
     addToScene();
 }
@@ -51,7 +63,7 @@ function createThreeScene() {
 
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     ri.camera.position.set( 10, 5, -15 );
-    // ri.camera.position.set( 2, 15, -4 ); // Temp position
+    ri.camera.position.set( 20, 10, -20 ); // Temp position
 
     ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
 }
@@ -88,10 +100,53 @@ function handleKeyDown(event) {
 
 function keyPresses() {
     if (ri.currentlyPressedKeys['KeyQ']) {
-        ri.spring.setEquilibriumPoint(0, 5);
-        console.log(ri.spring.setEquilibriumPoint)
+        ri.springs.cannonSpring.setEquilibriumPoint(0, 5);
     }
     
+}
+
+
+// Hentet fra kodeeksempel modul9/selectObject1
+function onDocumentTouchStart(event) {
+    event.preventDefault();
+    event.clientX = event.touches[0].clientX;
+    event.clientY = event.touches[0].clientY;
+    onDocumentMouseDown( event );
+}
+
+
+// Hentet fra kodeeksempel modul9/selectObject1
+function onDocumentMouseDown(event) {
+    event.preventDefault();
+    // Se: https://threejs.org/docs/index.html#api/en/core/Raycaster.
+    // ri.mouse.x og y skal være NDC, dvs. ligge i området -1 til 1.   (normalized device coordinates)
+    ri.mouse.x = (event.clientX / ri.renderer.domElement.clientWidth) * 2 - 1;
+    ri.mouse.y = -(event.clientY / ri.renderer.domElement.clientHeight) * 2 + 1;
+
+    //Ray/stråle fra klikkposisjon til kamera:
+    ri.raycaster.setFromCamera(ri.mouse, ri.camera); // Raycaster
+
+    let intersects = ri.raycaster.intersectObjects(ri.balls);
+
+    //Sjekker om strålen treffer noen av objekene:
+    if (intersects.length > 0) {
+        // console.log('ball')
+        //Endrer farge på det første objektet som er klikket på som strålen treffer:
+        let ball = intersects[0].object
+        ball.material.color.setHex(Math.random() * 0xffffff);
+
+        // Can only click a ball 1 time
+        if (ball.name == 'ball'){
+            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(10, 0, 0 ));
+            ball.name = 'ball_'
+        }
+
+        // //Viser en "partikkel":
+        // let particle = new THREE.Sprite(ri.particleMaterial);
+        // particle.position.copy(intersects[0].point);
+        // particle.scale.x = particle.scale.y = 16;
+        // ri.scene.add(particle);
+    }
 }
 
 
@@ -272,14 +327,7 @@ function threeAmmoObjects() {
     let ballPosition = {x: 0, y: 3.5, z: 0};
     let ballRadius = 0.5
     let ballMass = 10
-    ball(ballPosition, ballRadius, ballMass)
-
-    // testing av raila
-    ballPosition = {x: 0.2, y: 3, z: -0.2};
-    rails(ballPosition, 45, 10)
-
-    ballPosition = {x: -2.2, y: 0.5, z: 2.2};
-    rails(ballPosition, 45, -20)
+    ball(ballPosition, ballRadius, ballMass, 0.1, 0.5)
 
 
     // Kan flyttes hvor som helst, kan ikke roteres
@@ -296,10 +344,32 @@ function threeAmmoObjects() {
     
     // let position = {x: 10, y: 3, z: 10};
     let position = {x: 15, y: 5, z: -10};
-    funnel(position)
+    funnel(position, 2.7, 0.3, 2)
 
-    position = {x: 18, y: 3, z: -10};
-    rails(position, 0, -10)
+    position.x -= 1
+    position.y -= 0.7
+    // position = {x: 15, y: 3, z: -10};
+    rails(position, 180, 10, 7)
+
+
+    position.x += 6
+    position.y -= 1.5
+    // rails(position, 180, -5, 15)
+
+    rails(position, 180, -0, 15)
+
+    position.y += 1
+    position.x += 5
+    ball(position, 0.5, 5)
+
+    position.x += 1
+    ball(position, 0.5, 5)
+
+    position.x += 1
+    ball(position, 0.5, 5)
+
+    position.x += 1
+    ball(position, 0.5, 5)
 
 
     // createCoffeeCupTriangleMesh(
@@ -341,7 +411,7 @@ function ground() {
 }
 
 
-function ball(position, radius, mass) {
+function ball(position, radius, mass, restitution = 0.7, friction = 0.8) {
     // THREE
     const geometry = new THREE.SphereGeometry(radius, 32, 32);
     const material = new THREE.MeshStandardMaterial({
@@ -356,10 +426,14 @@ function ball(position, radius, mass) {
     mesh.position.set(position.x, position.y, position.z);
 
     ri.scene.add(mesh);
+    ri.balls.push(mesh)
 
     // AMMO
     let shape = new Ammo.btSphereShape(radius);
-    createAmmoRigidBody(shape, mesh, 0.7, 0.8, position, mass);
+    let rigidBody = createAmmoRigidBody(shape, mesh, restitution, friction, position, mass);
+
+    rigidBody.setActivationState(4)
+    //mesh.userData.physicsBody
 }
 
 function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0xFFFFFF) {
@@ -445,28 +519,23 @@ function tableTest() {
 }
 
 
-function funnel(position) {
+function funnel(position, upperRadius = 2.7, lowerRadius = 0.5, height = 2) {
+    // let rotation = {x: 0, z: 0};
+
     //Ammo-container:
     let compoundShape = new Ammo.btCompoundShape();
 
     let material = new THREE.MeshStandardMaterial({
         color: 0xFFFFFF,
         side: THREE.DoubleSide,
-        metalness: 0.5,
+        metalness: 0.4,
         roughness: 0.3});
 
-    let points = [
-        new THREE.Vector2(0.5, 0),
-        new THREE.Vector2(0.5, 0.3),
-        new THREE.Vector2(0.7, 0.4),
-        new THREE.Vector2(0.9, 0.5),
-        new THREE.Vector2(1.1, 0.6),
-        new THREE.Vector2(1.3, 0.7),
-        new THREE.Vector2(1.45, 0.8),
-        new THREE.Vector2(1.6, 0.9),
-        new THREE.Vector2(1.7, 1.0),
 
-        new THREE.Vector2(2.7, 2.0),
+    let points = [
+        new THREE.Vector2(lowerRadius, 0),
+        new THREE.Vector2(lowerRadius, height * 0.3),
+        new THREE.Vector2(upperRadius, height),
     ];
 
     let geometry = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
@@ -476,25 +545,24 @@ function funnel(position) {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
 
-    // mesh.updateMatrix();
-    // mesh.updateMatrixWorld(true);
+    mesh.material.transparent = true;
+    mesh.material.opacity = 0.5;
 
     ri.scene.add(mesh);
-
 
     createTriangleShapeAddToCompound(compoundShape, mesh);
 
     createAmmoRigidBody(compoundShape, mesh, 0.4, 0.6, position, 0);
 
     // Ball+rail to test funnel
-    let railPosition = {x: position.x + 1.6, y: position.y + 3, z: position.z + 6.8}
+    let railPosition = {x: position.x + upperRadius*0.9, y: position.y + height + 1, z: position.z + 5}
     rails(railPosition, -90, 10, 5)
     let ballPosition = {x: railPosition.x, y: railPosition.y + 0.6, z: railPosition.z - 0.2}
-    ball(ballPosition, 0.45, 1)
+    ball(ballPosition, lowerRadius*0.9, 5, 0.05)
 }
 
 
-function rails(position, rotation = 180, tilt =20, length = 4) {
+function rails(position, rotation = 180, tilt = 20, length = 4) {
     let material = new THREE.MeshStandardMaterial({
         color: 0xFFFFFF,
         metalness: 0.5,
@@ -503,44 +571,28 @@ function rails(position, rotation = 180, tilt =20, length = 4) {
     let groupMesh = new THREE.Group();
     groupMesh.rotateY(degToRad(rotation));
     groupMesh.rotateZ(degToRad(90 + tilt));
-
     groupMesh.name = 'rails';
 
-    let compoundShape = new Ammo.btCompoundShape();
-
-
-
-    let width = 0.1;
-    width = 0.05;
+    let width = 0.05;
     let distance = 0.4;
+    let size = {radius1: width, radius2: width, height: length};
 
+    let compoundShape = new Ammo.btCompoundShape();
     let geometry = new THREE.CylinderGeometry(width, width, length, 36, 1);
 
-    // let rotation = {x: 0, y: 0, z: 0};
-    let size = {x: width, y: width, z: length}
-    size = {radius1: width, radius2: width, height: length}
-
-    let railPosition = {x: 0, y: length/2, z: 0};
-    // let railPosition = {x: 0, y: 0, z: 0};
-
-
-
+    let railPosition = {x: 0, y: length/2, z: distance/2};
 
     // Rail 1:
-    railPosition.z = distance/2;
     createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
 
-    // rail 2:
+    // Rail 2:
     railPosition.z = -distance/2;
     createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
 
-
-
     ri.scene.add(groupMesh);
 
-    createAmmoRigidBody(compoundShape, groupMesh, 0.1, 0.8, position, 0);
+    createAmmoRigidBody(compoundShape, groupMesh, 0, 0.8, position, 0);
 }
-
 
 
 function domino(position, rotation = 0, starter = false) {
@@ -616,7 +668,7 @@ function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, t
         
     } else if (shapeType == 'cylinder') {
         if (size.radius1){
-            console.log('r1 exists')
+            // console.log('r1 exists')
             shape = new Ammo.btCylinderShape(new Ammo.btVector3(size.radius1, size.height/2, size.radius2));
         }
         else{
@@ -923,7 +975,7 @@ function spring() {
     spring.setEquilibriumPoint(0, 0);
     
     phy.ammoPhysicsWorld.addConstraint(spring, false);
-    ri.spring = spring;
+    ri.springs.cannonSpring = spring;
     ri.scene.add(boxMesh);
     ri.scene.add(box2Mesh);
 
@@ -981,7 +1033,7 @@ function newtonCradle() {
         addLineBetweenObjects("ball" + i, "cradleMesh", ballPosition, cradleTopBarPosition1, i, cradleTopBar1.mesh.name, "lineToTopBar1_" + i);
         addLineBetweenObjects("ball" + i, "cradleMesh", ballPosition, cradleTopBarPosition2, i, cradleTopBar2.mesh.name, "lineToTopBar2_" + i);
         let ballPivot = new Ammo.btVector3(0, 0, ballValues.radius);
-        console.log(1.4-ballValues.radius-i*0.4);
+        // console.log(1.4-ballValues.radius-i*0.4);
         let framePivot = new Ammo.btVector3(0, cradleTopBar1.mesh.position.y/2, 1.4-ballValues.radius-i*0.4);
         let axis = new Ammo.btVector3(0, 1, 0);
         let hinge = new Ammo.btHingeConstraint(ballRigid, cradleRigid, ballPivot, framePivot, axis, axis, false);
@@ -992,6 +1044,25 @@ function newtonCradle() {
         ballPosition.z = ballPosition.z - ballValues.radius*2;
 
     }
+
+    // Testing av cradle physics
+    // let railPosition = {
+    //     x: cradleMesh.position.x,
+    //     y: cradleTopBar1.mesh.position.y - 5.3,
+    //     z: cradleMesh.position.z - 2.8
+    // };
+    // railPosition.z += 4;
+    // console.log(railPosition);
+    // rails(railPosition, 90, -20, 8);
+    // rails(railPosition, -90, 0, 4);
+    //
+    // let testBallPosition = {
+    //     x: railPosition.x,
+    //     y: railPosition.y + 3,
+    //     z: railPosition.z + 7,
+    // };
+    // ball(testBallPosition, 0.3, 1000);
+
 }
 
 //Werner sin funksjon en gang i tida...
