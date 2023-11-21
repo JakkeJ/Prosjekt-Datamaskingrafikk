@@ -7,7 +7,7 @@ import {
     COLLISION_GROUP_SPHERE, COLLISION_GROUP_SPRING
 } from "./myAmmoHelper";
 
-export function createMovable(color=0xffaaff, position={x:-3, y:0.7, z:-8}) {
+export function createMovable(color=0xffaaff, position={x:0, y:0.7, z:-40}) {
     const sideLength = 1.5;
     const mass = 0; //Merk!
 

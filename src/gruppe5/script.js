@@ -52,7 +52,7 @@ function createThreeScene() {
     ri.lilGui = new GUI();
 
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    ri.camera.position.set( 10, 5, -15 );
+    ri.camera.position.set( 5, 5, -0 );
     // ri.camera.position.set( 20, 10, -20 ); // Temp position
 
     ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
@@ -144,7 +144,7 @@ function animate(currentTime) {
 
     updatePhysics(delta)
     updateLines();
-    updateLine();
+    updateHingeMarkers();
     renderCamera();
     keyPresses();
 }
@@ -281,7 +281,7 @@ function createMesh(geometry, material, parent, name = "", translateY = 0, trans
 
 
 function threeAmmoObjects() {
-    //ground()
+    ground()
 
     let ballPosition = {x: 0, y: 3.5, z: 0};
     let ballRadius = 0.5
@@ -984,10 +984,7 @@ function newtonCradle() {
     let bottomBoxConnectorValues = {x: 2, y: 0.25, z: 0.25};
     let riserBoxValues = {x: 0.25, y: 4, z: 0.25};
     let ballValues = {radius: 0.3, segments: 32};
-    let rodValues = {radius1: 0.125, height: 2, radius2: 0.125};
-
     let cradleMeshPosition = {x: 0, y: -2, z: 0};
-
     let cradleMesh = new THREE.Group();
     cradleMesh.name = "cradleMesh";
     cradleMesh.position.set( cradleMeshPosition.x, cradleMeshPosition.y, cradleMeshPosition.z);
@@ -996,7 +993,6 @@ function newtonCradle() {
     let cradleShape = new Ammo.btCompoundShape();
 
     let cradleBottomGeo = new THREE.BoxGeometry(topBoxValues.x, topBoxValues.y, topBoxValues.z);
-
 
     let cradleConnectorGeo = new THREE.BoxGeometry(bottomBoxConnectorValues.x, bottomBoxConnectorValues.y, bottomBoxConnectorValues.z);
     let cradleConnectorBar1 = createAmmoMesh('box', cradleConnectorGeo, bottomBoxConnectorValues, {x: 0, y: 2+0.125, z: 2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
@@ -1012,63 +1008,87 @@ function newtonCradle() {
 
     ri.scene.add(cradleMesh);
     let cradleRigid = createAmmoRigidBody(cradleShape, cradleMesh, 0.1, 1, cradleMesh.position, 0);
-    let ballMeshPosition =  {x: 0, y: 0.0, z: 0};
 
-    let rodShape = new Ammo.btCompoundShape();
-    let rodGeo = new THREE.CylinderGeometry(rodValues.radius1, rodValues.radius2, rodValues.height);
-    let armGeo = new THREE.CylinderGeometry(rodValues.radius1, rodValues.radius2, rodValues.height);
-    let rodInitialPosition = ballValues.radius * 7;
-    for (let i = 1; i <= 2; ++i) {
-        let rodMesh = new THREE.Group();
-        rodMesh.name ="rod" + i + "Mesh";
-        let rodPosition = {x: cradleMesh.position.x + 0, y: cradleMesh.position.y + 6-0.125, z: cradleMesh.position.z + rodInitialPosition};
+    let ballShape = new Ammo.btCompoundShape();
+    let anchorShape = new Ammo.btCompoundShape()
+    let anchorSize = {x: 0.1, y: 0.1, z: 0.1};
+    let anchorGeo = new THREE.BoxGeometry(anchorSize.x,anchorSize.y,anchorSize.z);
+    let ballGeo = new THREE.SphereGeometry(ballValues.radius, ballValues.segments, ballValues.segments);
+    let ballPosition = ballValues.radius * 7;
+    for (let i = 1; i <= 8; ++i) {
+        let anchor1Mesh = new THREE.Group();
+        anchor1Mesh.name = "anchor1Mesh" + i;
+        let anchor1 = createAmmoMesh('box', anchorGeo, anchorSize, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, transparent, anchor1Mesh, anchorShape);
+        let anchor1Body = createAmmoRigidBody(anchorShape, anchor1Mesh, 0, 1, {x: -1, y: 4-0.125, z: ballPosition}, 0);
+        ri.scene.add(anchor1Mesh);
 
-        let rod = createAmmoMesh('cylinder', rodGeo,rodValues, rodPosition, {x: 0, y: 0, z: Math.PI/2}, transparent, rodMesh, rodShape, "rod" + i + "MeshAmmo");
-        console.log("Fardin",rodPosition.z);
-        let rodRigid = createAmmoRigidBody(rodShape, rodMesh, 0.1, 1, rodMesh.position, 0);
-        rod.mesh.material.transparent = true;
-        rod.mesh.material.opacity = 1;
-        ri.scene.add(rodMesh);
+        let anchor2Mesh = new THREE.Group();
+        anchor2Mesh.name = "anchor2Mesh" + i;
+        let anchor2 = createAmmoMesh('box', anchorGeo, anchorSize, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, transparent, anchor2Mesh, anchorShape);
+        let anchor2Body = createAmmoRigidBody(anchorShape, anchor2Mesh, 0, 1, {x: 1, y: 4-0.125, z: ballPosition}, 0);
+        ri.scene.add(anchor2Mesh);
 
-        let armPosition = {x: cradleMesh.position.x, y: cradleMesh.position.y + 5-0.125, z: cradleMesh.position.z + rodInitialPosition};
-        let armMesh = new THREE.Group();
-        armMesh.name ="arm" + i + "Mesh";
-        let arm = createAmmoMesh('cylinder', armGeo, rodValues, armPosition, {x: 0, y: Math.PI/2, z: 0}, transparent, armMesh, rodShape, "arm" + i + "MeshAmmo");
-        let ballShape = new Ammo.btCompoundShape();
-        let ballGeo = new THREE.SphereGeometry(ballValues.radius, ballValues.segments, ballValues.segments);
-        let ball = createAmmoMesh('sphere', ballGeo, ballValues, {x: armPosition.x, y: armPosition.y-1, z: armPosition.z}, {x: 0, y: 0, z: 0}, materialDarkGrey, armMesh, ballShape);
-        let ballRigid = createAmmoRigidBody(ballShape, armMesh, 0,1, {x: 0, y: 0, z: 0}, 1);
+        let ballMesh = new THREE.Group();
+        ballMesh.name = "ball" + i + "Mesh";
+        let ball = createAmmoMesh('sphere', ballGeo, ballValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, transparent, ballMesh, ballShape);
+        let ballBody;
+        if (i === 8) {
+            ballBody = createAmmoRigidBody(ballShape, ballMesh, 0.75,1.0, {x: 0, y: 1 - 0.125, z: ballPosition}, 1000);
+        } else {
+            ballBody = createAmmoRigidBody(ballShape, ballMesh, 0.75,1.0, {x: 0, y: 1 - 0.125, z: ballPosition}, 1000);
+        }
+        ballBody.threeMesh = ballMesh;
+        ri.scene.add(ballMesh);
 
-        ri.scene.add(armMesh);
+        let anchorPivot = new Ammo.btVector3(1, 0, 0);
+        let ballPivot = new Ammo.btVector3(0, 3, 0);
 
-        addLineBetweenObjects("arm" + i + "MeshAmmo", "cradleMesh", {x: armPosition.x, y: armPosition.y, z: armPosition.z}, cradleTopBarPosition1, cradleTopBar1.mesh.name, "lineToTopBar1_" + i);
-        addLineBetweenObjects("arm" + i + "MeshAmmo", "cradleMesh", {x: armPosition.x, y: armPosition.y, z: armPosition.z}, cradleTopBarPosition2, cradleTopBar2.mesh.name, "lineToTopBar2_" + i);
-
-        let ballPivot = new Ammo.btVector3(0, 4, armPosition.z);
-        let cradlePivot = new Ammo.btVector3(0, (cradleMesh.position.y + 5 - 0.125)*1.42, armPosition.z);
-
-        let ballPivotMarker = createPivotMarker(ballPivot);
-        let cradlePivotMarker = createPivotMarker(cradlePivot);
-        ri.scene.add(ballPivotMarker, cradlePivotMarker);
-
-        console.log("Mordi",cradleMesh.position.z + rodInitialPosition)
         let axis = new Ammo.btVector3(1, 0, 0);
-        let hinge = new Ammo.btHingeConstraint(ballRigid, rodRigid, cradlePivot, ballPivot, axis, axis, false);
-        hinge.setLimit(-Math.PI/1, Math.PI/1, 0.9, 0.3, 1);
-        hinge.enableAngularMotor(false, 5, 5);
+        let hinge = new Ammo.btHingeConstraint(anchor1Body, ballBody, anchorPivot, ballPivot, axis, axis, false);
+        hinge.setLimit(-Math.PI/2, Math.PI/2, 0.9, 0.3, 1);
+        hinge.enableAngularMotor(false, 0, 0);
         phy.ammoPhysicsWorld.addConstraint(hinge, true);
 
-        rodInitialPosition = rodInitialPosition - (ballValues.radius * 2);
+        addLineBetweenObjects("anchor1Mesh" + i, "cradleMesh", {x: 0, y: 0, z: ballPosition}, {x: 0, y: 0, z: ballPosition}, cradleTopBar1.mesh.name, "lineToTopBar1_" + i);
+        addLineBetweenObjects("anchor2Mesh" + i, "cradleMesh", {x: 0, y: 0, z: ballPosition}, {x: 0, y: 0, z: ballPosition}, cradleTopBar2.mesh.name, "lineToTopBar2_" + i);
+
+        let anchorWorldPivot = localToWorld(anchor1Body, anchorPivot);
+        let ballWorldPivot = localToWorld(ballBody, ballPivot);
+
+        let anchorPivotMarker = createPivotMarker(anchorWorldPivot, 0x00ffff);
+        let ballPivotMarker = createPivotMarker(ballWorldPivot);
+
+        anchorPivotMarker.name = "anchorMarker_" + i;
+        ballPivotMarker.name = "ballMarker_" + i;
+
+        ri.scene.add(anchorPivotMarker);
+        ri.scene.add(ballPivotMarker);
+
+        ballPosition = ballPosition - (ballValues.radius * 2);
     }
 }
 
-function createPivotMarker(ammoVector, color = 0xff0000) {
-    let position = new THREE.Vector3(ammoVector.x(), ammoVector.y(), ammoVector.z());
-    let geometry = new THREE.SphereGeometry(0.1, 32, 32);
+//Helper for hinge
+function createPivotMarker(position, color = 0xff0000) {
+    let geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 32, 32);
     let material = new THREE.MeshBasicMaterial({ color: color });
     let marker = new THREE.Mesh(geometry, material);
     marker.position.copy(position);
+    marker.rotateZ(Math.PI / 2);
     return marker;
+}
+
+function localToWorld(body, localPoint) {
+    let worldTransform = body.getWorldTransform();
+    let position = worldTransform.getOrigin();
+    let orientation = worldTransform.getRotation();
+
+    let localVec = new THREE.Vector3(localPoint.x(), localPoint.y(), localPoint.z());
+    let quaternion = new THREE.Quaternion(orientation.x(), orientation.y(), orientation.z(), orientation.w());
+    localVec.applyQuaternion(quaternion);
+
+    localVec.add(new THREE.Vector3(position.x(), position.y(), position.z()));
+    return localVec;
 }
 
 //Werner sin funksjon en gang i tida...
@@ -1087,7 +1107,7 @@ function addLineBetweenObjects(nameMeshStart, nameMeshEnd, meshPositionStart, me
     // NB! Bruker world-position:
     lineMeshStartPosition.getWorldPosition(startPoint);
 
-    startPoint.set(startPoint.x, startPoint.y, startPoint.z);
+    startPoint.set(startPoint.x, meshPositionEnd.y, meshPositionEnd.z);
 
     lineMeshEndPosition.getWorldPosition(endPoint);
     endPoint.set(endPoint.x, endPoint.y, meshPositionStart.z);
@@ -1101,43 +1121,9 @@ function addLineBetweenObjects(nameMeshStart, nameMeshEnd, meshPositionStart, me
     ri.scene.add(springLineMesh);
 }
 
-function updateLine() {
-    let ballMesh = ri.scene.getObjectByName("firstBall");
-    if (ballMesh && ballMesh.userData.physicsBody) {
-        let ballPhysicsBody = ballMesh.userData.physicsBody;
-        let ballMotionState = ballPhysicsBody.getMotionState();
-
-        if (ballMotionState) {
-            let ballTransform = new Ammo.btTransform();
-            ballMotionState.getWorldTransform(ballTransform);
-            let ballPosition = ballTransform.getOrigin();
-
-            // Update the line connected to this ball
-            let line1 = ri.scene.getObjectByName("firstLineToTopBar1");
-            let line2 = ri.scene.getObjectByName("firstLineToTopBar2");
-            if (line1) {
-                let points = line1.geometry.attributes.position.array;
-                points[0] = ballPosition.x();
-                points[1] = ballPosition.y();
-                points[2] = ballPosition.z();
-                line1.geometry.attributes.position.needsUpdate = true;
-            }
-            if (line2) {
-                let points = line2.geometry.attributes.position.array;
-                points[0] = ballPosition.x();
-                points[1] = ballPosition.y();
-                points[2] = ballPosition.z();
-                line2.geometry.attributes.position.needsUpdate = true;
-            }
-
-            Ammo.destroy(ballTransform);
-        }
-    }
-}
-
 function updateLines() {
-    for (let i = 0; i < 7; ++i) {
-        let ballMesh = ri.scene.getObjectByName("ball" + i);
+    for (let i = 1; i <= 8; ++i) {
+        let ballMesh = ri.scene.getObjectByName("ball" + i + "Mesh");
         if (ballMesh && ballMesh.userData.physicsBody) {
             let ballPhysicsBody = ballMesh.userData.physicsBody;
             let ballMotionState = ballPhysicsBody.getMotionState();
@@ -1171,16 +1157,38 @@ function updateLines() {
     }
 }
 
-function createHinge(rigidObject, rigidObject2) {
-    //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/armHingeConstraint.js?ref_type=heads
-    let objectPivot = new Ammo.btVector3(0, 0, 1);
-    let objectAxis = new Ammo.btVector3(0, 0, 1);
-    let object2Pivot = new Ammo.btVector3(0, 9.5, 1);
-    let object2Axis = new Ammo.btVector3(0, 0, 1);
+function updateHingeMarkers() {
+    for (let i = 1; i <= 8; ++i) {
+        let anchorMesh = ri.scene.getObjectByName("anchor1Mesh" + i);
+        let ballMesh = ri.scene.getObjectByName("ball" + i + "Mesh");
 
-    let hinge = new Ammo.btHingeConstraint(rigidObject, rigidObject2, objectPivot, object2Pivot, objectAxis, object2Axis, false);
-    hinge.setLimit(-Math.PI, Math.PI, 1, 1, 1);
-    hinge.enableAngularMotor(true, 0, 0.5);
-    phy.ammoPhysicsWorld.addConstraint(hinge, false);
+        if (anchorMesh && ballMesh) {
+            let anchorBody = anchorMesh.userData.physicsBody;
+            let ballBody = ballMesh.userData.physicsBody;
+
+            if (anchorBody && ballBody) {
+                let anchorTransform = new Ammo.btTransform();
+                let ballTransform = new Ammo.btTransform();
+
+                anchorBody.getMotionState().getWorldTransform(anchorTransform);
+                ballBody.getMotionState().getWorldTransform(ballTransform);
+
+                let anchorPosition = anchorTransform.getOrigin();
+                let ballPosition = ballTransform.getOrigin();
+
+                let anchorMarker = ri.scene.getObjectByName("anchorMarker_" + i);
+                let ballMarker = ri.scene.getObjectByName("ballMarker_" + i);
+
+                if (anchorMarker) {
+                    anchorMarker.position.set(0, 4, anchorPosition.z());
+                }
+                if (ballMarker) {
+                    ballMarker.position.set(0, 4, ballPosition.z());
+                }
+
+                Ammo.destroy(anchorTransform);
+                Ammo.destroy(ballTransform);
+            }
+        }
+    }
 }
-
