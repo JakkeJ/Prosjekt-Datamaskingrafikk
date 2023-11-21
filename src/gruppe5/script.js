@@ -9,9 +9,7 @@ import {degToRad} from "three/src/math/MathUtils.js";
 
 const ri = {
     currentlyPressedKeys: [],
-    springs: {
-        cannonSpring: undefined,
-    }
+    
 }
 
 let phy = {
@@ -90,8 +88,8 @@ function handleKeyDown(event) {
 
 function keyPresses() {
     if (ri.currentlyPressedKeys['KeyQ']) {
-        //let cannonSpring = ri.springs.getObjectByName("cannonSpring");
-        ri.springs.cannonSpring.enableSpring(0, true);
+        ri.spring.setEquilibriumPoint(0, 5);
+        console.log(ri.spring.setEquilibriumPoint)
     }
     
 }
@@ -118,7 +116,6 @@ function addToScene() {
 
         // Three-Ammo objects:
         threeAmmoObjects()
-
         // Start animate loop
         animate(0)
     }
@@ -134,8 +131,8 @@ function animate(currentTime) {
 
     updatePhysics(delta)
     updateLines();
-    renderCamera();
     keyPresses();
+    renderCamera();
 }
 
 
@@ -884,14 +881,11 @@ function golfclub() {
     ri.scene.add(golfClubMesh);
 }
 
-
-
 function spring() {
     //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra: https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/springGeneric6DofSpringConstraint.js?ref_type=heads
-    let position = {x: -14, y: 2, z: 0};
+    let position = {x: -14, y: 1, z: 0};
     let boxValues = {x: 0.2, y: 1, z: 1};
     let box2Values = {x: 0.2, y: 1, z: 1};
-    let pegGeo = new THREE.CylinderGeometry(box2Values.x, box2Values.y, box2Values.z, 36, 1);
     //createAmmoMesh('cylinder', pegGeo, pegValues, {x: x+j, y: 0.4, z: 5.5+y}, {x: 0, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
 
     const materialJohnny = new THREE.MeshStandardMaterial({map: ri.textures.johnny, side: THREE.DoubleSide});
@@ -906,72 +900,39 @@ function spring() {
     let box = createAmmoMesh('box', boxGeo, boxValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, materialJohnny, boxMesh, boxShape);
 
     let box2Mesh = new THREE.Group();
-    box2Mesh.position.set(position.x-0.3, position.y ,position.z);
+    box2Mesh.position.set(position.x+0.2, position.y ,position.z);
     let box2Geo = new THREE.BoxGeometry(box2Values.x, box2Values.y, box2Values.z);
     let box2 = createAmmoMesh('box', box2Geo, box2Values, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, colorGrey, box2Mesh, box2Shape);
 
-    let rigidBox = createAmmoRigidBody(boxShape, boxMesh, 1, 1, boxMesh.position, 10);
+    let rigidBox = createAmmoRigidBody(boxShape, boxMesh, 1, 1, boxMesh.position, 1000);
     let rigidBox2 = createAmmoRigidBody(box2Shape, box2Mesh, 1, 1, box2Mesh.position, 0);
-
-    let spring = new Ammo.btGeneric6DofSpringConstraint(rigidBox, rigidBox2, box.transform, box2.transform, false);
+    rigidBox.setActivationState(4);
+    rigidBox2.setActivationState(4);
+    
+    let spring = new Ammo.btGeneric6DofSpringConstraint(rigidBox, rigidBox2, box.transform, box2.transform, true);
     spring.name = "cannonSpring";
 
-    spring.setLinearLowerLimit(new Ammo.btVector3(2, 0, 0));
+    spring.setLinearLowerLimit(new Ammo.btVector3(1, 0, 0));
     spring.setLinearUpperLimit(new Ammo.btVector3(0, 0, 0));
     spring.setAngularLowerLimit(new Ammo.btVector3(0, 0, 0));
     spring.setAngularUpperLimit(new Ammo.btVector3(0, 0, 0));
 
-    spring.enableSpring(0, false);
-    spring.setStiffness(0, 400);
-    spring.setDamping(0, 1);
+    spring.enableSpring(0, true);
+    spring.setStiffness(0, 18000);
+    spring.setDamping(0, 10);
+    spring.setEquilibriumPoint(0, 0);
     
-
-    //phy.rigidBodies.push(box.mesh);
-    //phy.rigidBodies.push(box2.mesh);
     phy.ammoPhysicsWorld.addConstraint(spring, false);
-    ri.springs.cannonSpring = spring;
+    ri.spring = spring;
     ri.scene.add(boxMesh);
     ri.scene.add(box2Mesh);
 
+    let ballPosition = {x: -20, y: 0.1, z: 0};
+    let ballRadius = 0.5
+    let ballMass = 10
+    ball(ballPosition, ballRadius, ballMass);
+
 }
-
-
-/*function createAmmoMesh2(shapeType, geometry, geoValues, meshPosition, meshRotation, texture) {
-    let shape;
-    
-    if (shapeType == 'box') {
-
-        shape = new Ammo.btBoxShape(new Ammo.btVector3(geoValues.x/2, geoValues.y/2, geoValues.z/2));
-
-    } else if (shapeType == 'cylinder') {
-        shape = new Ammo.btCylinderShape(new Ammo.btVector3(geoValues.x, geoValues.y, geoValues.z/2));
-    }
-
-    let mesh = new THREE.Mesh(geometry, texture);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.position.set(meshPosition.x, meshPosition.y, meshPosition.z);
-    mesh.rotateX(meshRotation.x);
-    mesh.rotateY(meshRotation.y);
-    mesh.rotateZ(meshRotation.z);
-
-    
-    let rotation = new THREE.Quaternion();
-    if (meshRotation.x != 0) {
-        rotation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), meshRotation.x);}; 
-    if (meshRotation.y != 0) {
-        rotation.setFromAxisAngle(new THREE.Vector3(0, 1, 0), meshRotation.y);};
-    if (meshRotation.z != 0) {
-        rotation.setFromAxisAngle(new THREE.Vector3(0, 0, 1), meshRotation.z);};
-
-    let transform = new Ammo.btTransform();
-    transform.setIdentity();
-    transform.setOrigin(new Ammo.btVector3(meshPosition.x, meshPosition.y, meshPosition.z));
-    transform.setRotation(new Ammo.btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
-
-    return { shape, mesh, transform}
-
-};*/
 
 function newtonCradle() {
     const materialDarkGrey = new THREE.MeshStandardMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
@@ -1111,4 +1072,3 @@ function createHinge(rigidObject, rigidObject2) {
     hinge.enableAngularMotor(true, 0, 0.5);
     phy.ammoPhysicsWorld.addConstraint(hinge, false);
 }
-
