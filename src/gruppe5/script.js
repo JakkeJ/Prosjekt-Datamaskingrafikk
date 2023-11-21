@@ -4,6 +4,7 @@ import './style.css';
 import * as THREE from "three";
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import GUI from 'lil-gui'
+import * as TWEEN from '@tweenjs/tween.js'   // HUSK: npm install @tweenjs/tween.js
 import {createConvexTriangleShapeAddToCompound, createTriangleShapeAddToCompound} from "./triangleMeshHelpers.js";
 import {degToRad, radToDeg} from "three/src/math/MathUtils.js";
 import {createMovable, moveRigidBody} from "./movable.js";
@@ -12,7 +13,11 @@ export const ri = {
     currentlyPressedKeys: [],
     springs: {
         cannonSpring: undefined,
-    }
+    },
+    camera: undefined,
+    raycaster: undefined,
+    mouse: undefined,
+    balls: []
 }
 
 export let phy = {
@@ -28,10 +33,16 @@ export function main() {
     // Clock for animation
     ri.clock = new THREE.Clock();
 
+    // For clicking on target
+    ri.raycaster = new THREE.Raycaster();
+    ri.mouse = new THREE.Vector2();
+
     // Event listeners
     window.addEventListener('resize', onWindowResize, false);
     document.addEventListener('keyup', handleKeyUp, false);
     document.addEventListener('keydown', handleKeyDown, false);
+    document.addEventListener('mousedown', onDocumentMouseDown, false);
+    document.addEventListener('touchstart', onDocumentTouchStart, false);
 
     addToScene();
 }
@@ -90,8 +101,7 @@ function handleKeyDown(event) {
 
 function keyPresses() {
     if (ri.currentlyPressedKeys['KeyQ']) {
-        //let cannonSpring = ri.springs.getObjectByName("cannonSpring");
-        ri.springs.cannonSpring.enableSpring(0, true);
+        ri.springs.cannonSpring.enableSpring(1, true);;
     }
     const movableMesh = ri.scene.getObjectByName("movable");
     if (ri.currentlyPressedKeys['KeyA']) {	//A
@@ -105,6 +115,50 @@ function keyPresses() {
     }
     if (ri.currentlyPressedKeys['KeyS']) {	//S
         moveRigidBody(movableMesh,{x: 0, y: 0, z: 0.2});
+    }
+}
+
+
+// Hentet fra kodeeksempel modul9/selectObject1
+function onDocumentTouchStart(event) {
+    event.preventDefault();
+    event.clientX = event.touches[0].clientX;
+    event.clientY = event.touches[0].clientY;
+    onDocumentMouseDown( event );
+}
+
+
+// Hentet fra kodeeksempel modul9/selectObject1
+function onDocumentMouseDown(event) {
+    event.preventDefault();
+    // Se: https://threejs.org/docs/index.html#api/en/core/Raycaster.
+    // ri.mouse.x og y skal være NDC, dvs. ligge i området -1 til 1.   (normalized device coordinates)
+    ri.mouse.x = (event.clientX / ri.renderer.domElement.clientWidth) * 2 - 1;
+    ri.mouse.y = -(event.clientY / ri.renderer.domElement.clientHeight) * 2 + 1;
+
+    //Ray/stråle fra klikkposisjon til kamera:
+    ri.raycaster.setFromCamera(ri.mouse, ri.camera); // Raycaster
+
+    let intersects = ri.raycaster.intersectObjects(ri.balls);
+
+    //Sjekker om strålen treffer noen av objekene:
+    if (intersects.length > 0) {
+        // console.log('ball')
+        //Endrer farge på det første objektet som er klikket på som strålen treffer:
+        let ball = intersects[0].object
+        ball.material.color.setHex(Math.random() * 0xffffff);
+
+        // Can only click a ball 1 time
+        if (ball.name == 'ball'){
+            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(10, 0, 0 ));
+            ball.name = 'ball_'
+        }
+
+        // //Viser en "partikkel":
+        // let particle = new THREE.Sprite(ri.particleMaterial);
+        // particle.position.copy(intersects[0].point);
+        // particle.scale.x = particle.scale.y = 16;
+        // ri.scene.add(particle);
     }
 }
 
@@ -147,6 +201,8 @@ function animate(currentTime) {
     updateHingeMarkers();
     renderCamera();
     keyPresses();
+
+    TWEEN.update(currentTime);
 }
 
 
@@ -286,7 +342,7 @@ function threeAmmoObjects() {
     let ballPosition = {x: 0, y: 3.5, z: 0};
     let ballRadius = 0.5
     let ballMass = 10
-    //ball(ballPosition, ballRadius, ballMass)
+    ball(ballPosition, ballRadius, ballMass, 0.1, 0.5)
 
 
     // Kan flyttes hvor som helst, kan ikke roteres
@@ -303,17 +359,32 @@ function threeAmmoObjects() {
     
     // let position = {x: 10, y: 3, z: 10};
     let position = {x: 15, y: 5, z: -10};
-    funnel(position)
+    funnel(position, 2.7, 0.3, 2)
 
     position.x -= 1
-    position.y -= 1
+    position.y -= 0.7
     // position = {x: 15, y: 3, z: -10};
     rails(position, 180, 10, 7)
 
 
     position.x += 6
     position.y -= 1.5
-    rails(position, 180, -5, 15)
+    // rails(position, 180, -5, 15)
+
+    rails(position, 180, -0, 15)
+
+    position.y += 1
+    position.x += 5
+    ball(position, 0.5, 5)
+
+    position.x += 1
+    ball(position, 0.5, 5)
+
+    position.x += 1
+    ball(position, 0.5, 5)
+
+    position.x += 1
+    ball(position, 0.5, 5)
 
 
     // createCoffeeCupTriangleMesh(
@@ -326,6 +397,8 @@ function threeAmmoObjects() {
     ballRadius = 0.5
     ballMass = 0
     // ball(ballPosition, ballRadius, ballMass)
+
+    arrow()
 }
 
 
@@ -355,7 +428,7 @@ function ground() {
 }
 
 
-function ball(position, radius, mass) {
+function ball(position, radius, mass, restitution = 0.7, friction = 0.8) {
     // THREE
     const geometry = new THREE.SphereGeometry(radius, 32, 32);
     const material = new THREE.MeshStandardMaterial({
@@ -370,10 +443,14 @@ function ball(position, radius, mass) {
     mesh.position.set(position.x, position.y, position.z);
 
     ri.scene.add(mesh);
+    ri.balls.push(mesh)
 
     // AMMO
     let shape = new Ammo.btSphereShape(radius);
-    createAmmoRigidBody(shape, mesh, 0.7, 0.8, position, mass);
+    let rigidBody = createAmmoRigidBody(shape, mesh, restitution, friction, position, mass);
+
+    rigidBody.setActivationState(4)
+    //mesh.userData.physicsBody
 }
 
 function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0xFFFFFF) {
@@ -471,20 +548,6 @@ function funnel(position, upperRadius = 2.7, lowerRadius = 0.5, height = 2) {
         metalness: 0.4,
         roughness: 0.3});
 
-    // Old points list
-    // let points = [
-    //     new THREE.Vector2(0.5, 0),
-    //     new THREE.Vector2(0.5, 0.3),
-    //     new THREE.Vector2(0.7, 0.4),
-    //     new THREE.Vector2(0.9, 0.5),
-    //     new THREE.Vector2(1.1, 0.6),
-    //     new THREE.Vector2(1.3, 0.7),
-    //     new THREE.Vector2(1.45, 0.8),
-    //     new THREE.Vector2(1.6, 0.9),
-    //     new THREE.Vector2(1.7, 1.0),
-    //
-    //     new THREE.Vector2(2.7, 2.0),
-    // ];
 
     let points = [
         new THREE.Vector2(lowerRadius, 0),
@@ -512,7 +575,7 @@ function funnel(position, upperRadius = 2.7, lowerRadius = 0.5, height = 2) {
     let railPosition = {x: position.x + upperRadius*0.9, y: position.y + height + 1, z: position.z + 5}
     rails(railPosition, -90, 10, 5)
     let ballPosition = {x: railPosition.x, y: railPosition.y + 0.6, z: railPosition.z - 0.2}
-    ball(ballPosition, lowerRadius*0.9, 1)
+    ball(ballPosition, lowerRadius*0.9, 5, 0.05)
 }
 
 
@@ -545,7 +608,7 @@ function rails(position, rotation = 180, tilt = 20, length = 4) {
 
     ri.scene.add(groupMesh);
 
-    createAmmoRigidBody(compoundShape, groupMesh, 0.1, 0.8, position, 0);
+    createAmmoRigidBody(compoundShape, groupMesh, 0, 0.8, position, 0);
 }
 
 
@@ -886,94 +949,115 @@ function golfclub() {
     ri.scene.add(golfClubMesh);
 }
 
-
-
 function spring() {
     //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra: https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/springGeneric6DofSpringConstraint.js?ref_type=heads
-    let position = {x: -14, y: 2, z: 0};
-    let boxValues = {x: 0.2, y: 1, z: 1};
-    let box2Values = {x: 0.2, y: 1, z: 1};
-    let pegGeo = new THREE.CylinderGeometry(box2Values.x, box2Values.y, box2Values.z, 36, 1);
+    let position = {x: 10, y: 10, z: 10};
+    let rotationDegree = 0*Math.PI/180;
+    let bottomSpringValues = {x: 1, y: 1, z: 0.2};
+    let topSpringValues = {x: 1, y: 1, z: 0.2};
     //createAmmoMesh('cylinder', pegGeo, pegValues, {x: x+j, y: 0.4, z: 5.5+y}, {x: 0, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
 
     const materialJohnny = new THREE.MeshStandardMaterial({map: ri.textures.johnny, side: THREE.DoubleSide});
     const colorGrey = new THREE.MeshStandardMaterial({color: 0xffffff, side: THREE.DoubleSide});
 
-    let boxMesh = new THREE.Group();
-    boxMesh.position.set(position.x, position.y ,position.z);
-    let boxShape = new Ammo.btCompoundShape();
+    let bottomSpringMesh = new THREE.Group();
+    bottomSpringMesh.position.set(position.x, position.y ,position.z);
+    bottomSpringMesh.rotateX(rotationDegree)
+    let bottomSpringShape = new Ammo.btCompoundShape();
     
-    let box2Shape = new Ammo.btCompoundShape();
-    let boxGeo = new THREE.BoxGeometry(boxValues.x, boxValues.y, boxValues.z);
-    let box = createAmmoMesh('box', boxGeo, boxValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, materialJohnny, boxMesh, boxShape);
+    let bottomSpringGeo = new THREE.CylinderGeometry(bottomSpringValues.x, bottomSpringValues.y, bottomSpringValues.z, 36, 1);
+    let bottomSpring = createAmmoMesh('cylinder', bottomSpringGeo, bottomSpringValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, materialJohnny, bottomSpringMesh, bottomSpringShape);
 
-    let box2Mesh = new THREE.Group();
-    box2Mesh.position.set(position.x-0.3, position.y ,position.z);
-    let box2Geo = new THREE.BoxGeometry(box2Values.x, box2Values.y, box2Values.z);
-    let box2 = createAmmoMesh('box', box2Geo, box2Values, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, colorGrey, box2Mesh, box2Shape);
+    let topSpringMesh = new THREE.Group();
+    topSpringMesh.position.set(position.x, position.y+0.1 ,position.z);
+    topSpringMesh.rotateX(rotationDegree)
+    let topSpringShape = new Ammo.btCompoundShape();
+    let topSpringGeo = new THREE.CylinderGeometry(topSpringValues.x, topSpringValues.y, topSpringValues.z, 36, 1);
+    let topSpring2 = createAmmoMesh('cylinder', topSpringGeo, topSpringValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, colorGrey, topSpringMesh, topSpringShape);
 
-    let rigidBox = createAmmoRigidBody(boxShape, boxMesh, 1, 1, boxMesh.position, 10);
-    let rigidBox2 = createAmmoRigidBody(box2Shape, box2Mesh, 1, 1, box2Mesh.position, 0);
-
-    let spring = new Ammo.btGeneric6DofSpringConstraint(rigidBox, rigidBox2, box.transform, box2.transform, false);
+    let rigidTopSpring = createAmmoRigidBody(bottomSpringShape, bottomSpringMesh, 1, 1, bottomSpringMesh.position, 0);
+    let rigidBottomSpring = createAmmoRigidBody(topSpringShape, topSpringMesh, 1, 1, topSpringMesh.position, 10);
+    rigidTopSpring.setActivationState(4);
+    rigidBottomSpring.setActivationState(4);
+    
+    let spring = new Ammo.btGeneric6DofSpringConstraint(rigidTopSpring, rigidBottomSpring, bottomSpring.transform, topSpring2.transform, true);
     spring.name = "cannonSpring";
 
-    spring.setLinearLowerLimit(new Ammo.btVector3(2, 0, 0));
+    spring.setLinearLowerLimit(new Ammo.btVector3(0, 1, 0));
     spring.setLinearUpperLimit(new Ammo.btVector3(0, 0, 0));
     spring.setAngularLowerLimit(new Ammo.btVector3(0, 0, 0));
     spring.setAngularUpperLimit(new Ammo.btVector3(0, 0, 0));
 
-    spring.enableSpring(0, false);
-    spring.setStiffness(0, 400);
-    spring.setDamping(0, 1);
+    spring.enableSpring(1, false);
+    spring.setStiffness(1, 18000);
+    spring.setDamping(1, 10);
+    spring.setEquilibriumPoint(1, 4);
     
-
-    //phy.rigidBodies.push(box.mesh);
-    //phy.rigidBodies.push(box2.mesh);
     phy.ammoPhysicsWorld.addConstraint(spring, false);
     ri.springs.cannonSpring = spring;
-    ri.scene.add(boxMesh);
-    ri.scene.add(box2Mesh);
 
-}
-
-
-/*function createAmmoMesh2(shapeType, geometry, geoValues, meshPosition, meshRotation, texture) {
-    let shape;
-    
-    if (shapeType == 'box') {
-
-        shape = new Ammo.btBoxShape(new Ammo.btVector3(geoValues.x/2, geoValues.y/2, geoValues.z/2));
-
-    } else if (shapeType == 'cylinder') {
-        shape = new Ammo.btCylinderShape(new Ammo.btVector3(geoValues.x, geoValues.y, geoValues.z/2));
-    }
-
-    let mesh = new THREE.Mesh(geometry, texture);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.position.set(meshPosition.x, meshPosition.y, meshPosition.z);
-    mesh.rotateX(meshRotation.x);
-    mesh.rotateY(meshRotation.y);
-    mesh.rotateZ(meshRotation.z);
+    //cannonbody
+    let cannonBodyShape = new Ammo.btCompoundShape();
+    let material = new THREE.MeshStandardMaterial({
+        color: 0xFFFFFF,
+        side: THREE.DoubleSide,
+        metalness: 0.4,
+        roughness: 0.3});
 
     
+    let height = 10;
+    let raidus = 1.5;
+    let points = [
+        new THREE.Vector2(raidus*0.9, height*0),
+        new THREE.Vector2(raidus, height*0.1),
+        new THREE.Vector2(raidus, height*0.3),
+        new THREE.Vector2(raidus*0.8, height*0.5),
+        new THREE.Vector2(raidus*0.8, height*0.6),
+        new THREE.Vector2(raidus*0.8, height*0.8),
+        new THREE.Vector2(raidus*0.9, height*0.8),
+        new THREE.Vector2(raidus*0.9, height*0.9),
+        new THREE.Vector2(raidus*0.4, height*0.9),
+    ];
+
+    let cannonBodyGeo = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
+
+    let cannonBodyMesh = new THREE.Mesh(cannonBodyGeo, material);
+    cannonBodyMesh.name = 'cannonBody';
+    cannonBodyMesh.castShadow = true;
+    cannonBodyMesh.receiveShadow = true;
+
+    cannonBodyMesh.material.transparent = true;
+    cannonBodyMesh.material.opacity = 1;
+
     let rotation = new THREE.Quaternion();
-    if (meshRotation.x != 0) {
-        rotation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), meshRotation.x);}; 
-    if (meshRotation.y != 0) {
-        rotation.setFromAxisAngle(new THREE.Vector3(0, 1, 0), meshRotation.y);};
-    if (meshRotation.z != 0) {
-        rotation.setFromAxisAngle(new THREE.Vector3(0, 0, 1), meshRotation.z);};
-
+    rotation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), rotationDegree)
+    
     let transform = new Ammo.btTransform();
     transform.setIdentity();
-    transform.setOrigin(new Ammo.btVector3(meshPosition.x, meshPosition.y, meshPosition.z));
+    transform.setOrigin(new Ammo.btVector3(0, 0, 0));
     transform.setRotation(new Ammo.btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
 
-    return { shape, mesh, transform}
+    createTriangleShapeAddToCompound(cannonBodyShape, cannonBodyMesh);
 
-};*/
+    createAmmoRigidBody(cannonBodyShape, cannonBodyMesh, 0.4, 0.6, {x: 0, y: -0.2, z: 0}, 0);
+
+    bottomSpringMesh.add(cannonBodyMesh);
+    bottomSpringShape.addChildShape(transform, cannonBodyShape);
+
+    //cannonEnd
+    let cannonEndValues = {radius: 1.35, segments: 32}
+    let cannonEndGeo = new THREE.SphereGeometry(cannonEndValues.radius, cannonEndValues.segments, cannonEndValues.segments, 0 , Math.PI);
+    let cannonEnd = createAmmoMesh('sphere', cannonEndGeo, cannonEndValues, {x: 0, y: -0.2, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, material, bottomSpringMesh, bottomSpringShape);
+
+    ri.scene.add(bottomSpringMesh);
+    ri.scene.add(topSpringMesh);
+
+    let ballPosition = {x: 10, y: 15, z: 10};
+    let ballRadius = 0.5
+    let ballMass = 10
+    ball(ballPosition, ballRadius, ballMass);
+
+}
 
 function newtonCradle() {
     const materialDarkGrey = new THREE.MeshStandardMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
@@ -1066,6 +1150,25 @@ function newtonCradle() {
 
         ballPosition = ballPosition - (ballValues.radius * 2);
     }
+
+    // Testing av cradle physics
+    // let railPosition = {
+    //     x: cradleMesh.position.x,
+    //     y: cradleTopBar1.mesh.position.y - 5.3,
+    //     z: cradleMesh.position.z - 2.8
+    // };
+    // railPosition.z += 4;
+    // console.log(railPosition);
+    // rails(railPosition, 90, -20, 8);
+    // rails(railPosition, -90, 0, 4);
+    //
+    // let testBallPosition = {
+    //     x: railPosition.x,
+    //     y: railPosition.y + 3,
+    //     z: railPosition.z + 7,
+    // };
+    // ball(testBallPosition, 0.3, 1000);
+
 }
 
 //Helper for hinge
@@ -1191,4 +1294,67 @@ function updateHingeMarkers() {
             }
         }
     }
+}
+
+
+function arrow(position = {x:0, y:10, z:0}) {
+    // THREE
+    let groupMesh = new THREE.Group();
+
+    let width = 2;
+    let height = 4;
+    let depth = 0.3;
+
+    let shape = new THREE.Shape();
+    shape.moveTo( 0,0 );
+    shape.lineTo(width/2, height/3);
+    shape.lineTo(width/4, height/3);
+    shape.lineTo(width/4, height);
+    shape.lineTo(-width/4, height);
+    shape.lineTo(-width/4, height/3);
+    shape.lineTo(-width/2, height/3);
+
+    const extrudeSettings = {
+        depth: depth,
+        bevelEnabled: true,
+        bevelThickness: 0.1,
+        bevelSize: 0.1,
+        bevelOffset: 0.3,
+        bevelSegments: 4
+    };
+
+    let geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
+    let material = new THREE.MeshStandardMaterial({
+        color: 0xd10000,
+        metalness: 0.5,
+        roughness: 0.3});
+    let mesh = new THREE.Mesh(geometry, material);
+
+    groupMesh.name = 'arrow';
+    groupMesh.castShadow = true;
+    groupMesh.receiveShadow = true;
+    groupMesh.position.set(position.x, position.y, position.z);
+    mesh.position.set(0, 0, -depth/2)
+    groupMesh.add(mesh)
+
+    ri.scene.add(groupMesh);
+
+    let tween1 = new TWEEN.Tween({y: 0})
+        .to({y: 3}, 2000)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .yoyo(true)
+        .repeat(Infinity)
+        .onUpdate(function (newPosition) {
+            groupMesh.position.y = position.y + newPosition.y
+        });
+
+    let tween2 = new TWEEN.Tween({r:0})
+        .to({r: 2 * Math.PI}, 6000)
+        .repeat(Infinity)
+        .onUpdate(function (newPosition) {
+            groupMesh.rotation.set(0, newPosition.r, 0)
+        });
+
+    tween1.start();
+    tween2.start();
 }
