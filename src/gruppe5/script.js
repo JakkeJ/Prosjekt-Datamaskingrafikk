@@ -12,6 +12,10 @@ import {
 } from "./triangleMeshHelpers.js";
 import {degToRad, radToDeg} from "three/src/math/MathUtils.js";
 import {createMovable, moveRigidBody} from "./movable.js";
+import {
+    COLLISION_GROUP_BOX, COLLISION_GROUP_MOVEABLE, COLLISION_GROUP_PLANE,
+    COLLISION_GROUP_SPHERE, COLLISION_GROUP_SPRING
+} from "./myAmmoHelper";
 
 export const ri = {
     currentlyPressedKeys: [],
@@ -105,7 +109,7 @@ function handleKeyDown(event) {
 
 function keyPresses() {
     if (ri.currentlyPressedKeys['KeyQ']) {
-        ri.springs.cannonSpring.enableSpring(1, true);;
+        ri.springs.cannonSpring.enableSpring(1, true);
     }
     const movableMesh = ri.scene.getObjectByName("movable");
     if (ri.currentlyPressedKeys['KeyA']) {	//A
@@ -390,6 +394,10 @@ function threeAmmoObjects() {
     position.x += 1
     ball(position, 0.5, 5)
 
+    position= {x: 10, y: 10, z: 0};
+    // cube(position, {x:1,y:1,z:1}, 0,'cube', 2)
+    steps(position)
+
 
     // createCoffeeCupTriangleMesh(
     //     20000,
@@ -444,7 +452,7 @@ function ball(position, radius, mass, restitution = 0.7, friction = 0.8) {
     mesh.name = 'ball';
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    mesh.position.set(position.x, position.y, position.z);
+    // mesh.position.set(position.x, position.y, position.z);
 
     ri.scene.add(mesh);
     ri.balls.push(mesh)
@@ -457,7 +465,7 @@ function ball(position, radius, mass, restitution = 0.7, friction = 0.8) {
     //mesh.userData.physicsBody
 }
 
-function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0xFFFFFF) {
+function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0xFF00FF) {
     // THREE
     const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
     const material = new THREE.MeshStandardMaterial({
@@ -475,7 +483,7 @@ function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0x
 
     // AMMO
     let shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
-    createAmmoRigidBody(shape, mesh, 0.5, 0.8, position, mass);
+    createAmmoRigidBody(shape, mesh, 0.5, 0.8, position, 3);
 }
 
 
@@ -1362,4 +1370,93 @@ function arrow(position = {x:0, y:10, z:0}) {
 
     tween1.start();
     tween2.start();
+}
+
+
+function steps(position) {
+    let groupMesh = new THREE.Group();
+    let stepMesh1 = new THREE.Group();
+    let stepMesh2 = new THREE.Group();
+    let compoundShape1 = new Ammo.btCompoundShape();
+    let compoundShape2 = new Ammo.btCompoundShape();
+
+    let mass = 0;
+    let size = {x:2,y:4,z:2};
+    let name = 'step1'
+    let numberOfSteps = 4;
+
+    let useFirst = true;
+
+    // THREE
+    const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+    const material = new THREE.MeshStandardMaterial({
+        color: 0xff00ff,
+        side: THREE.DoubleSide});
+
+    for (let i = 0; i <numberOfSteps; i++) {
+        // const mesh = new THREE.Mesh(geometry, material);
+        // mesh.position.x = i * size.x;
+        if (useFirst) {
+            createAmmoMesh('box', geometry, size, {x: i * size.x, y: 0, z: 0}, {x: 0, y: 0, z: 0},material, stepMesh1, compoundShape1, 'step1')
+            // stepMesh1.add(mesh)
+        }
+        else {
+            createAmmoMesh('box', geometry, size, {x: i * size.x, y: 0, z: 0}, {x: 0, y: 0, z: 0},material, stepMesh2, compoundShape2, 'step2')
+            // stepMesh2.add(mesh)
+        }
+        useFirst = !useFirst
+        console.log(useFirst);
+    }
+
+    const mesh = new THREE.Mesh(geometry, material);
+
+    groupMesh.name = name
+    // groupMesh.castShadow = true;
+    // groupMesh.receiveShadow = true;
+
+    // mesh.rotation.x = 10 * Math.PI / 180
+
+    ri.scene.add(mesh);
+    ri.scene.add(stepMesh1);
+
+    // AMMO
+    let shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
+    let rigidBody = createAmmoRigidBody(shape, mesh, 0.5, 0.8, position, mass);
+
+    // Make object movable:
+    rigidBody.setCollisionFlags(rigidBody.getCollisionFlags() | 2);  // 2 = BODYFLAG_KINEMATIC_OBJECT: Betyr kinematic object, masse=0 men kan flyttes!
+    rigidBody.setActivationState(4);  // 4 = BODYSTATE_DISABLE_DEACTIVATION, dvs. "Never sleep".
+
+
+    let val = 0.03;
+
+    let tween1 = new TWEEN.Tween({y: -val})
+        .to({y: val}, 2000)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .yoyo(true)
+        .repeat(Infinity)
+        .onUpdate(function (newPosition) {
+            // groupMesh.position.y = position.y + newPosition.y
+            moveRigidBody(mesh,{x: 0, y: newPosition.y, z: 0})
+            moveRigidBody(mesh,{x: 0, y: newPosition.y, z: 0})
+        });
+
+    // let tween2 = new TWEEN.Tween({y: val})
+    //     .to({y: -val}, 2000)
+    //     .easing(TWEEN.Easing.Quadratic.InOut)
+    //     .yoyo(true)
+    //     .repeat(Infinity)
+    //     .onUpdate(function (newPosition) {
+    //         // groupMesh.position.y = position.y + newPosition.y
+    //         moveRigidBody(mesh,{x: 0, y: newPosition.y, z: 0})
+    //     });
+
+    tween1.start();
+
+    // moveRigidBody(mesh,{x: 0, y: 1, z: 0})
+
+
+    position.y += 5
+    ball(position, 1, 10, 0.9)
+
 }
