@@ -11,7 +11,11 @@ import {
     generateTriangleShape
 } from "./triangleMeshHelpers.js";
 import {degToRad} from "three/src/math/MathUtils.js";
-import {createMovable, moveRigidBody} from "./movable.js";
+import {
+    createMovable,
+    moveRigidBody,
+    moveRigidBodyAnimation
+} from "./movable.js";
 import {inflate} from "three/addons/libs/fflate.module.js";
 
 export const ri = {
@@ -399,9 +403,9 @@ function threeAmmoObjects() {
     position.x += 1
     ball(position, 0.5, 5)
 
-    position = {x: -30, y: 0, z: 20};
+    position = {x: -30, y: 2, z: 20};
     // cube(position, {x:1,y:1,z:1}, 0,'cube', 2)
-    steps(position,-90, 10)
+    steps(position,90, 10)
 
     position = {x: 10, y: 0, z: 5};
     ball(position, 0.2, 0)
@@ -1374,57 +1378,82 @@ function steps(position, rotation = 0, numberOfSteps = 6) {
     let groupMesh = new THREE.Group();
     let stepMesh1 = new THREE.Group();
     let stepMesh2 = new THREE.Group();
+    let wallGroupMesh = new THREE.Group();
     let compoundShape1 = new Ammo.btCompoundShape();
     let compoundShape2 = new Ammo.btCompoundShape();
+    let wallCompoundShape = new Ammo.btCompoundShape();
 
     let mass = 0;
     let size = {x:1.5,y:8,z:1.5};
     let name = 'steps'
+    let offset = 2 // height offset per step
 
-    let shape = new THREE.Shape();
-    shape.moveTo( -size.x/2,-size.y/2 );
-    shape.lineTo(-size.x/2, size.y/2);
-    shape.lineTo(size.x/2, size.y/2 * 0.8);
-    shape.lineTo(size.x/2, -size.y/2);
+    let stepShape = new THREE.Shape();
+    stepShape.moveTo( -size.x/2,-size.y/2 );
+    stepShape.lineTo(-size.x/2, size.y/2);
+    stepShape.lineTo(size.x/2, size.y/2 * 0.8);
+    stepShape.lineTo(size.x/2, -size.y/2);
 
-    const extrudeSettings = {
+    let wallShape = new THREE.Shape();
+    wallShape.moveTo( -size.x/2,0 );
+    wallShape.lineTo(-size.x/2, size.y/2 + offset);
+    wallShape.lineTo(-size.x/2 + numberOfSteps*size.x, size.y/2 + numberOfSteps*offset);
+    wallShape.lineTo(-size.x/2 + numberOfSteps*size.x, -offset + numberOfSteps*offset);
+
+    const stepExtrudeSettings = {
         depth: size.z,
         bevelEnabled: false,
     };
+    const wallExtrudeSettings = {
+        depth: 0.3,
+        bevelEnabled: false,
+    };
 
-    // THREE
-    let geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-    // let geometry1 = new THREE.BoxGeometry(size.x, size.y, size.z);
-    let material = new THREE.MeshStandardMaterial({
-        color: 0xff00ff,
+    let stepGeometry = new THREE.ExtrudeGeometry( stepShape, stepExtrudeSettings );
+    let stepMaterial = new THREE.MeshStandardMaterial({
+        color: 0xff0044,
         side: THREE.DoubleSide});
 
-    let mesh = new THREE.Mesh(geometry, material);
+    let wallGeometry = new THREE.ExtrudeGeometry( wallShape, wallExtrudeSettings );
+    let wallMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.3});
+
+    let mesh = new THREE.Mesh(stepGeometry, new THREE.MeshBasicMaterial());
+    let wallMesh = new THREE.Mesh(wallGeometry, new THREE.MeshBasicMaterial());
 
     let useFirst = true;
-    let offset = 2
+
     for (let i = 0; i <numberOfSteps; i++) {
         if (useFirst) {// createAmmoMesh('box', geometry, size, {x: i * size.x, y: 0, z: 0}, {x: 0, y: 0, z: 0},material, stepMesh1, compoundShape1, 'step1')
-            createAmmoMesh('triangleShape', geometry, mesh, {x: i * size.x, y: i * offset, z: -size.z/2}, {x: 0, y: 0, z: 0},material, stepMesh1, compoundShape1, 'step1')// stepMesh1.add(mesh)
+            createAmmoMesh('triangleShape', stepGeometry, mesh, {x: i * size.x, y: i * offset, z: -size.z/2}, {x: 0, y: 0, z: 0}, stepMaterial, stepMesh1, compoundShape1, 'step1')// stepMesh1.add(mesh)
         }
         else {// createAmmoMesh('box', geometry, size, {x: i * size.x, y: 0, z: 0}, {x: 0, y: 0, z: 0},material, stepMesh2, compoundShape2, 'step2')
-            createAmmoMesh('triangleShape', geometry, mesh, {x: i * size.x, y: i * offset, z: -size.z/2}, {x: 0, y: 0, z: 0},material, stepMesh2, compoundShape2, 'step1')// stepMesh2.add(mesh)
+            createAmmoMesh('triangleShape', stepGeometry, mesh, {x: i * size.x, y: i * offset, z: -size.z/2}, {x: 0, y: 0, z: 0}, stepMaterial, stepMesh2, compoundShape2, 'step1')// stepMesh2.add(mesh)
         }
         useFirst = !useFirst;
     }
 
+    // Sidewalls
+    createAmmoMesh('triangleShape', wallGeometry, wallMesh, {x: 0, y: 0, z: -0.3 - size.z/2}, {x: 0, y: 0, z: 0}, wallMaterial, wallGroupMesh, wallCompoundShape, 'wall')
+    createAmmoMesh('triangleShape', wallGeometry, wallMesh, {x: 0, y: 0, z: size.z/2}, {x: 0, y: 0, z: 0}, wallMaterial, wallGroupMesh, wallCompoundShape, 'wall')
+
     groupMesh.name = name
     groupMesh.add(stepMesh1)
     groupMesh.add(stepMesh2)
+    groupMesh.add(wallGroupMesh)
 
     stepMesh1.rotation.y = rotation * Math.PI / 180
     stepMesh2.rotation.y = rotation * Math.PI / 180
+    wallGroupMesh.rotation.y = rotation * Math.PI / 180
 
     ri.scene.add(groupMesh);
 
-    // AMMO
     let rigidBody1 = createAmmoRigidBody(compoundShape1, stepMesh1, 0.1, 0.1, position, mass);
     let rigidBody2 = createAmmoRigidBody(compoundShape2, stepMesh2, 0.1, 0.1, position, mass);
+    let wallRigidBody = createAmmoRigidBody(wallCompoundShape, wallGroupMesh, 0.1, 0.1, position, mass);
 
     // Make object movable:
     rigidBody1.setCollisionFlags(rigidBody1.getCollisionFlags() | 2);  // 2 = BODYFLAG_KINEMATIC_OBJECT: Betyr kinematic object, masse=0 men kan flyttes!
@@ -1432,7 +1461,8 @@ function steps(position, rotation = 0, numberOfSteps = 6) {
     rigidBody2.setCollisionFlags(rigidBody2.getCollisionFlags() | 2);  // 2 = BODYFLAG_KINEMATIC_OBJECT: Betyr kinematic object, masse=0 men kan flyttes!
     rigidBody2.setActivationState(4);  // 4 = BODYSTATE_DISABLE_DEACTIVATION, dvs. "Never sleep".
 
-    let val = 0.05;
+    let val = 0.03;
+    val = offset
     let duration = 1100;
 
     function newTween(value, duration, mesh2move) {
@@ -1442,21 +1472,29 @@ function steps(position, rotation = 0, numberOfSteps = 6) {
             .repeat(1)
             .onUpdate(function (newPosition) {
                 // groupMesh.position.y = position.y + newPosition.y
-                moveRigidBody(mesh2move, {x: 0, y: newPosition.y, z: 0})
+                console.log('Pos1',position.y)
+                moveRigidBodyAnimation(mesh2move, position, {x: 0, y: newPosition.y, z: 0})
             })
     }
 
+    // Move steps up
     let tween1 = newTween(val, duration, stepMesh1)
     let tween2 = newTween(val, duration, stepMesh2)
+    // Move steps down
     let tween3 = newTween(-val, duration, stepMesh1)
     let tween4 = newTween(-val, duration, stepMesh2)
 
     tween1.chain(tween2, tween3)
     tween2.chain(tween1, tween4)
 
+    // tween1.start()
+
     // Ball for testing
-    position.y += 5
-    position.z -= 0.1
-    ball(position, 0.4, 10, 0.1)
+    let ballPos = {x:position.x, y:position.y +  size.y/2, z:position.z + size.z/2}
+    ball(ballPos, 0.4, 10, 0.1)
+    rails(ballPos, rotation, -5, 8)
+    ballPos.z += 7.5
+    ballPos.y += 2
+    ball(ballPos, 0.4, 10, 0.1)
     groupMesh.tween = tween1
 }

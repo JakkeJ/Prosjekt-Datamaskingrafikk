@@ -65,3 +65,11 @@ export function moveRigidBody(movableMesh, direction) {
     transform.setOrigin(new Ammo.btVector3(position.x() + direction.x, position.y() + direction.y, position.z() + direction.z));
     motionState.setWorldTransform(transform);
 }
+
+export function moveRigidBodyAnimation(movableMesh, position, direction) {
+    let transform = new Ammo.btTransform();
+    let motionState = movableMesh.userData.physicsBody.getMotionState();
+    motionState.getWorldTransform(transform);
+    transform.setOrigin(new Ammo.btVector3(position.x + direction.x, position.y + direction.y, position.z + direction.z,));
+    motionState.setWorldTransform(transform);
+}
