@@ -168,8 +168,8 @@ function onDocumentMouseDown(event) {
         ball.material.color.setHex(Math.random() * 0xffffff);
 
         // Can only click a ball 1 time
-        if (ball.name == 'ball'){
-            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(10, 0, 0 ));
+        if (ball.name === 'ball'){
+            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(0, 0, 3 ));
             ball.name = 'ball_'
         }
 
@@ -400,8 +400,8 @@ function threeAmmoObjects() {
 
 
     // Kan flyttes hvor som helst, kan ikke roteres
-    let dominoPosition = {x: 10, y: 3, z: -10};
-    domino(dominoPosition, 0)
+    let dominoPosition = {x: 9.85, y: 1.6, z: -8};
+    domino(dominoPosition)
 
     // dominoPosition = {x: 10, y: 8, z: 10};
     // domino(dominoPosition, 30, true)
@@ -584,7 +584,7 @@ function ball(position, radius, mass, restitution = 0.7, friction = 0.8) {
     //mesh.userData.physicsBody
 }
 
-function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0xFF00FF) {
+function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0xFF00FF, restitution = 0.5, friction = 0.8) {
     // THREE
     const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
     const material = new THREE.MeshStandardMaterial({
@@ -602,7 +602,7 @@ function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0x
 
     // AMMO
     let shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
-    createAmmoRigidBody(shape, mesh, 0.5, 0.8, position, 3);
+    createAmmoRigidBody(shape, mesh, restitution, friction, position, mass);
 }
 
 
@@ -733,11 +733,10 @@ function rails(position, rotation = 180, tilt = 20, length = 4, guardrails = fal
 }
 
 
-function domino(position, rotation = 0, starter = false) {
+function domino(position, starter = true) {
     const tableSize = {x: 5, y: 0.05, z: 10};
-    // let rotation = {x: 0, y: 0, z: 0};
+
     let groupMesh = new THREE.Group();
-    groupMesh.rotateY(degToRad(rotation));
     let compoundShape = new Ammo.btCompoundShape();
 
     tableMesh(groupMesh, compoundShape, tableSize, {x: 0, y: 0, z: 0}, position.y, 'dominoTable',  0x823c17)
@@ -746,10 +745,11 @@ function domino(position, rotation = 0, starter = false) {
 
     createAmmoRigidBody(compoundShape, groupMesh, 0.5, 0.5, position, 0);
 
-    // cube(position, tableSize, rotation, 'table',0, 0x823c17)
-
-    const dominoSize = {x: 0.4, y: 0.8, z: 0.08};
-    const dominoPositions = [
+    let dominoSize = {x: 0.4, y: 0.8, z: 0.08};
+    let posX = position.x - 2.5;
+    let posY = position.y + 0.5;
+    let posZ = position.z - 5;
+    let dominoPositions = [
         {x: position.x + 0, y: position.y + 0.5, z: position.z - 4.9, rot: 0},
         {x: position.x + 0, y: position.y + 0.5, z: position.z - 4.2, rot: -10},
         {x: position.x - 0.2, y: position.y + 0.5, z: position.z - 3.7, rot: -20},
@@ -787,12 +787,46 @@ function domino(position, rotation = 0, starter = false) {
         {x: position.x + 0, y: position.y + 0.5, z: position.z + 4.9, rot: 0},
     ]
 
-    dominoPositions.forEach(position => cube(position, dominoSize, position.rot , 'dominoPiece', 20, 0x303030))
+    // dominoPositions = [
+    //     {x: posX + 2.5, y: posY, z: posZ + 0.1, rot: 0},
+    //     {x: posX + 2.5, y: posY, z: posZ + 0.5, rot: 0},
+    //     {x: posX + 2.5, y: posY, z: posZ + 1.0, rot: 0},
+    //     {x: posX + 2.5, y: posY, z: posZ + 1.5, rot: 0},
+    // ]
+
+    // dominoPositions.forEach(position => cube(position, dominoSize, position.rot , 'dominoPiece', 40, 0x303030, 0.3, 0.8))
+    for (let i = 0; i < dominoPositions.length; i++) {
+        cube(dominoPositions[i], dominoSize, dominoPositions[i].rot , 'dominoPiece', 40, 0x303030, 0.3, 0.8)
+    }
 
     // Ball to start first domino:
     if (starter){
-        const ballPosition = {x: position.x + 0, y: position.y + 3, z: position.z - 5.3}
-        ball(ballPosition, 0.45, 10)
+        // Ball to start first domino:
+        let ballPosition = {x: position.x + 0, y: position.y + 1, z: position.z - 5.6};
+        rails(ballPosition, -90, -20, 1);
+        // ball(ballPosition, 0.45, 0);
+
+        ballPosition.y += 0.35;
+        ballPosition.z -= 0.9;
+        rails(ballPosition, -90, 0, 1);
+
+        ballPosition.y += 0.5;
+        ballPosition.z -= 0.5;
+        ball(ballPosition, 0.3, 10);
+
+        // Ball to end domino:
+        ballPosition = {x: position.x + 0, y: position.y + 0, z: position.z + 5.2};
+        rails(ballPosition, 90, 0, 1);
+
+        ballPosition.y += 0.5;
+        ballPosition.z += 0.7;
+        ball(ballPosition, 0.3, 5, 0.7, 0.1);
+
+        // ballPosition.y += 0.35;
+        ballPosition.y -= 0.5;
+        ballPosition.z += 0.3;
+        // ballPosition.z += 1;
+        rails(ballPosition, 90, 20, 1);
     }
 
 }
