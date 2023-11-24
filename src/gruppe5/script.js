@@ -356,8 +356,8 @@ function createMesh(geometry, material, parent, name = "", translateY = 0, trans
 function threeAmmoObjects() {
     ground()
 
-    let ballPosition = {x: -10, y: 3.5, z: 10};
-    let ballRadius = 0.5
+    let ballPosition = {x: -10, y: 30.5, z: 10};
+    let ballRadius = 3.5
     let ballMass = 10
     ball(ballPosition, ballRadius, ballMass, 0.1, 0.5)
 
@@ -689,9 +689,8 @@ function domino(position, rotation = 0, starter = false) {
 
 }
 
-function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, texture, groupMesh, compoundShape, name = "") {
+function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, texture, groupMesh, compoundShape, name = "",rotateType) {
     let shape;
-    
     if (shapeType == 'box') {
         shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
         
@@ -714,10 +713,15 @@ function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, t
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.position.set(meshPosition.x, meshPosition.y, meshPosition.z);
-    mesh.rotateX(meshRotation.x);
-    mesh.rotateY(meshRotation.y);
-    mesh.rotateZ(meshRotation.z);
-    
+    if (rotateType === 'quaternion_norm') {
+        mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), meshRotation);
+    } else {
+        mesh.rotateX(meshRotation.x);
+        mesh.rotateY(meshRotation.y);
+        mesh.rotateZ(meshRotation.z);
+    }
+
+
     let rotation = new THREE.Quaternion();
     if (meshRotation.x != 0) {
         rotation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), meshRotation.x)}
@@ -1084,7 +1088,7 @@ function newtonCradle() {
     let bottomBoxConnectorValues = {x: 2, y: 0.25, z: 0.25};
     let riserBoxValues = {x: 0.25, y: 4, z: 0.25};
     let ballValues = {radius: 0.3, segments: 32};
-    let cradleMeshPosition = {x: 0, y: -2, z: 0};
+    let cradleMeshPosition = {x: 0, y: 10, z: 0};
     let cradleMesh = new THREE.Group();
     cradleMesh.name = "cradleMesh";
     cradleMesh.position.set( cradleMeshPosition.x, cradleMeshPosition.y, cradleMeshPosition.z);
@@ -1376,32 +1380,28 @@ function arrow(position = {x:0, y:10, z:0}) {
 
 
 function spiral() {
-    const numTurns = 50;
-    const height = numTurns/10;
+    const numTurns = 10;
+    const height = numTurns/5;
     const boxSize = 0.05; // Size of each box
     const radius = 0.5;    // Radius of the spiral
     let spiralMesh = new THREE.Group();
-
+    spiralMesh.position.set(-10, 10, 10);
+    let spiralShape = new Ammo.btCompoundShape();
+    const materialDarkGrey = new THREE.MeshStandardMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
+    const boxMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
+    const boxGeometry = new THREE.BoxGeometry(boxSize*10, boxSize, boxSize);
     for (let i = 0; i < numTurns * 20; i++) {
-        const angle = (i / 200) * Math.PI * 2; // Full circle for each turn
+        const angle = (i / 40) * Math.PI * 2; // Full circle for each turn
         const x = radius * Math.cos(angle);
         const y = (height / (numTurns * 20)) * i;
         const z = radius * Math.sin(angle);
-
-        const boxGeometry = new THREE.BoxGeometry(boxSize*10, boxSize, boxSize);
-        const boxMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
-        const box = new THREE.Mesh(boxGeometry, boxMaterial);
-
-        box.position.set(x, y, z);
-
+        const position = {x: x, y: y, z: z}
         const radialVector = new THREE.Vector3(x, 0, z);
         radialVector.normalize();
 
-        box.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), radialVector);
-
-        spiralMesh.add(box);
+        let spiralStep = createAmmoMesh('box', boxGeometry, boxSize, position, {x: radialVector.x, y: radialVector.y, z: radialVector.z}, materialDarkGrey, spiralMesh, spiralShape, "", "quaternion_norm");
     }
-    spiralMesh.position.set(-10, 0, 10)
+    let spiralBody = createAmmoRigidBody(spiralShape, spiralMesh, 1, 1, spiralMesh.position, 1);
     ri.scene.add(spiralMesh);
 }
 
