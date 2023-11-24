@@ -26,7 +26,8 @@ export const ri = {
     camera: undefined,
     raycaster: undefined,
     mouse: undefined,
-    balls: []
+    balls: [],
+    uniforms: {}
 }
 
 export let phy = {
@@ -190,8 +191,12 @@ function addToScene() {
     const loader = new THREE.TextureLoader(manager);
     ri.textures = {};
 
-    ri.textures.johnny = loader.load('static/johnny.png');
-    ri.textures.darkGrey = loader.load('static/darkGreyTexture.png')
+    ri.textures.johnny = loader.load('static/assets/textures/johnny.png');
+    // grass texture: https://opengameart.org/content/seamless-grass-texture
+    ri.textures.grass = loader.load('static/assets/textures/grass.png');
+    ri.textures.darkGrey = loader.load('static/assets/textures/darkGreyTexture.png')
+    ri.textures.water = loader.load('static/assets/textures/water.jpg')
+    ri.textures.cloud = loader.load('static/assets/textures/cloud.png')
 
     manager.onLoad = () => {
         addLights()
@@ -212,6 +217,7 @@ function animate(currentTime) {
 
     // Time interval for smooth movement regardless of FPS:
     let delta = ri.clock.getDelta();
+    let elapsed = ri.clock.getElapsedTime();
 
     updatePhysics(delta)
     updateLines();
@@ -220,7 +226,12 @@ function animate(currentTime) {
     keyPresses();
 
     TWEEN.update(currentTime);
+
+    let waterMesh = ri.scene.getObjectByName("myWater")
+    waterMesh.material.uniforms.uTime.value = elapsed;
 }
+
+
 
 
 function addLights() {
@@ -355,6 +366,7 @@ function createMesh(geometry, material, parent, name = "", translateY = 0, trans
 
 function threeAmmoObjects() {
     ground()
+    water()
 
     let ballPosition = {x: -10, y: 30.5, z: 10};
     let ballRadius = 3.5
@@ -421,9 +433,9 @@ function ground() {
 
     // THREE
     const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
-    const texture = ri.textures.johnny;
+    const texture = ri.textures.grass;
     texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-    texture.repeat.set(100,100);
+    texture.repeat.set(10,10);
     const material = new THREE.MeshStandardMaterial({
         map: texture,
         side: THREE.DoubleSide});
@@ -438,6 +450,86 @@ function ground() {
     // AMMO
     let shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
     createAmmoRigidBody(shape, mesh, 0.7, 0.8, position, 0);
+}
+
+
+function water() {
+    let position = {x: 0, y: -2, z: 0};
+    let waterTexture = ri.textures.water;
+    waterTexture.wrapS = waterTexture.wrapT = THREE.RepeatWrapping
+    waterTexture.repeat.set(5,5);
+    let noiseTexture = ri.textures.cloud;
+    noiseTexture.wrapS = noiseTexture.wrapT = THREE.RepeatWrapping;
+    noiseTexture.repeat.set(5,5);
+
+    let colorDebugObject = {}
+    colorDebugObject.depthColor = '#186691';
+    colorDebugObject.surfaceColor = '#9bd8ff';
+
+    //Definerer ekstra uniform-variabler:
+    ri.uniforms = {
+        baseTexture: { type: "t", value: waterTexture },
+        baseSpeed: { type: "f", value: 0.05 },
+        noiseTexture: { type: "t", value: noiseTexture },
+        noiseScale: { type: "f", value: 0.25 },
+        alpha: { type: "f", value: 1.0 },
+
+        uBigWavesElevation: { value: 0.7 },
+        uBigWavesFrequency: { value: new THREE.Vector2(0.09, 0.1) },
+        uTime: { value: 0 },
+        uBigWavesSpeed: { value: 0.45 },
+        uDepthColor: { value: new THREE.Color(colorDebugObject.depthColor) },
+        uSurfaceColor: { value: new THREE.Color(colorDebugObject.surfaceColor) },
+        uColorOffset: { value: 0.08 },
+        uColorMultiplier: { value: 5 },
+
+        uSmallWavesElevation: { value: 0.02 },
+        uSmallWavesFrequency: { value: 3 },
+        uSmallWavesSpeed: { value: 0.6 },
+        uSmallIterations: { value: 2 },
+    };
+
+    let waterMaterial = new THREE.ShaderMaterial({
+        uniforms: ri.uniforms,
+        vertexShader: document.getElementById('vertexshader').textContent,
+        fragmentShader: document.getElementById('fragmentshader').textContent,
+        side: THREE.DoubleSide,
+        transparent: true
+    });
+
+    let geometry = new THREE.PlaneGeometry(200, 200, 512, 512)
+
+    geometry.rotateX(-Math.PI/2);
+    let waterMesh = new THREE.Mesh(geometry, waterMaterial);
+    waterMesh.name = "myWater";
+    waterMesh.position.set(position.x, position.y, position.z)
+    // waterMesh.scale.set(10,1,10)
+    ri.scene.add(waterMesh);
+
+
+    ri.effectFolder = ri.lilGui.addFolder( 'Effekt' );
+    ri.effectFolder.close();
+    ri.effectFolder.add(waterMaterial.uniforms.baseSpeed, 'value').min(0).max(1).step(0.001).name('baseSpeed');
+    ri.effectFolder.add(waterMaterial.uniforms.noiseScale, 'value').min(0).max(1).step(0.001).name('noiseScale');
+
+    ri.waweFolder = ri.lilGui.addFolder( 'Bølger' );
+    ri.waweFolder.close();
+    ri.waweFolder.add(waterMaterial.uniforms.uBigWavesFrequency.value, 'x').min(0).max(0.5).step(0.001).name('uBigWavesFrequencyX');
+    ri.waweFolder.add(waterMaterial.uniforms.uBigWavesElevation, 'value').min(0).max(2).step(0.001).name('uBigWavesElevation');
+    ri.waweFolder.add(waterMaterial.uniforms.uBigWavesFrequency.value, 'y').min(0).max(0.5).step(0.001).name('uBigWavesFrequencyY');
+    ri.waweFolder.add(waterMaterial.uniforms.uBigWavesSpeed, 'value').min(0).max(4).step(0.001).name('uBigWavesSpeed');
+
+    ri.waweFolder.addColor(colorDebugObject, 'depthColor').onChange(() => { waterMaterial.uniforms.uDepthColor.value.set(colorDebugObject.depthColor) })
+    ri.waweFolder.addColor(colorDebugObject, 'surfaceColor').onChange(() => { waterMaterial.uniforms.uSurfaceColor.value.set(colorDebugObject.surfaceColor) })
+
+    // const perlinFolder = ri.lilGui.addFolder( 'Perlin noise' );
+    ri.waweFolder.add(waterMaterial.uniforms.uSmallWavesElevation, 'value').min(0).max(1).step(0.001).name('uSmallWavesElevation')
+    ri.waweFolder.add(waterMaterial.uniforms.uSmallWavesFrequency, 'value').min(0).max(30).step(0.001).name('uSmallWavesFrequency')
+    ri.waweFolder.add(waterMaterial.uniforms.uSmallWavesSpeed, 'value').min(0).max(4).step(0.001).name('uSmallWavesSpeed')
+    ri.waweFolder.add(waterMaterial.uniforms.uSmallIterations, 'value').min(0).max(5).step(1).name('uSmallIterations')
+
+
+
 }
 
 
@@ -526,26 +618,6 @@ function tableMesh(groupMesh, compoundShape, size, rotation, height, name = 'tab
     position.x = xOffset;
     geometry = new THREE.BoxGeometry(width, height, width);
     createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
-}
-
-function tableTest() {
-    let position = {x: 20, y: 5, z: 4};
-    let size = {x: 6, y: 0.3, z: 10};
-    let rotation = {x: 0, y: 0, z: 0};
-
-    let groupMesh = new THREE.Group();
-    groupMesh.rotateY(degToRad(0));
-    let compoundShape = new Ammo.btCompoundShape();
-
-    tableMesh(groupMesh, compoundShape, size, rotation, position.y, 'tableTest',  0x823c17)
-
-    ri.scene.add(groupMesh);
-
-    createAmmoRigidBody(compoundShape, groupMesh, 0.5, 0.5, position, 20);
-
-    // position.y += 15
-    // position.x += 0
-    // ball(position, 1, 30)
 }
 
 
@@ -705,7 +777,7 @@ function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, t
     } else if (shapeType == 'sphere') {
         shape = new Ammo.btSphereShape(size.radius);
     } else if (shapeType == 'triangleShape') {
-        shape = generateTriangleShape(size, true)
+        shape = generateTriangleShape(size, false)
     }
 
     let mesh = new THREE.Mesh(geometry, texture);
@@ -969,16 +1041,16 @@ function golfclub() {
 
 function cannon() {
     //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra: https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/springGeneric6DofSpringConstraint.js?ref_type=heads
-    let position = {x: 0, y: 10, z: 10};
-    let rotationDegree =0*Math.PI/180;
-    let bottomSpringValues = {x: 1, y: 1, z: 0.2};
-    let topSpringValues = {x: 1, y: 1, z: 0.2};
+    let position = {x: 47, y: 6, z: 20};
+    let rotationDegree =75*Math.PI/180;
+    let bottomSpringValues = {x: 0.5, y: 0.5, z: 0.2};
+    let topSpringValues = {x: 0.5, y: 0.5, z: 0.2};
 
     const materialJohnny = new THREE.MeshStandardMaterial({map: ri.textures.johnny, side: THREE.DoubleSide});
     const colorGrey = new THREE.MeshStandardMaterial({color: 0xffffff, side: THREE.DoubleSide});
 
     let bottomSpringMesh = new THREE.Group();
-    bottomSpringMesh.position.set(position.x, position.y+0.1 ,position.z);
+    bottomSpringMesh.position.set(position.x, position.y ,position.z);
     bottomSpringMesh.rotateX(rotationDegree)
     let bottomSpringShape = new Ammo.btCompoundShape();
     
@@ -986,7 +1058,7 @@ function cannon() {
     let bottomSpring = createAmmoMesh('cylinder', bottomSpringGeo, bottomSpringValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, materialJohnny, bottomSpringMesh, bottomSpringShape);
 
     let topSpringMesh = new THREE.Group();
-    topSpringMesh.position.set(position.x, position.y+0.2 ,position.z);
+    topSpringMesh.position.set(position.x, position.y+0.1 ,position.z);
     topSpringMesh.rotateX(rotationDegree)
     let topSpringShape = new Ammo.btCompoundShape();
     let topSpringGeo = new THREE.CylinderGeometry(topSpringValues.x, topSpringValues.y, topSpringValues.z, 36, 1);
@@ -997,7 +1069,7 @@ function cannon() {
     rigidTopSpring.setActivationState(4);
     rigidBottomSpring.setActivationState(4);
     
-    let spring = new Ammo.btGeneric6DofSpringConstraint(rigidTopSpring, rigidBottomSpring, bottomSpring.transform, topSpring2.transform, true);
+    let spring = new Ammo.btGeneric6DofSpringConstraint(rigidTopSpring, rigidBottomSpring, bottomSpring.transform, topSpring2.transform, false);
     spring.name = "cannonSpring";
 
     spring.setLinearLowerLimit(new Ammo.btVector3(0, 1, 0));
@@ -1006,9 +1078,9 @@ function cannon() {
     spring.setAngularUpperLimit(new Ammo.btVector3(0, 0, 0));
 
     spring.enableSpring(1, false);
-    spring.setStiffness(1, 18000);
+    spring.setStiffness(1, 5000);
     spring.setDamping(1, 100);
-    spring.setEquilibriumPoint(1, 4);
+    spring.setEquilibriumPoint(1, 2);
     
     phy.ammoPhysicsWorld.addConstraint(spring, false);
     ri.springs.cannonSpring = spring;
@@ -1023,10 +1095,9 @@ function cannon() {
         roughness: 0.3});
 
     
-    let height = 10;
-    let radius = 1.5;
+    let height = 8;
+    let radius = 1;
     let points = [
-        new THREE.Vector2(radius*0.9, 0),
         new THREE.Vector2(radius, height*0.1),
         new THREE.Vector2(radius, height*0.3),
         new THREE.Vector2(radius*0.8, height*0.5),
@@ -1034,12 +1105,12 @@ function cannon() {
         new THREE.Vector2(radius*0.8, height*0.8),
         new THREE.Vector2(radius*0.9, height*0.8),
         new THREE.Vector2(radius*0.9, height*0.9),
-        new THREE.Vector2(radius*0.4, height*0.9),
+        new THREE.Vector2(radius*0.6, height*0.9),
     ];
 
-    let cannonBodyGeo = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
-    //createAmmoMesh('triangleShape', geometry, mesh, {x: i * size.x, y: i * offset, z: -size.z/2}, {x: 0, y: 0, z: 0},material, stepMesh1, compoundShape1, 'step1')
+    
 
+    let cannonBodyGeo = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
     let cannonBodyMesh = new THREE.Mesh(cannonBodyGeo, material);
     cannonBodyMesh.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), rotationDegree)
     cannonBodyMesh.name = 'cannonBody';
@@ -1049,31 +1120,21 @@ function cannon() {
     cannonBodyMesh.material.transparent = true;
     cannonBodyMesh.material.opacity = 1;
 
-    /*let rotation = new THREE.Quaternion();
-    rotation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), rotationDegree)
-    
-    let transform = new Ammo.btTransform();
-    transform.setIdentity();
-    transform.setOrigin(new Ammo.btVector3(0, 0, 0));
-    transform.setRotation(new Ammo.btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));*/
-
-    createTriangleShapeAddToCompound(cannonBodyShape, cannonBodyMesh);
+   
+    createAmmoMesh('triangleShape', cannonBodyGeo, cannonBodyMesh, {x: 0, y: -1.5, z: 0}, {x: 0, y: 0, z: 0}, material, bottomSpringMesh, cannonBodyShape, 'cannonBody')
     createAmmoRigidBody(cannonBodyShape, cannonBodyMesh, 0.4, 0.6, {x: position.x, y: position.y, z: position.z}, 0);
 
 
-    //bottomSpringMesh.add(cannonBodyMesh);
-    //bottomSpringShape.addChildShape(transform, cannonBodyShape);
-
     //cannonEnd
-    let cannonEndValues = {radius: 1.35, segments: 32}
+    let cannonEndValues = {radius: 1, segments: 32}
     let cannonEndGeo = new THREE.SphereGeometry(cannonEndValues.radius, cannonEndValues.segments, cannonEndValues.segments, 0 , Math.PI);
-    let cannonEnd = createAmmoMesh('sphere', cannonEndGeo, cannonEndValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, colorGrey, bottomSpringMesh, bottomSpringShape);
-    ri.scene.add(cannonBodyMesh);
+    let cannonEnd = createAmmoMesh('sphere', cannonEndGeo, cannonEndValues, {x: 0, y: -0.5, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, material, bottomSpringMesh, bottomSpringShape);
+    
     ri.scene.add(bottomSpringMesh);
     ri.scene.add(topSpringMesh);
 
-    let ballPosition = {x: position.x, y: 20, z: position.z};
-    let ballRadius = 0.8
+    let ballPosition = {x: position.x, y: 6, z: position.z};
+    let ballRadius = 0.4
     let ballMass = 10
     ball(ballPosition, ballRadius, ballMass);
 
