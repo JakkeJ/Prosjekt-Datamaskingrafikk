@@ -27,6 +27,7 @@ export const ri = {
     raycaster: undefined,
     mouse: undefined,
     balls: [],
+    textures: {},
     uniforms: {}
 }
 
@@ -188,8 +189,32 @@ function renderCamera() {
 
 function addToScene() {
     const manager = new THREE.LoadingManager();
+    const cubeLoader = new THREE.CubeTextureLoader();
+    // Skybox textures: https://opengameart.org/content/cloudy-skyboxes
+    let paths = [
+        'static/assets/skybox/bluecloud',
+        'static/assets/skybox/browncloud',
+        'static/assets/skybox/graycloud',
+        'static/assets/skybox/yellowcloud'
+    ]
+    let path = paths[3]
+    // ri.textures.skybokTexture =
+    cubeLoader.load(
+        [
+            path + '_ft.jpg',
+            path + '_bk.jpg',
+            path + '_up.jpg',
+            path + '_dn.jpg',
+            path + '_rt.jpg',
+            path + '_lf.jpg',
+        ],
+        (environmentMapTexture) => {
+            ri.scene.background = environmentMapTexture;
+        }
+    )
+
     const loader = new THREE.TextureLoader(manager);
-    ri.textures = {};
+
 
     ri.textures.johnny = loader.load('static/assets/textures/johnny.png');
     // grass texture: https://opengameart.org/content/seamless-grass-texture
