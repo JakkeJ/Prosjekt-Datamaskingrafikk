@@ -385,6 +385,7 @@ function threeAmmoObjects() {
     cannon();
     golfclub();
     newtonCradle();
+    spiral();
     
     // let position = {x: 10, y: 3, z: 10};
     let position = {x: 15, y: 5, z: -10};
@@ -760,7 +761,6 @@ function domino(position, rotation = 0, starter = false) {
 
 }
 
-
 function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, texture, groupMesh, compoundShape, name = "") {
     let shape;
     
@@ -991,10 +991,10 @@ function golfclub() {
     golfClubStandMesh.position.set( position.x, position.y, position.z);
     let golfClubStandShape = new Ammo.btCompoundShape();
     
-    let hingeValues = {x: 0.4, y: 0.4, z: 8}; 
+    let hingeValues = {x: 0.4, y: 0.4, z: 8};
     let LegValues = {x: 1.4, y: 17, z: 1.4};
-    let topBarValues = {x: 0.4, y: 0.4, z: 6}; 
-    let stopperHingeValues = {x: 0.1, y: 0.1, z: 1}; 
+    let topBarValues = {x: 0.4, y: 0.4, z: 6};
+    let stopperHingeValues = {x: 0.1, y: 0.1, z: 1};
 
     let hingeGeo = new THREE.CylinderGeometry(hingeValues.x, hingeValues.y, hingeValues.z, 36, 1);
     let hinge = createAmmoMesh('cylinder', hingeGeo, hingeValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, colorGrey, golfClubStandMesh, golfClubStandShape);
@@ -1444,6 +1444,37 @@ function arrow(position = {x:0, y:10, z:0}) {
 
     tween1.start();
     tween2.start();
+}
+
+
+function spiral() {
+    const numTurns = 50;
+    const height = numTurns/10;
+    const boxSize = 0.05; // Size of each box
+    const radius = 0.5;    // Radius of the spiral
+    let spiralMesh = new THREE.Group();
+
+    for (let i = 0; i < numTurns * 20; i++) {
+        const angle = (i / 200) * Math.PI * 2; // Full circle for each turn
+        const x = radius * Math.cos(angle);
+        const y = (height / (numTurns * 20)) * i;
+        const z = radius * Math.sin(angle);
+
+        const boxGeometry = new THREE.BoxGeometry(boxSize*10, boxSize, boxSize);
+        const boxMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
+        const box = new THREE.Mesh(boxGeometry, boxMaterial);
+
+        box.position.set(x, y, z);
+
+        const radialVector = new THREE.Vector3(x, 0, z);
+        radialVector.normalize();
+
+        box.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), radialVector);
+
+        spiralMesh.add(box);
+    }
+    spiralMesh.position.set(-10, 0, 10)
+    ri.scene.add(spiralMesh);
 }
 
 function steps(position, rotation = 0, numberOfSteps = 6) {
