@@ -26,7 +26,8 @@ export const ri = {
     camera: undefined,
     raycaster: undefined,
     mouse: undefined,
-    balls: []
+    balls: [],
+    uniforms: {}
 }
 
 export let phy = {
@@ -190,8 +191,12 @@ function addToScene() {
     const loader = new THREE.TextureLoader(manager);
     ri.textures = {};
 
-    ri.textures.johnny = loader.load('static/johnny.png');
-    ri.textures.darkGrey = loader.load('static/darkGreyTexture.png')
+    ri.textures.johnny = loader.load('static/assets/textures/johnny.png');
+    // grass texture: https://opengameart.org/content/seamless-grass-texture
+    ri.textures.grass = loader.load('static/assets/textures/grass.png');
+    ri.textures.darkGrey = loader.load('static/assets/textures/darkGreyTexture.png')
+    ri.textures.water = loader.load('static/assets/textures/water.jpg')
+    ri.textures.cloud = loader.load('static/assets/textures/cloud.png')
 
     manager.onLoad = () => {
         addLights()
@@ -212,6 +217,7 @@ function animate(currentTime) {
 
     // Time interval for smooth movement regardless of FPS:
     let delta = ri.clock.getDelta();
+    let elapsed = ri.clock.getElapsedTime();
 
     updatePhysics(delta)
     updateLines();
@@ -220,7 +226,12 @@ function animate(currentTime) {
     keyPresses();
 
     TWEEN.update(currentTime);
+
+    let waterMesh = ri.scene.getObjectByName("myWater")
+    waterMesh.material.uniforms.uTime.value = elapsed;
 }
+
+
 
 
 function addLights() {
@@ -355,6 +366,7 @@ function createMesh(geometry, material, parent, name = "", translateY = 0, trans
 
 function threeAmmoObjects() {
     ground()
+    water()
 
     let ballPosition = {x: -10, y: 3.5, z: 10};
     let ballRadius = 0.5
@@ -420,9 +432,9 @@ function ground() {
 
     // THREE
     const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
-    const texture = ri.textures.johnny;
+    const texture = ri.textures.grass;
     texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-    texture.repeat.set(100,100);
+    texture.repeat.set(10,10);
     const material = new THREE.MeshStandardMaterial({
         map: texture,
         side: THREE.DoubleSide});
@@ -437,6 +449,86 @@ function ground() {
     // AMMO
     let shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
     createAmmoRigidBody(shape, mesh, 0.7, 0.8, position, 0);
+}
+
+
+function water() {
+    let position = {x: 0, y: -2, z: 0};
+    let waterTexture = ri.textures.water;
+    waterTexture.wrapS = waterTexture.wrapT = THREE.RepeatWrapping
+    waterTexture.repeat.set(5,5);
+    let noiseTexture = ri.textures.cloud;
+    noiseTexture.wrapS = noiseTexture.wrapT = THREE.RepeatWrapping;
+    noiseTexture.repeat.set(5,5);
+
+    let colorDebugObject = {}
+    colorDebugObject.depthColor = '#186691';
+    colorDebugObject.surfaceColor = '#9bd8ff';
+
+    //Definerer ekstra uniform-variabler:
+    ri.uniforms = {
+        baseTexture: { type: "t", value: waterTexture },
+        baseSpeed: { type: "f", value: 0.05 },
+        noiseTexture: { type: "t", value: noiseTexture },
+        noiseScale: { type: "f", value: 0.25 },
+        alpha: { type: "f", value: 1.0 },
+
+        uBigWavesElevation: { value: 0.7 },
+        uBigWavesFrequency: { value: new THREE.Vector2(0.09, 0.1) },
+        uTime: { value: 0 },
+        uBigWavesSpeed: { value: 0.45 },
+        uDepthColor: { value: new THREE.Color(colorDebugObject.depthColor) },
+        uSurfaceColor: { value: new THREE.Color(colorDebugObject.surfaceColor) },
+        uColorOffset: { value: 0.08 },
+        uColorMultiplier: { value: 5 },
+
+        uSmallWavesElevation: { value: 0.02 },
+        uSmallWavesFrequency: { value: 3 },
+        uSmallWavesSpeed: { value: 0.6 },
+        uSmallIterations: { value: 2 },
+    };
+
+    let waterMaterial = new THREE.ShaderMaterial({
+        uniforms: ri.uniforms,
+        vertexShader: document.getElementById('vertexshader').textContent,
+        fragmentShader: document.getElementById('fragmentshader').textContent,
+        side: THREE.DoubleSide,
+        transparent: true
+    });
+
+    let geometry = new THREE.PlaneGeometry(200, 200, 512, 512)
+
+    geometry.rotateX(-Math.PI/2);
+    let waterMesh = new THREE.Mesh(geometry, waterMaterial);
+    waterMesh.name = "myWater";
+    waterMesh.position.set(position.x, position.y, position.z)
+    // waterMesh.scale.set(10,1,10)
+    ri.scene.add(waterMesh);
+
+
+    ri.effectFolder = ri.lilGui.addFolder( 'Effekt' );
+    ri.effectFolder.close();
+    ri.effectFolder.add(waterMaterial.uniforms.baseSpeed, 'value').min(0).max(1).step(0.001).name('baseSpeed');
+    ri.effectFolder.add(waterMaterial.uniforms.noiseScale, 'value').min(0).max(1).step(0.001).name('noiseScale');
+
+    ri.waweFolder = ri.lilGui.addFolder( 'Bølger' );
+    ri.waweFolder.close();
+    ri.waweFolder.add(waterMaterial.uniforms.uBigWavesFrequency.value, 'x').min(0).max(0.5).step(0.001).name('uBigWavesFrequencyX');
+    ri.waweFolder.add(waterMaterial.uniforms.uBigWavesElevation, 'value').min(0).max(2).step(0.001).name('uBigWavesElevation');
+    ri.waweFolder.add(waterMaterial.uniforms.uBigWavesFrequency.value, 'y').min(0).max(0.5).step(0.001).name('uBigWavesFrequencyY');
+    ri.waweFolder.add(waterMaterial.uniforms.uBigWavesSpeed, 'value').min(0).max(4).step(0.001).name('uBigWavesSpeed');
+
+    ri.waweFolder.addColor(colorDebugObject, 'depthColor').onChange(() => { waterMaterial.uniforms.uDepthColor.value.set(colorDebugObject.depthColor) })
+    ri.waweFolder.addColor(colorDebugObject, 'surfaceColor').onChange(() => { waterMaterial.uniforms.uSurfaceColor.value.set(colorDebugObject.surfaceColor) })
+
+    // const perlinFolder = ri.lilGui.addFolder( 'Perlin noise' );
+    ri.waweFolder.add(waterMaterial.uniforms.uSmallWavesElevation, 'value').min(0).max(1).step(0.001).name('uSmallWavesElevation')
+    ri.waweFolder.add(waterMaterial.uniforms.uSmallWavesFrequency, 'value').min(0).max(30).step(0.001).name('uSmallWavesFrequency')
+    ri.waweFolder.add(waterMaterial.uniforms.uSmallWavesSpeed, 'value').min(0).max(4).step(0.001).name('uSmallWavesSpeed')
+    ri.waweFolder.add(waterMaterial.uniforms.uSmallIterations, 'value').min(0).max(5).step(1).name('uSmallIterations')
+
+
+
 }
 
 
@@ -525,26 +617,6 @@ function tableMesh(groupMesh, compoundShape, size, rotation, height, name = 'tab
     position.x = xOffset;
     geometry = new THREE.BoxGeometry(width, height, width);
     createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
-}
-
-function tableTest() {
-    let position = {x: 20, y: 5, z: 4};
-    let size = {x: 6, y: 0.3, z: 10};
-    let rotation = {x: 0, y: 0, z: 0};
-
-    let groupMesh = new THREE.Group();
-    groupMesh.rotateY(degToRad(0));
-    let compoundShape = new Ammo.btCompoundShape();
-
-    tableMesh(groupMesh, compoundShape, size, rotation, position.y, 'tableTest',  0x823c17)
-
-    ri.scene.add(groupMesh);
-
-    createAmmoRigidBody(compoundShape, groupMesh, 0.5, 0.5, position, 20);
-
-    // position.y += 15
-    // position.x += 0
-    // ball(position, 1, 30)
 }
 
 
