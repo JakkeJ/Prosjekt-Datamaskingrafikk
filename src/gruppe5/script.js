@@ -1460,9 +1460,9 @@ function spiral() {
         const radialVector = new THREE.Vector3(x, 0, z);
         radialVector.normalize();
 
-        let spiralStep = createAmmoMesh('box', boxGeometry, boxSize, position, {x: radialVector.x, y: radialVector.y, z: radialVector.z}, materialDarkGrey, spiralMesh, spiralShape, "", "quaternion_norm");
+        let spiralStep = createAmmoMesh('box', boxGeometry, {x: 0, y: 0, z: 0}, position, {x: radialVector.x, y: radialVector.y, z: radialVector.z}, materialDarkGrey, spiralMesh, spiralShape, "", "quaternion_norm");
     }
-    let spiralBody = createAmmoRigidBody(spiralShape, spiralMesh, 1, 1, spiralMesh.position, 1);
+    let spiralBody = createAmmoRigidBody(spiralShape, spiralMesh, 1, 1, spiralMesh.position, 0);
     ri.scene.add(spiralMesh);
 }
 
