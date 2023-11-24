@@ -419,14 +419,14 @@ function threeAmmoObjects() {
     position.x -= 1
     position.y -= 0.7
     // position = {x: 15, y: 3, z: -10};
-    rails(position, 180, 10, 7)
+    rails(position, 180, 10, 7, true)
 
 
-    position.x += 6
+    position.x += 7
     position.y -= 1.5
     // rails(position, 180, -5, 15)
 
-    rails(position, 180, -0, 15)
+    rails(position, 180, -0, 15, false)
 
     position.y += 1
     position.x += 5
@@ -478,6 +478,7 @@ function ground() {
 }
 
 
+// Kode og shader hentet fra kodeeksempel modul8/shaderMaterial5
 function water() {
     let position = {x: 0, y: -2, z: 0};
     let waterTexture = ri.textures.water;
@@ -685,11 +686,11 @@ function funnel(position, upperRadius = 2.7, lowerRadius = 0.5, height = 2) {
     let railPosition = {x: position.x + upperRadius*0.9, y: position.y + height + 1, z: position.z + 5}
     rails(railPosition, -90, 10, 5)
     let ballPosition = {x: railPosition.x, y: railPosition.y + 0.6, z: railPosition.z - 0.2}
-    ball(ballPosition, lowerRadius*0.9, 5, 0.05)
+    ball(ballPosition, lowerRadius*0.9, 5, 0.85)
 }
 
 
-function rails(position, rotation = 180, tilt = 20, length = 4) {
+function rails(position, rotation = 180, tilt = 20, length = 4, guardrails = false) {
     let material = new THREE.MeshStandardMaterial({
         color: 0xFFFFFF,
         metalness: 0.5,
@@ -715,6 +716,16 @@ function rails(position, rotation = 180, tilt = 20, length = 4) {
     // Rail 2:
     railPosition.z = -distance/2;
     createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
+
+    if (guardrails) {
+        railPosition = {x: distance, y: length/2, z: distance * 1.0};
+        // Guardrail 1:
+        createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
+
+        // Guardrail 2:
+        railPosition.z = -distance * 1.0;
+        createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
+    }
 
     ri.scene.add(groupMesh);
 
