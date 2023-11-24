@@ -406,7 +406,7 @@ function threeAmmoObjects() {
     // dominoPosition = {x: 10, y: 8, z: 10};
     // domino(dominoPosition, 30, true)
 
-    // plinko();
+    plinko();
     cannon();
     golfclub();
     newtonCradle();
@@ -1024,7 +1024,7 @@ function golfclub() {
     let clubGeo = new THREE.BoxGeometry(clubValues.x, clubValues.y, clubValues.z);
     let club = createAmmoMesh('box', clubGeo, clubValues, {x: 0, y: -5.4, z: 0.6}, {x: 0, y: 0, z: 0}, colorGrey, golfClubMesh, golfClubShape);
     
-    let golfClubRigid = createAmmoRigidBody(golfClubShape, golfClubMesh, 0, 0, golfClubMesh.position, 8);
+    let golfClubRigid = createAmmoRigidBody(golfClubShape, golfClubMesh, 0, 0, golfClubMesh.position, 20);
 
 
     let golfClubStandMesh = new THREE.Group();
@@ -1067,7 +1067,7 @@ function golfclub() {
     let stopperValues = {x: 0.2, y: 0.2, z: 10}; 
     let stopperGeo = new THREE.CylinderGeometry(stopperValues.x, stopperValues.y, stopperValues.z, 36, 1);
     let stopper = createAmmoMesh('cylinder', stopperGeo, stopperValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, colorGrey, golfClubStopperMesh, golfClubStopperShape);
-    let golfClubStopperRigid = createAmmoRigidBody(golfClubStopperShape, golfClubStopperMesh, 0, 0, golfClubStopperMesh.position, 5);
+    let golfClubStopperRigid = createAmmoRigidBody(golfClubStopperShape, golfClubStopperMesh, 0, 0, golfClubStopperMesh.position, 10);
     
     
     ri.scene.add(golfClubStopperMesh);
@@ -1496,9 +1496,9 @@ function spiral() {
         const radialVector = new THREE.Vector3(x, 0, z);
         radialVector.normalize();
 
-        let spiralStep = createAmmoMesh('box', boxGeometry, boxSize, position, {x: radialVector.x, y: radialVector.y, z: radialVector.z}, materialDarkGrey, spiralMesh, spiralShape, "", "quaternion_norm");
+        let spiralStep = createAmmoMesh('box', boxGeometry, {x: 0, y: 0, z: 0}, position, {x: radialVector.x, y: radialVector.y, z: radialVector.z}, materialDarkGrey, spiralMesh, spiralShape, "", "quaternion_norm");
     }
-    let spiralBody = createAmmoRigidBody(spiralShape, spiralMesh, 1, 1, spiralMesh.position, 1);
+    let spiralBody = createAmmoRigidBody(spiralShape, spiralMesh, 1, 1, spiralMesh.position, 0);
     ri.scene.add(spiralMesh);
 }
 
