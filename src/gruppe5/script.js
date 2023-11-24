@@ -1401,6 +1401,7 @@ function spiral() {
 
         spiralMesh.add(box);
     }
+    spiralMesh.position.set(-10, 0, 10)
     ri.scene.add(spiralMesh);
 }
 
