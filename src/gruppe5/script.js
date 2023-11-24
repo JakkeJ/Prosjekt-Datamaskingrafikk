@@ -14,7 +14,7 @@ import {degToRad} from "three/src/math/MathUtils.js";
 import {
     createMovable,
     moveRigidBody,
-    moveRigidBodyAnimation
+    moveRigidBodyAnimation, rotateRigidBody
 } from "./movable.js";
 import {inflate} from "three/addons/libs/fflate.module.js";
 
@@ -72,9 +72,8 @@ function createThreeScene() {
     ri.scene.background = new THREE.Color(0xe4f3f0);
 
     ri.lilGui = new GUI();
-
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    ri.camera.position.set( 25, 10, -0 );
+    ri.camera.position.set( -14, 3.5, 13 );
     // ri.camera.position.set( 20, 10, -20 ); // Temp position
 
     ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
@@ -127,6 +126,22 @@ function keyPresses() {
     if (ri.currentlyPressedKeys['KeyS']) {	//S
         moveRigidBody(movableMesh,{x: 0, y: 0, z: 0.2});
     }
+
+    if (ri.currentlyPressedKeys['KeyT']) {
+        const spiral = ri.scene.getObjectByName("spiral");
+        // Create a quaternion for the incremental rotation
+        let deltaRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 80);
+
+        // Multiply the spiral's current quaternion by the incremental rotation
+        spiral.quaternion.multiply(deltaRotation);
+
+        // Extract the Euler rotation from the updated quaternion if needed
+        let eulerRotation = new THREE.Euler().setFromQuaternion(spiral.quaternion, 'XYZ');
+
+        // Apply the rotation to the rigid body
+        rotateRigidBody(spiral, eulerRotation);
+    }
+
     const steps =  ri.scene.getObjectByName("steps");
     let stepsStarted = false
     if (ri.currentlyPressedKeys['KeyE']) {	//E
@@ -393,8 +408,8 @@ function threeAmmoObjects() {
     ground()
     water()
 
-    let ballPosition = {x: -10, y: 30.5, z: 10};
-    let ballRadius = 3.5
+    let ballPosition = {x: -9.4, y: 8.5, z: 11};
+    let ballRadius = 0.16
     let ballMass = 10
     ball(ballPosition, ballRadius, ballMass, 0.1, 0.5)
 
@@ -414,39 +429,42 @@ function threeAmmoObjects() {
     
     // let position = {x: 10, y: 3, z: 10};
     let position = {x: 15, y: 5, z: -10};
-    funnel(position, 2.7, 0.3, 2)
+    funnel(position, 2.7, 0.3, 2);
 
-    position.x -= 1
-    position.y -= 0.7
+    position.x -= 1;
+    position.y -= 0.7;
     // position = {x: 15, y: 3, z: -10};
-    rails(position, 180, 10, 7)
+    rails(position, 180, 10, 7);
 
 
-    position.x += 6
-    position.y -= 1.5
-    // rails(position, 180, -5, 15)
+    position.x += 6;
+    position.y -= 1.5;
+    // rails(position, 180, -5, 15);
 
-    rails(position, 180, -0, 15)
+    rails(position, 180, -0, 15);
 
-    position.y += 1
-    position.x += 5
-    //ball(position, 0.5, 5)
+    position.y += 1;
+    position.x += 5;
+    //ball(position, 0.5, 5);
 
-    position.x += 1
-    //ball(position, 0.5, 5)
+    position.x += 1;
+    //ball(position, 0.5, 5);
 
-    position.x += 1
-    //ball(position, 0.5, 5)
+    position.x += 1;
+    //ball(position, 0.5, 5);
 
-    position.x += 1
-    ball(position, 0.5, 5)
+    position.x += 1;
+    ball(position, 0.5, 5);
 
     position = {x: -30, y: 2, z: 20};
-    // cube(position, {x:1,y:1,z:1}, 0,'cube', 2)
-    steps(position,90, 10)
+    // cube(position, {x:1,y:1,z:1}, 0,'cube', 2);
+    steps(position,90, 10);
 
     position = {x: 10, y: 0, z: 5};
-    ball(position, 0.2, 0)
+    ball(position, 0.2, 0);
+
+    position = {x: -9.3, y: 3.35, z: 10};
+    rails(position, 90, -5, 15);
 
     // arrow()
 }
@@ -820,12 +838,18 @@ function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, t
 
 
     let rotation = new THREE.Quaternion();
-    if (meshRotation.x != 0) {
+    if (meshRotation.x != 0 && rotateType !== 'quaterion_norm') {
         rotation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), meshRotation.x)}
-    if (meshRotation.y != 0) {
+    if (meshRotation.y != 0 && rotateType !== 'quaterion_norm') {
         rotation.setFromAxisAngle(new THREE.Vector3(0, 1, 0), meshRotation.y)}
-    if (meshRotation.z != 0) {
+    if (meshRotation.z != 0 && rotateType !== 'quaterion_norm') {
         rotation.setFromAxisAngle(new THREE.Vector3(0, 0, 1), meshRotation.z)}
+    if (meshRotation.x != 0 && rotateType === 'quaterion_norm') {
+        rotation.setFromUnitVectors(new THREE.Vector3(1, 0, 0), meshRotation.x)}
+    if (meshRotation.y != 0 && rotateType === 'quaterion_norm') {
+        rotation.setFromUnitVectors(new THREE.Vector3(0, 1, 0), meshRotation.y)}
+    if (meshRotation.z != 0 && rotateType === 'quaterion_norm') {
+        rotation.setFromUnitVectors(new THREE.Vector3(0, 0, 1), meshRotation.z)}
 
     let transform = new Ammo.btTransform();
     transform.setIdentity();
@@ -1466,28 +1490,54 @@ function arrow(position = {x:0, y:10, z:0}) {
 
 
 function spiral() {
-    const numTurns = 10;
+    const materialDarkGrey = new THREE.MeshStandardMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
+    const transparent = new THREE.MeshStandardMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
+    const numTurns = 20;
     const height = numTurns/5;
-    const boxSize = 0.05; // Size of each box
+    const boxSize = {x: 0.1*10, y: 0.1, z: 0.1}; // Size of each box
     const radius = 0.5;    // Radius of the spiral
     let spiralMesh = new THREE.Group();
-    spiralMesh.position.set(-10, 10, 10);
+    spiralMesh.name = "spiral"
+    spiralMesh.position.set(-10, 0, 10);
     let spiralShape = new Ammo.btCompoundShape();
-    const materialDarkGrey = new THREE.MeshStandardMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
-    const boxMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
-    const boxGeometry = new THREE.BoxGeometry(boxSize*10, boxSize, boxSize);
+
+    let centerCylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 3.4, 32, 32, false);
+    let centerCylinderAmmoMesh = createAmmoMesh('cylinder', centerCylinderGeometry, {x: 0, y: 0, z: 0}, {x: 0, y: 1.7, z: 0}, {x: 0, y: 0, z: 0}, materialDarkGrey, spiralMesh, spiralShape, "")
+
+    const boxGeometry = new THREE.BoxGeometry(boxSize.x, boxSize.y, boxSize.z);
+    const wallBoxGeometry = new THREE.BoxGeometry(boxSize.y, boxSize.x, boxSize.z); // Adjust dimensions for vertical box
     for (let i = 0; i < numTurns * 20; i++) {
         const angle = (i / 40) * Math.PI * 2; // Full circle for each turn
         const x = radius * Math.cos(angle);
         const y = (height / (numTurns * 20)) * i;
         const z = radius * Math.sin(angle);
-        const position = {x: x, y: y, z: z}
+        const position = {x: x, y: y, z: z};
         const radialVector = new THREE.Vector3(x, 0, z);
         radialVector.normalize();
+        const remainingHeight = height - position.y;
+        const wallBoxHeight = Math.min(boxSize * 10, remainingHeight);
 
-        let spiralStep = createAmmoMesh('box', boxGeometry, {x: 0, y: 0, z: 0}, position, {x: radialVector.x, y: radialVector.y, z: radialVector.z}, materialDarkGrey, spiralMesh, spiralShape, "", "quaternion_norm");
+        // Create geometry for the wall box with the dynamic height
+        const wallBoxGeometry = new THREE.BoxGeometry(boxSize.y, wallBoxHeight, boxSize.y);
+
+        // Position for the wall box
+        const wallBoxPosition = {
+            x: position.x + radialVector.x * boxSize.y * 5,
+            y: position.y + wallBoxHeight / 2, // Center the box vertically based on its height
+            z: position.z + radialVector.z * boxSize.y * 5
+        };
+
+        // Orientation for the wall box
+        let wallBoxRotation = new THREE.Vector3(0, 0, 0); // Assuming vertical along the Y-axis
+
+        // Create and add the wall box
+        //let wallMesh = createAmmoMesh('box', wallBoxGeometry, {x: 0, y: 0, z: 0}, wallBoxPosition, wallBoxRotation, transparent, spiralMesh, spiralShape, "", "quaternion_norm");
+        let spiralStep = createAmmoMesh('box', boxGeometry, {x: 0, y: 0, z: 0}, position, {x: radialVector.x, y: radialVector.y, z: radialVector.z}, materialDarkGrey, spiralMesh, spiralShape, "step" + i, "quaternion_norm");
+        //wallMesh.mesh.material.transparent = true;
+        //wallMesh.mesh.material.opacity = 0.05;
+
     }
-    let spiralBody = createAmmoRigidBody(spiralShape, spiralMesh, 1, 1, spiralMesh.position, 0);
+    let spiralBody = createAmmoRigidBody(spiralShape, spiralMesh, 0.1, 0, spiralMesh.position, 0);
     ri.scene.add(spiralMesh);
 }
 
