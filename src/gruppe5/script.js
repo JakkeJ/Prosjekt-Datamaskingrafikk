@@ -180,9 +180,12 @@ function threeAmmoObjects() {
     // let position = {x: 10, y: 3, z: 10};
     position = {x: 15, y: 5, z: -10};
     funnel(position, 2.7, 0.3, 2)
+    position.y +=3
+    ball(position, 0.5, 2)
+    ball(position, 0.5, 2)
 
     position.x -= 1
-    position.y -= 0.7
+    position.y -= 3.7
     // position = {x: 15, y: 3, z: -10};
     rails(position, 180, 10, 7, true)
 
@@ -230,7 +233,7 @@ function threeAmmoObjects() {
 }
 
 
-function ball(position, radius = 0.3, mass = 5, restitution = 0.7, friction = 0.8) {
+function ball(position, radius = 0.3, mass = 5, restitution = 0.7, friction = 0.8, name = "ball") {
     // THREE
     const geometry = new THREE.SphereGeometry(radius, 32, 32);
     const material = new THREE.MeshStandardMaterial({
@@ -239,7 +242,7 @@ function ball(position, radius = 0.3, mass = 5, restitution = 0.7, friction = 0.
         roughness: 0.3});
     const mesh = new THREE.Mesh(geometry, material);
 
-    mesh.name = 'ball';
+    mesh.name = name;
     mesh.castShadow = true;
     mesh.receiveShadow = true;
 
@@ -469,6 +472,9 @@ function domino(position, starter = true) {
 
 function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
 
+    
+    ball({x: position.x+4.5, y: position.y+4.5, z: position.z+5}, 0.20, 2)
+
     const boardValues = {x: 20, y: 0.2, z: 12};
     const pegValues = {x: 0.08, y: 0.04, z: 0.5};
     const fenceValues = {x: 0.2, y: 0.8, z: 13};
@@ -530,17 +536,6 @@ function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
     createAmmoRigidBody(plinkoShape, plinkoMesh, 1, 1, plinkoMesh.position, 0);
 
     ri.scene.add(plinkoMesh);
-
-    // {x: 14, y: 7.05, z: -30.5}
-    // position.x, position.y, position.z
-    let ballPosition = {x: 18.8, y: 11.5, z: -25.5}; //x: 17, y: 12, z: -27
-    ballPosition = {x: position.x + 4.8, y: position.y + 4.45, z: position.z + 5}; //x: 17, y: 12, z: -27
-    ball(ballPosition, 0.2, 5)
-
-    let ballPosition2 = {x: 18.9, y: 20, z: -25.5}; //x: 19, y: 20, z: -26
-    ballPosition2 = {x: position.x + 4.9, y: position.y + 13, z: position.z + 5};
-    ball(ballPosition2, 0.20, 3)
-
 }
 
 function golfclub() {
@@ -639,6 +634,7 @@ function cannon() {
 
     let bottomSpringMesh = new THREE.Group();
     bottomSpringMesh.position.set(position.x, position.y ,position.z);
+    bottomSpringMesh.name = 'cannon';
     
     if (rotationAxis == "Z") 
         {bottomSpringMesh.rotateZ(rotationDegree)}
@@ -720,6 +716,11 @@ function cannon() {
 
    
     createAmmoMesh('triangleShape', cannonBodyShapeGeo, cannonBodyMesh, {x: 0, y: -1.5, z: 0}, {x: 0, y: 0, z: 0}, material, bottomSpringMesh, cannonBodyShape, 'cannonBody')
+    cannonBodyMesh.collisionResponse = (mesh1) => {
+        ri.springs.cannonSpring.enableSpring(1, true);
+        console.log("im here")
+       
+	};
     createAmmoRigidBody(cannonBodyShape, cannonBodyMesh, 0.4, 0.6, {x: position.x, y: position.y, z: position.z}, 0);
     
     //cannonEnd
@@ -760,7 +761,8 @@ function cannon() {
     else {ballPosition = {x: position.x, y: position.y+0.2, z: position.z+1};};
     let ballRadius = 0.45
     let ballMass = 20
-    ball(ballPosition, ballRadius, ballMass);
+    ball(ballPosition, ballRadius, ballMass, 0.7, 0.8, 'cannonBall');
+    ball({x: position.x, y: position.y+150, z: position.z+2}, ballRadius, ballMass, 0.7, 0.8);
 
 }
 
@@ -771,12 +773,18 @@ function cannonTarget() {
     let position = {x: 45, y: 25, z: 20};
     let targetMesh = new THREE.Group();
     targetMesh.position.set(position.x, position.y ,position.z);
+    targetMesh.name = 'target'
 
     let targetShape = new Ammo.btCompoundShape();
 
     let targetValues = {x: 5, y: 5, z: 0.5}
     let targetGeo = new THREE.CylinderGeometry(targetValues.x, targetValues.y, targetValues.z, 36, 1);
-    let target = createAmmoMesh('cylinder', targetGeo, targetValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, targetTexture, targetMesh, targetShape, 'target')
+    let target = createAmmoMesh('cylinder', targetGeo, targetValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, targetTexture, targetMesh, targetShape)
+    
+    targetMesh.collisionResponse = (mesh1) => {
+        ri.springs.cannonSpring.setDamping(1, 0);
+       
+	};
     let targetBody = createAmmoRigidBody(targetShape, targetMesh, 0, 0.6, {x: position.x, y: position.y, z: position.z}, 0);
     position.y -= 10
     position.z -= 3

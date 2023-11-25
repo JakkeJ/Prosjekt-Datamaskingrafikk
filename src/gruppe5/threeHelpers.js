@@ -77,15 +77,6 @@ export function keyPresses() {
         // Apply the rotation to the rigid body
         rotateRigidBody(spiral, eulerRotation);
     }
-
-    const steps =  ri.scene.getObjectByName("steps");
-    let stepsStarted = false
-    if (ri.currentlyPressedKeys['KeyE']) {	//E
-        if (!stepsStarted) {
-            stepsStarted = true;
-            steps.tween.start();}
-
-    }
 }
 
 
@@ -119,7 +110,7 @@ export function onDocumentMouseDown(event) {
 
         // Can only click a ball 1 time
         if (ball.name === 'ball'){
-            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(0, 0, 3 ));
+            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(-3, 0, 0 ));
             ball.name = 'ball_'
         }
     }

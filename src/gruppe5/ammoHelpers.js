@@ -73,7 +73,7 @@ function checkCollisions(deltaTime) {
                             let localPos0 = contactPoint.get_m_localPointA();
                             let localPos1 = contactPoint.get_m_localPointB();
                             //console.log('Kollisjon mellom ' + threeMesh0.name + " og " + threeMesh1.name);
-                            console.log({
+                            /*console.log({
                                 manifoldIndex: i,
                                 contactIndex: j,
                                 distance: distance,
@@ -89,12 +89,30 @@ function checkCollisions(deltaTime) {
                                     worldPos: {x: worldPos1.x(), y: worldPos1.y(), z: worldPos1.z()},
                                     localPos: {x: localPos1.x(), y: localPos1.y(), z: localPos1.z()}
                                 }
-                            });
+                            });*/
                             if (typeof threeMesh0.collisionResponse === 'function')
                                 threeMesh0.collisionResponse(threeMesh0);
                             if (typeof threeMesh1.collisionResponse === 'function')
                                 threeMesh1.collisionResponse(threeMesh1);
                         }
+                        if ((threeMesh0.name === 'target' && threeMesh1.name === 'cannonBall') ||
+                        threeMesh1.name === 'target' && threeMesh0.name === 'cannonBall') {
+                            console.log("target hit ;)")
+                            if (typeof threeMesh0.collisionResponse === 'function')
+                                threeMesh0.collisionResponse(threeMesh0);
+                            if (typeof threeMesh1.collisionResponse === 'function')
+                                threeMesh1.collisionResponse(threeMesh1);
+                        };
+
+                        if ((threeMesh0.name === 'cannonBody' && threeMesh1.name === 'ball') ||
+                        threeMesh1.name === 'cannonBody' && threeMesh0.name === 'ball') {
+                            console.log("cannon printer hit ;)")
+                            if (typeof threeMesh0.collisionResponse === 'function')
+                                threeMesh0.collisionResponse(threeMesh0);
+                            if (typeof threeMesh1.collisionResponse === 'function')
+                                threeMesh1.collisionResponse(threeMesh1);
+                        };
+                        
                     }
                 }
             }

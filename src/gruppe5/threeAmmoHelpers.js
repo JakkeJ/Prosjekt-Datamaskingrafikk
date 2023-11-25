@@ -28,6 +28,7 @@ export function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRota
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.position.set(meshPosition.x, meshPosition.y, meshPosition.z);
+
     if (rotateType === 'quaternion_norm') {
         mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), meshRotation);
     } else {
