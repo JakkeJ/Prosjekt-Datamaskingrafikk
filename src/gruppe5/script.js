@@ -10,13 +10,31 @@ import {
     createTriangleShapeAddToCompound,
     generateTriangleShape
 } from "./triangleMeshHelpers.js";
+
 import {degToRad} from "three/src/math/MathUtils.js";
 import {
     createMovable,
     moveRigidBody,
     moveRigidBodyAnimation, rotateRigidBody
 } from "./movable.js";
-import {inflate} from "three/addons/libs/fflate.module.js";
+
+
+import {
+    createThreeScene,
+    onWindowResize,
+    handleKeyUp,
+    handleKeyDown,
+    keyPresses,
+    onDocumentTouchStart,
+    onDocumentMouseDown,
+    renderCamera,
+    addLights,
+    water,
+    arrow,
+} from "./threeHelpers.js";
+
+import {createAmmoWorld} from "./ammoHelpers.js"
+
 
 export const ri = {
     currentlyPressedKeys: [],
@@ -24,8 +42,11 @@ export const ri = {
         cannonSpring: undefined,
     },
     camera: undefined,
+    renderer: undefined,
+    scene: undefined,
     raycaster: undefined,
     mouse: undefined,
+    lilGui: undefined,
     balls: [],
     textures: {},
     uniforms: {}
@@ -59,150 +80,6 @@ export function main() {
 }
 
 
-function createThreeScene() {
-    const canvas = document.createElement('canvas');
-    document.body.appendChild(canvas);
-
-    ri.renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
-    ri.renderer.setSize(window.innerWidth, window.innerHeight);
-    ri.renderer.shadowMap.enabled = true;
-    ri.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    ri.scene = new THREE.Scene();
-    ri.scene.background = new THREE.Color(0xe4f3f0);
-
-    ri.lilGui = new GUI();
-
-    ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    ri.camera.position.set( -15, 7, 15 );
-    // ri.camera.position.set( -5, 10, -10 ); // Temp position
-
-    ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
-}
-
-
-// Hentet fra kodeeksempel modul7/ammoShapes1
-function createAmmoWorld() {
-    phy.transform = new Ammo.btTransform();
-
-    // Initialiserer phy.ammoPhysicsWorld:
-    let collisionConfiguration = new Ammo.btDefaultCollisionConfiguration(),
-        dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration),
-        overlappingPairCache = new Ammo.btDbvtBroadphase(),
-        solver = new Ammo.btSequentialImpulseConstraintSolver();
-
-    phy.ammoPhysicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
-    phy.ammoPhysicsWorld.setGravity(new Ammo.btVector3(0, -9.81, 0));
-}
-
-
-function onWindowResize() {
-    ri.camera.aspect = window.innerWidth / window.innerHeight;
-    ri.camera.updateProjectionMatrix();
-    ri.renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-function handleKeyUp(event) {
-    ri.currentlyPressedKeys[event.code] = false;
-}
-
-function handleKeyDown(event) {
-    ri.currentlyPressedKeys[event.code] = true;
-}
-
-function keyPresses() {
-    if (ri.currentlyPressedKeys['KeyQ']) {
-        ri.springs.cannonSpring.enableSpring(1, true);
-    }
-    const movableMesh = ri.scene.getObjectByName("movable");
-    if (ri.currentlyPressedKeys['KeyA']) {	//A
-        moveRigidBody(movableMesh,{x: -0.2, y: 0, z: 0});
-    }
-    if (ri.currentlyPressedKeys['KeyD']) {	//D
-        moveRigidBody(movableMesh,{x: 0.2, y: 0, z: 0});
-    }
-    if (ri.currentlyPressedKeys['KeyW']) {	//W
-        moveRigidBody(movableMesh,{x: 0, y: 0, z: -0.2});
-    }
-    if (ri.currentlyPressedKeys['KeyS']) {	//S
-        moveRigidBody(movableMesh,{x: 0, y: 0, z: 0.2});
-    }
-
-    const spiral = ri.scene.getObjectByName("spiral");
-    if (ri.currentlyPressedKeys['KeyT']) {
-        // Create a quaternion for the incremental rotation
-        let deltaRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 80);
-
-        // Multiply the spiral's current quaternion by the incremental rotation
-        spiral.quaternion.multiply(deltaRotation);
-
-        // Extract the Euler rotation from the updated quaternion if needed
-        let eulerRotation = new THREE.Euler().setFromQuaternion(spiral.quaternion, 'XYZ');
-
-        // Apply the rotation to the rigid body
-        rotateRigidBody(spiral, eulerRotation);
-    }
-
-    const steps =  ri.scene.getObjectByName("steps");
-    let stepsStarted = false
-    if (ri.currentlyPressedKeys['KeyE']) {	//E
-        if (!stepsStarted) {
-            stepsStarted = true;
-            steps.tween.start();}
-
-    }
-}
-
-
-// Hentet fra kodeeksempel modul9/selectObject1
-function onDocumentTouchStart(event) {
-    event.preventDefault();
-    event.clientX = event.touches[0].clientX;
-    event.clientY = event.touches[0].clientY;
-    onDocumentMouseDown( event );
-}
-
-
-// Hentet fra kodeeksempel modul9/selectObject1
-function onDocumentMouseDown(event) {
-    event.preventDefault();
-    // Se: https://threejs.org/docs/index.html#api/en/core/Raycaster.
-    // ri.mouse.x og y skal være NDC, dvs. ligge i området -1 til 1.   (normalized device coordinates)
-    ri.mouse.x = (event.clientX / ri.renderer.domElement.clientWidth) * 2 - 1;
-    ri.mouse.y = -(event.clientY / ri.renderer.domElement.clientHeight) * 2 + 1;
-
-    //Ray/stråle fra klikkposisjon til kamera:
-    ri.raycaster.setFromCamera(ri.mouse, ri.camera); // Raycaster
-
-    let intersects = ri.raycaster.intersectObjects(ri.balls);
-
-    //Sjekker om strålen treffer noen av objekene:
-    if (intersects.length > 0) {
-        // console.log('ball')
-        //Endrer farge på det første objektet som er klikket på som strålen treffer:
-        let ball = intersects[0].object
-        ball.material.color.setHex(Math.random() * 0xffffff);
-
-        // Can only click a ball 1 time
-        if (ball.name === 'ball'){
-            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(0, 0, 3 ));
-            ball.name = 'ball_'
-        }
-
-        // //Viser en "partikkel":
-        // let particle = new THREE.Sprite(ri.particleMaterial);
-        // particle.position.copy(intersects[0].point);
-        // particle.scale.x = particle.scale.y = 16;
-        // ri.scene.add(particle);
-    }
-}
-
-
-function renderCamera() {
-    ri.renderer.render(ri.scene, ri.camera);
-}
-
-
 function addToScene() {
     const manager = new THREE.LoadingManager();
     const cubeLoader = new THREE.CubeTextureLoader();
@@ -214,7 +91,7 @@ function addToScene() {
         'static/assets/skybox/yellowcloud'
     ]
     let path = paths[3]
-    // ri.textures.skybokTexture =
+
     cubeLoader.load(
         [
             path + '_ft.jpg',
@@ -230,7 +107,6 @@ function addToScene() {
     )
 
     const loader = new THREE.TextureLoader(manager);
-
 
     ri.textures.johnny = loader.load('static/assets/textures/johnny.png');
     // grass texture: https://opengameart.org/content/seamless-grass-texture
@@ -256,9 +132,7 @@ function addToScene() {
 
 function animate(currentTime) {
     window.requestAnimationFrame((currentTime) => {animate(currentTime);});
-    // console.log('Current time: '+currentTime)
 
-    // Time interval for smooth movement regardless of FPS:
     let delta = ri.clock.getDelta();
     let elapsed = ri.clock.getElapsedTime();
 
@@ -272,64 +146,6 @@ function animate(currentTime) {
 
     let waterMesh = ri.scene.getObjectByName("myWater")
     waterMesh.material.uniforms.uTime.value = elapsed;
-}
-
-
-function addLights() {
-    ambientLight();
-    directionalLight();
-}
-
-
-// Kode hentet fra oblig 3
-function ambientLight() {
-    ri.ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
-    ri.ambientLight.visible = true;
-    ri.scene.add(ri.ambientLight);
-
-    // lilGui
-    ri.ambientFolder = ri.lilGui.addFolder( 'Ambient Light' );
-    ri.ambientFolder.close();
-    ri.ambientFolder.add(ri.ambientLight, 'visible').name("On/Off");
-    ri.ambientFolder.add(ri.ambientLight, 'intensity').min(0).max(1).step(0.01).name("Intensity");
-    ri.ambientFolder.addColor(ri.ambientLight, 'color').name("Color");
-}
-
-
-// Kode hentet fra oblig 3
-function directionalLight() {
-    ri.directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    ri.directionalLight.position.set(1, 40, 0);
-    ri.directionalLight.castShadow = true;
-
-    ri.directionalLight.shadow.mapSize.width = 1024;
-    ri.directionalLight.shadow.mapSize.height = 1024;
-    ri.directionalLight.shadow.camera.near = 0;
-    ri.directionalLight.shadow.camera.far = 50;
-    ri.directionalLight.shadow.camera.left = -50;
-    ri.directionalLight.shadow.camera.right = 50;
-    ri.directionalLight.shadow.camera.top = 50;
-    ri.directionalLight.shadow.camera.bottom = -50;
-
-    const directionalLightHelper = new THREE.DirectionalLightHelper(ri.directionalLight, 10, 0xff7777);
-    const directionalLightCameraHelper = new THREE.CameraHelper(ri.directionalLight.shadow.camera)
-    directionalLightHelper.visible = false;
-    directionalLightCameraHelper.visible = false;
-
-    ri.scene.add(ri.directionalLight);
-    ri.scene.add(directionalLightHelper);
-    ri.scene.add(directionalLightCameraHelper);
-
-    // Add folder to lilGui
-    ri.directionalFolder = ri.lilGui.addFolder('Directional Light');
-    ri.directionalFolder.close();
-    ri.directionalFolder.add(ri.directionalLight, 'visible').name("On/Off");
-
-    ri.directionalFolder.add(directionalLightHelper, 'visible').name("Helper").onChange(value => {
-        directionalLightCameraHelper.visible = value;
-    });
-    ri.directionalFolder.add(ri.directionalLight, 'intensity').min(0).max(1).step(0.01).name("Intensity");
-    ri.directionalFolder.addColor(ri.directionalLight, 'color').name("Color");
 }
 
 
@@ -401,9 +217,11 @@ function threeAmmoObjects() {
     // dominoPosition = {x: 0, y: 1.6, z: 0};
     domino(dominoPosition)
 
-
     let position = {x: 14, y: 7.05, z: -30.5}
     plinko(position);
+    position = {x:16, y:15, z:-26}
+    arrow(position)
+
     cannon();
     golfclub();
     // newtonCradle();
@@ -448,7 +266,7 @@ function threeAmmoObjects() {
     position = {x: -10, y: 4.2, z: 10.5};
     rails(position, 0, -5, true)
 
-    // arrow()
+
 }
 
 
@@ -475,87 +293,6 @@ function ground() {
     // AMMO
     let shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
     createAmmoRigidBody(shape, mesh, 0.7, 0.8, position, 0);
-}
-
-
-// Kode og shader hentet fra kodeeksempel modul8/shaderMaterial5
-function water() {
-    let position = {x: 0, y: -2, z: 0};
-    let waterTexture = ri.textures.water;
-    waterTexture.wrapS = waterTexture.wrapT = THREE.RepeatWrapping
-    waterTexture.repeat.set(5,5);
-    let noiseTexture = ri.textures.cloud;
-    noiseTexture.wrapS = noiseTexture.wrapT = THREE.RepeatWrapping;
-    noiseTexture.repeat.set(5,5);
-
-    let colorDebugObject = {}
-    colorDebugObject.depthColor = '#186691';
-    colorDebugObject.surfaceColor = '#9bd8ff';
-
-    //Definerer ekstra uniform-variabler:
-    ri.uniforms = {
-        baseTexture: { type: "t", value: waterTexture },
-        baseSpeed: { type: "f", value: 0.05 },
-        noiseTexture: { type: "t", value: noiseTexture },
-        noiseScale: { type: "f", value: 0.25 },
-        alpha: { type: "f", value: 1.0 },
-
-        uBigWavesElevation: { value: 0.7 },
-        uBigWavesFrequency: { value: new THREE.Vector2(0.09, 0.1) },
-        uTime: { value: 0 },
-        uBigWavesSpeed: { value: 0.45 },
-        uDepthColor: { value: new THREE.Color(colorDebugObject.depthColor) },
-        uSurfaceColor: { value: new THREE.Color(colorDebugObject.surfaceColor) },
-        uColorOffset: { value: 0.08 },
-        uColorMultiplier: { value: 5 },
-
-        uSmallWavesElevation: { value: 0.02 },
-        uSmallWavesFrequency: { value: 3 },
-        uSmallWavesSpeed: { value: 0.6 },
-        uSmallIterations: { value: 2 },
-    };
-
-    let waterMaterial = new THREE.ShaderMaterial({
-        uniforms: ri.uniforms,
-        vertexShader: document.getElementById('vertexshader').textContent,
-        fragmentShader: document.getElementById('fragmentshader').textContent,
-        side: THREE.DoubleSide,
-        transparent: true
-    });
-
-    let geometry = new THREE.PlaneGeometry(200, 200, 512, 512)
-
-    geometry.rotateX(-Math.PI/2);
-    let waterMesh = new THREE.Mesh(geometry, waterMaterial);
-    waterMesh.name = "myWater";
-    waterMesh.position.set(position.x, position.y, position.z)
-    // waterMesh.scale.set(10,1,10)
-    ri.scene.add(waterMesh);
-
-
-    ri.effectFolder = ri.lilGui.addFolder( 'Effekt' );
-    ri.effectFolder.close();
-    ri.effectFolder.add(waterMaterial.uniforms.baseSpeed, 'value').min(0).max(1).step(0.001).name('baseSpeed');
-    ri.effectFolder.add(waterMaterial.uniforms.noiseScale, 'value').min(0).max(1).step(0.001).name('noiseScale');
-
-    ri.waweFolder = ri.lilGui.addFolder( 'Bølger' );
-    ri.waweFolder.close();
-    ri.waweFolder.add(waterMaterial.uniforms.uBigWavesFrequency.value, 'x').min(0).max(0.5).step(0.001).name('uBigWavesFrequencyX');
-    ri.waweFolder.add(waterMaterial.uniforms.uBigWavesElevation, 'value').min(0).max(2).step(0.001).name('uBigWavesElevation');
-    ri.waweFolder.add(waterMaterial.uniforms.uBigWavesFrequency.value, 'y').min(0).max(0.5).step(0.001).name('uBigWavesFrequencyY');
-    ri.waweFolder.add(waterMaterial.uniforms.uBigWavesSpeed, 'value').min(0).max(4).step(0.001).name('uBigWavesSpeed');
-
-    ri.waweFolder.addColor(colorDebugObject, 'depthColor').onChange(() => { waterMaterial.uniforms.uDepthColor.value.set(colorDebugObject.depthColor) })
-    ri.waweFolder.addColor(colorDebugObject, 'surfaceColor').onChange(() => { waterMaterial.uniforms.uSurfaceColor.value.set(colorDebugObject.surfaceColor) })
-
-    // const perlinFolder = ri.lilGui.addFolder( 'Perlin noise' );
-    ri.waweFolder.add(waterMaterial.uniforms.uSmallWavesElevation, 'value').min(0).max(1).step(0.001).name('uSmallWavesElevation')
-    ri.waweFolder.add(waterMaterial.uniforms.uSmallWavesFrequency, 'value').min(0).max(30).step(0.001).name('uSmallWavesFrequency')
-    ri.waweFolder.add(waterMaterial.uniforms.uSmallWavesSpeed, 'value').min(0).max(4).step(0.001).name('uSmallWavesSpeed')
-    ri.waweFolder.add(waterMaterial.uniforms.uSmallIterations, 'value').min(0).max(5).step(1).name('uSmallIterations')
-
-
-
 }
 
 
@@ -940,82 +677,6 @@ function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
 
 }
 
-// testing. Hentet fra eksempel
-// function createCoffeeCupTriangleMesh(
-//     mass = 100,
-//     color=0x00FF09,
-//     position={x:-20, y:50, z:20},
-// ) {
-//     //Ammo-container:
-//     let compoundShape = new Ammo.btCompoundShape();
-//     //Three-container:
-//     let groupMesh = new THREE.Group();
-//     groupMesh.userData.tag = 'cup';
-//     // groupMesh.position.x = 10
-//     // groupMesh.position.y = 25;
-//     // groupMesh.position.z = -15;
-//     groupMesh.scale.set(0.1,0.1,0.1);
-//     // groupMesh.rotateX(100 * Math.PI/180)
-//     createCupParts(groupMesh, compoundShape);
-//
-//     ri.scene.add(groupMesh);
-//
-//     // Sett samme transformasjon på compoundShape som på bottomMesh:
-//     createAmmoRigidBody(compoundShape, groupMesh, 0.4, 0.6, position, mass);
-//
-// }
-//
-// // testing. Hentet fra eksempel
-// function createCupParts(groupMesh, compoundShape) {
-//
-//     let cupMaterial = new THREE.MeshPhongMaterial({color :0xFFFFFF , side: THREE.DoubleSide});	//NB! MeshPhongMaterial
-//
-//     // Bunnen/sylinder:
-//     let bottomGeometry = new THREE.CylinderGeometry( 8, 8, 1, 32 );
-//     let bottomMesh = new THREE.Mesh( bottomGeometry, cupMaterial );
-//     bottomMesh.castShadow = true;
-//     bottomMesh.receiveShadow = true;
-//
-//     groupMesh.add( bottomMesh );
-//     createConvexTriangleShapeAddToCompound(compoundShape, bottomMesh);
-//
-//     // Hanken/Torus:
-//     let torusGeometry = new THREE.TorusGeometry( 9.2, 2, 16, 100, Math.PI );
-//     let torusMesh = new THREE.Mesh( torusGeometry, cupMaterial );
-//     torusMesh.rotation.z = -Math.PI/2 - Math.PI/14;
-//     torusMesh.position.x = 15.8;
-//     torusMesh.position.y = 15;
-//     torusMesh.castShadow = true;
-//     torusMesh.receiveShadow = true;
-//     groupMesh.add( torusMesh );
-//     createConvexTriangleShapeAddToCompound(compoundShape, torusMesh);
-//
-//     //Koppen/Lathe:
-//     let points = [];
-//     for (let x = 0; x < 1; x=x+0.1) {
-//         let y = Math.pow(x,5)*2;
-//         points.push(new THREE.Vector2(x*20,y*13));
-//     }
-//     let latheGeometry = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
-//
-//     let latheMesh = new THREE.Mesh(latheGeometry, cupMaterial);
-//     latheMesh.castShadow = true;
-//     latheMesh.receiveShadow = true;
-//     // latheMesh.updateMatrix();
-//     // latheMesh.updateMatrixWorld(true);
-//     groupMesh.add( latheMesh );
-//     createConvexTriangleShapeAddToCompound(compoundShape, latheMesh);
-//
-//     // Kaffen, sylinder:
-//     let coffeeGeometry = new THREE.CylinderGeometry( 18, 18, 0.2, 32 );
-//     let coffeeMaterial = new THREE.MeshPhongMaterial({color:0x7F4600});
-//     let coffeeMesh = new THREE.Mesh( coffeeGeometry, coffeeMaterial );
-//     coffeeMesh.position.x = 0;
-//     coffeeMesh.position.y = 24;
-//     coffeeMesh.position.z = 0;
-//     groupMesh.add( coffeeMesh );
-//     createConvexTriangleShapeAddToCompound(compoundShape, coffeeMesh);
-// }
 
 function golfclub() {
     let position = {x: 40, y: 16.51, z: 40};
@@ -1469,69 +1130,6 @@ function updateHingeMarkers() {
         }
     }
 }
-
-function arrow(position = {x:0, y:10, z:0}) {
-    // THREE
-    let groupMesh = new THREE.Group();
-
-    let width = 2;
-    let height = 4;
-    let depth = 0.3;
-
-    let shape = new THREE.Shape();
-    shape.moveTo( 0,0 );
-    shape.lineTo(width/2, height/3);
-    shape.lineTo(width/4, height/3);
-    shape.lineTo(width/4, height);
-    shape.lineTo(-width/4, height);
-    shape.lineTo(-width/4, height/3);
-    shape.lineTo(-width/2, height/3);
-
-    const extrudeSettings = {
-        depth: depth,
-        bevelEnabled: true,
-        bevelThickness: 0.1,
-        bevelSize: 0.1,
-        bevelOffset: 0.3,
-        bevelSegments: 4
-    };
-
-    let geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-    let material = new THREE.MeshStandardMaterial({
-        color: 0xd10000,
-        metalness: 0.5,
-        roughness: 0.3});
-    let mesh = new THREE.Mesh(geometry, material);
-
-    groupMesh.name = 'arrow';
-    groupMesh.castShadow = true;
-    groupMesh.receiveShadow = true;
-    groupMesh.position.set(position.x, position.y, position.z);
-    mesh.position.set(0, 0, -depth/2)
-    groupMesh.add(mesh)
-
-    ri.scene.add(groupMesh);
-
-    let tween1 = new TWEEN.Tween({y: 0})
-        .to({y: 3}, 2000)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .yoyo(true)
-        .repeat(Infinity)
-        .onUpdate(function (newPosition) {
-            groupMesh.position.y = position.y + newPosition.y
-        });
-
-    let tween2 = new TWEEN.Tween({r:0})
-        .to({r: 2 * Math.PI}, 6000)
-        .repeat(Infinity)
-        .onUpdate(function (newPosition) {
-            groupMesh.rotation.set(0, newPosition.r, 0)
-        });
-
-    tween1.start();
-    tween2.start();
-}
-
 
 function spiral() {
     const numTurns = 20;
