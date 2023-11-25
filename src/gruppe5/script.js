@@ -76,7 +76,7 @@ function createThreeScene() {
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     ri.camera.position.set( -15, 7, 15 );
 
-    ri.camera.position.set( -5, 10, -10 ); // Temp position
+    // ri.camera.position.set( -5, 10, -10 ); // Temp position
 
     ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
 }
@@ -422,18 +422,17 @@ function threeAmmoObjects() {
     let dominoPosition = {x: 9.85, y: 1.6, z: -8};
     // dominoPosition = {x: 0, y: 1.6, z: 0};
     domino(dominoPosition)
+    
 
-    // dominoPosition = {x: 10, y: 8, z: 10};
-    // domino(dominoPosition, 30, true)
-
-    plinko();
+    let position = {x: 14, y: 7.05, z: -30.5}
+    plinko(position);
     cannon();
     golfclub();
     // newtonCradle();
     spiral();
 
     // let position = {x: 10, y: 3, z: 10};
-    let position = {x: 15, y: 5, z: -10};
+    position = {x: 15, y: 5, z: -10};
     funnel(position, 2.7, 0.3, 2)
 
     position.x -= 1
@@ -887,7 +886,7 @@ function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, t
     }
 }
 
-function plinko() {
+function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
 
     let boardValues = {x: 20, y: 0.2, z: 12};
     let pegValues = {x: 0.08, y: 0.04, z: 0.5};
@@ -903,7 +902,7 @@ function plinko() {
     const blackColor = new THREE.MeshStandardMaterial({color: 0x000500,  side: THREE.DoubleSide, roughness: 0.3, metalness: 0.8});
 
     let plinkoMesh = new THREE.Group();
-    plinkoMesh.position.set(14, 7.05, -30.5);
+    plinkoMesh.position.set(position.x, position.y, position.z);
     plinkoMesh.rotateY(90*Math.PI/180);
     plinkoMesh.rotateX(-45*Math.PI/180);
     let plinkoShape = new Ammo.btCompoundShape();
@@ -951,10 +950,14 @@ function plinko() {
 
     ri.scene.add(plinkoMesh);
 
-    const ballPosition = {x: 18.8, y: 11.5, z: -25.5}; //x: 17, y: 12, z: -27
+    // {x: 14, y: 7.05, z: -30.5}
+    // position.x, position.y, position.z
+    let ballPosition = {x: 18.8, y: 11.5, z: -25.5}; //x: 17, y: 12, z: -27
+    ballPosition = {x: position.x + 4.8, y: position.y + 4.45, z: position.z + 5}; //x: 17, y: 12, z: -27
     ball(ballPosition, 0.2, 5)
 
-    const ballPosition2 = {x: 18.9, y: 20, z: -25.5}; //x: 19, y: 20, z: -26
+    let ballPosition2 = {x: 18.9, y: 20, z: -25.5}; //x: 19, y: 20, z: -26
+    ballPosition2 = {x: position.x + 4.9, y: position.y + 13, z: position.z + 5};
     ball(ballPosition2, 0.20, 3)
 
 }
