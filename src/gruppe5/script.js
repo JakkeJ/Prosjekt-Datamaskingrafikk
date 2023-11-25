@@ -76,7 +76,7 @@ function createThreeScene() {
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     ri.camera.position.set( -15, 7, 15 );
 
-    // ri.camera.position.set( 20, 10, -20 ); // Temp position
+    ri.camera.position.set( -5, 10, -10 ); // Temp position
 
     ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
 }
@@ -391,21 +391,21 @@ function updatePhysics(deltaTime) {
 
 // Kode hentet fra oblig 3
 // Vet ikke om vi blir å bruke denne
-function createMesh(geometry, material, parent, name = "", translateY = 0, translateZ = 0, rotateX = 0, rotateY = 0, rotateZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1) {
-    const mesh = new THREE.Mesh(geometry, material);
-
-    mesh.translateY(translateY);
-    mesh.translateZ(translateZ);
-    mesh.rotateX(rotateX);
-    mesh.rotateY(rotateY);
-    mesh.rotateZ(rotateZ);
-    mesh.scale.set(scaleX, scaleY, scaleZ);
-    mesh.name = name;
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    parent.add(mesh);
-    return mesh;
-}
+// function createMesh(geometry, material, parent, name = "", translateY = 0, translateZ = 0, rotateX = 0, rotateY = 0, rotateZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1) {
+//     const mesh = new THREE.Mesh(geometry, material);
+//
+//     mesh.translateY(translateY);
+//     mesh.translateZ(translateZ);
+//     mesh.rotateX(rotateX);
+//     mesh.rotateY(rotateY);
+//     mesh.rotateZ(rotateZ);
+//     mesh.scale.set(scaleX, scaleY, scaleZ);
+//     mesh.name = name;
+//     mesh.castShadow = true;
+//     mesh.receiveShadow = true;
+//     parent.add(mesh);
+//     return mesh;
+// }
 
 
 function threeAmmoObjects() {
@@ -420,6 +420,7 @@ function threeAmmoObjects() {
 
     // Kan flyttes hvor som helst, kan ikke roteres
     let dominoPosition = {x: 9.85, y: 1.6, z: -8};
+    // dominoPosition = {x: 0, y: 1.6, z: 0};
     domino(dominoPosition)
 
     // dominoPosition = {x: 10, y: 8, z: 10};
@@ -428,7 +429,7 @@ function threeAmmoObjects() {
     plinko();
     cannon();
     golfclub();
-    newtonCradle();
+    // newtonCradle();
     spiral();
 
     // let position = {x: 10, y: 3, z: 10};
@@ -617,7 +618,6 @@ function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0x
     mesh.name = name
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-
     mesh.rotation.y = rotation * Math.PI / 180
 
     ri.scene.add(mesh);
@@ -772,56 +772,37 @@ function domino(position, starter = true) {
     let posY = position.y + 0.5;
     let posZ = position.z - 5;
     let dominoPositions = [
-        {x: position.x + 0, y: position.y + 0.5, z: position.z - 4.9, rot: 0},
-        {x: position.x + 0, y: position.y + 0.5, z: position.z - 4.2, rot: -10},
-        {x: position.x - 0.2, y: position.y + 0.5, z: position.z - 3.7, rot: -20},
-        {x: position.x - 0.5, y: position.y + 0.5, z: position.z - 3.3, rot: -40},
-        {x: position.x - 1.0, y: position.y + 0.5, z: position.z - 2.9, rot: -40},
-        {x: position.x - 1.4, y: position.y + 0.5, z: position.z - 2.4, rot: -35},
-        {x: position.x - 1.8, y: position.y + 0.5, z: position.z - 1.9, rot: -25},
-        {x: position.x - 2.0, y: position.y + 0.5, z: position.z - 1.4, rot: -10},
-        {x: position.x - 2.1, y: position.y + 0.5, z: position.z - 0.7, rot: 0},
-        {x: position.x - 2.1, y: position.y + 0.5, z: position.z + 0.0, rot: 10},
-        {x: position.x - 1.85, y: position.y + 0.5, z: position.z + 0.55, rot: 30},
-        {x: position.x - 1.5, y: position.y + 0.5, z: position.z + 1.0, rot: 70},
-        {x: position.x - 0.9, y: position.y + 0.5, z: position.z + 1.1, rot: 90},
-        {x: position.x - 0.1, y: position.y + 0.5, z: position.z + 1.1, rot: 90},
-        {x: position.x + 0.4, y: position.y + 0.5, z: position.z + 1.0, rot: 110},
-        {x: position.x + 0.9, y: position.y + 0.5, z: position.z + 0.8, rot: 130},
-        {x: position.x + 1.3, y: position.y + 0.5, z: position.z + 0.3, rot: 145},
-        {x: position.x + 1.6, y: position.y + 0.5, z: position.z - 0.3, rot: 160},
-        {x: position.x + 1.7, y: position.y + 0.5, z: position.z - 0.8, rot: 180},
-        {x: position.x + 1.6, y: position.y + 0.5, z: position.z - 1.2, rot: 200},
-        {x: position.x + 1.3, y: position.y + 0.5, z: position.z - 1.5, rot: 240},
-        {x: position.x + 0.9, y: position.y + 0.5, z: position.z - 1.7, rot: 260},
-        {x: position.x + 0.4, y: position.y + 0.5, z: position.z - 1.8, rot: 280},
-        {x: position.x + 0.0, y: position.y + 0.5, z: position.z - 1.6, rot: 320},
-        {x: position.x - 0.3, y: position.y + 0.5, z: position.z - 1.0, rot: 335},
-        {x: position.x - 0.4, y: position.y + 0.5, z: position.z - 0.4, rot: 350},
-        {x: position.x - 0.5, y: position.y + 0.5, z: position.z + 0.1, rot: 0},
-        {x: position.x - 0.5, y: position.y + 0.5, z: position.z + 0.7, rot: 0},
-        {x: position.x - 0.5, y: position.y + 0.5, z: position.z + 1.5, rot: 0},
-        {x: position.x - 0.5, y: position.y + 0.5, z: position.z + 2.1, rot: 10},
-        {x: position.x - 0.4, y: position.y + 0.5, z: position.z + 2.7, rot: 10},
-        {x: position.x - 0.2, y: position.y + 0.5, z: position.z + 3.3, rot: 15},
-        {x: position.x - 0.1, y: position.y + 0.5, z: position.z + 3.8, rot: 10},
-        {x: position.x + 0.0, y: position.y + 0.5, z: position.z + 4.4, rot: 5},
-        {x: position.x + 0, y: position.y + 0.5, z: position.z + 4.9, rot: 0},
+        {x: posX + 2.5, y: posY, z: posZ + 0.1, rot: 0},
+        {x: posX + 2.5, y: posY, z: posZ + 0.5, rot: 0},
+        {x: posX + 2.5, y: posY, z: posZ + 0.9, rot: 0},
+        {x: posX + 2.5, y: posY, z: posZ + 1.3, rot: 0},
+        {x: posX + 2.55, y: posY, z: posZ + 1.7, rot: 10}, // turn left
+        {x: posX + 2.65, y: posY, z: posZ + 2.1, rot: 20},
+        {x: posX + 2.8, y: posY, z: posZ + 2.5, rot: 25},
+        {x: posX + 3.0, y: posY, z: posZ + 2.9, rot: 25},
+        {x: posX + 3.2, y: posY, z: posZ + 3.3, rot: 25},
+        {x: posX + 3.35, y: posY, z: posZ + 3.7, rot: 20},
+        {x: posX + 3.45, y: posY, z: posZ + 4.1, rot: 10},
+        {x: posX + 3.5, y: posY, z: posZ + 4.5, rot: 0},
+        {x: posX + 3.5, y: posY, z: posZ + 4.9, rot: 0},
+        {x: posX + 3.5, y: posY, z: posZ + 5.3, rot: 0},
+        {x: posX + 3.40, y: posY, z: posZ + 5.7, rot: -10},
+        {x: posX + 3.30, y: posY, z: posZ + 6.1, rot: -10},
+        {x: posX + 3.20, y: posY, z: posZ + 6.5, rot: -10},
+        {x: posX + 3.10, y: posY, z: posZ + 6.9, rot: -10},
+        {x: posX + 3.0, y: posY, z: posZ + 7.3, rot: -10},
+        {x: posX + 2.9, y: posY, z: posZ + 7.7, rot: -10},
+        {x: posX + 2.8, y: posY, z: posZ + 8.1, rot: -10},
+        {x: posX + 2.7, y: posY, z: posZ + 8.5, rot: -10},
+        {x: posX + 2.6, y: posY, z: posZ + 8.9, rot: -10},
+        {x: posX + 2.5, y: posY, z: posZ + 9.3, rot: -10},
+        {x: posX + 2.5, y: posY, z: posZ + 9.7, rot: 0},
     ]
 
-    // dominoPositions = [
-    //     {x: posX + 2.5, y: posY, z: posZ + 0.1, rot: 0},
-    //     {x: posX + 2.5, y: posY, z: posZ + 0.5, rot: 0},
-    //     {x: posX + 2.5, y: posY, z: posZ + 1.0, rot: 0},
-    //     {x: posX + 2.5, y: posY, z: posZ + 1.5, rot: 0},
-    // ]
-
-    // dominoPositions.forEach(position => cube(position, dominoSize, position.rot , 'dominoPiece', 40, 0x303030, 0.3, 0.8))
     for (let i = 0; i < dominoPositions.length; i++) {
-        cube(dominoPositions[i], dominoSize, dominoPositions[i].rot , 'dominoPiece', 40, 0x303030, 0.3, 0.8)
+        cube(dominoPositions[i], dominoSize, dominoPositions[i].rot , 'dominoPiece', 20, 0x303030, 0.3, 0.8)
     }
 
-    // Ball to start first domino:
     if (starter){
         // Ball to start first domino:
         let ballPosition = {x: position.x + 0, y: position.y + 1, z: position.z - 5.6};
@@ -841,16 +822,13 @@ function domino(position, starter = true) {
         rails(ballPosition, 90, 0, 1);
 
         ballPosition.y += 0.5;
-        ballPosition.z += 0.7;
-        ball(ballPosition, 0.3, 5, 0.7, 0.1);
-
-        // ballPosition.y += 0.35;
-        ballPosition.y -= 0.5;
         ballPosition.z += 0.3;
-        // ballPosition.z += 1;
+        ball(ballPosition, 0.3, 10, 0.7, 0.1);
+
+        ballPosition.y -= 0.5;
+        ballPosition.z += 0.7;
         rails(ballPosition, 90, 20, 1);
     }
-
 }
 
 function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, texture, groupMesh, compoundShape, name = "",rotateType) {
@@ -982,81 +960,81 @@ function plinko() {
 }
 
 // testing. Hentet fra eksempel
-function createCoffeeCupTriangleMesh(
-    mass = 100,
-    color=0x00FF09,
-    position={x:-20, y:50, z:20},
-) {
-    //Ammo-container:
-    let compoundShape = new Ammo.btCompoundShape();
-    //Three-container:
-    let groupMesh = new THREE.Group();
-    groupMesh.userData.tag = 'cup';
-    // groupMesh.position.x = 10
-    // groupMesh.position.y = 25;
-    // groupMesh.position.z = -15;
-    groupMesh.scale.set(0.1,0.1,0.1);
-    // groupMesh.rotateX(100 * Math.PI/180)
-    createCupParts(groupMesh, compoundShape);
-
-    ri.scene.add(groupMesh);
-
-    // Sett samme transformasjon på compoundShape som på bottomMesh:
-    createAmmoRigidBody(compoundShape, groupMesh, 0.4, 0.6, position, mass);
-
-}
-
-// testing. Hentet fra eksempel
-function createCupParts(groupMesh, compoundShape) {
-
-    let cupMaterial = new THREE.MeshPhongMaterial({color :0xFFFFFF , side: THREE.DoubleSide});	//NB! MeshPhongMaterial
-
-    // Bunnen/sylinder:
-    let bottomGeometry = new THREE.CylinderGeometry( 8, 8, 1, 32 );
-    let bottomMesh = new THREE.Mesh( bottomGeometry, cupMaterial );
-    bottomMesh.castShadow = true;
-    bottomMesh.receiveShadow = true;
-
-    groupMesh.add( bottomMesh );
-    createConvexTriangleShapeAddToCompound(compoundShape, bottomMesh);
-
-    // Hanken/Torus:
-    let torusGeometry = new THREE.TorusGeometry( 9.2, 2, 16, 100, Math.PI );
-    let torusMesh = new THREE.Mesh( torusGeometry, cupMaterial );
-    torusMesh.rotation.z = -Math.PI/2 - Math.PI/14;
-    torusMesh.position.x = 15.8;
-    torusMesh.position.y = 15;
-    torusMesh.castShadow = true;
-    torusMesh.receiveShadow = true;
-    groupMesh.add( torusMesh );
-    createConvexTriangleShapeAddToCompound(compoundShape, torusMesh);
-
-    //Koppen/Lathe:
-    let points = [];
-    for (let x = 0; x < 1; x=x+0.1) {
-        let y = Math.pow(x,5)*2;
-        points.push(new THREE.Vector2(x*20,y*13));
-    }
-    let latheGeometry = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
-
-    let latheMesh = new THREE.Mesh(latheGeometry, cupMaterial);
-    latheMesh.castShadow = true;
-    latheMesh.receiveShadow = true;
-    // latheMesh.updateMatrix();
-    // latheMesh.updateMatrixWorld(true);
-    groupMesh.add( latheMesh );
-    createConvexTriangleShapeAddToCompound(compoundShape, latheMesh);
-
-    // Kaffen, sylinder:
-    let coffeeGeometry = new THREE.CylinderGeometry( 18, 18, 0.2, 32 );
-    let coffeeMaterial = new THREE.MeshPhongMaterial({color:0x7F4600});
-    let coffeeMesh = new THREE.Mesh( coffeeGeometry, coffeeMaterial );
-    coffeeMesh.position.x = 0;
-    coffeeMesh.position.y = 24;
-    coffeeMesh.position.z = 0;
-    groupMesh.add( coffeeMesh );
-    createConvexTriangleShapeAddToCompound(compoundShape, coffeeMesh);
-}
+// function createCoffeeCupTriangleMesh(
+//     mass = 100,
+//     color=0x00FF09,
+//     position={x:-20, y:50, z:20},
+// ) {
+//     //Ammo-container:
+//     let compoundShape = new Ammo.btCompoundShape();
+//     //Three-container:
+//     let groupMesh = new THREE.Group();
+//     groupMesh.userData.tag = 'cup';
+//     // groupMesh.position.x = 10
+//     // groupMesh.position.y = 25;
+//     // groupMesh.position.z = -15;
+//     groupMesh.scale.set(0.1,0.1,0.1);
+//     // groupMesh.rotateX(100 * Math.PI/180)
+//     createCupParts(groupMesh, compoundShape);
+//
+//     ri.scene.add(groupMesh);
+//
+//     // Sett samme transformasjon på compoundShape som på bottomMesh:
+//     createAmmoRigidBody(compoundShape, groupMesh, 0.4, 0.6, position, mass);
+//
+// }
+//
+// // testing. Hentet fra eksempel
+// function createCupParts(groupMesh, compoundShape) {
+//
+//     let cupMaterial = new THREE.MeshPhongMaterial({color :0xFFFFFF , side: THREE.DoubleSide});	//NB! MeshPhongMaterial
+//
+//     // Bunnen/sylinder:
+//     let bottomGeometry = new THREE.CylinderGeometry( 8, 8, 1, 32 );
+//     let bottomMesh = new THREE.Mesh( bottomGeometry, cupMaterial );
+//     bottomMesh.castShadow = true;
+//     bottomMesh.receiveShadow = true;
+//
+//     groupMesh.add( bottomMesh );
+//     createConvexTriangleShapeAddToCompound(compoundShape, bottomMesh);
+//
+//     // Hanken/Torus:
+//     let torusGeometry = new THREE.TorusGeometry( 9.2, 2, 16, 100, Math.PI );
+//     let torusMesh = new THREE.Mesh( torusGeometry, cupMaterial );
+//     torusMesh.rotation.z = -Math.PI/2 - Math.PI/14;
+//     torusMesh.position.x = 15.8;
+//     torusMesh.position.y = 15;
+//     torusMesh.castShadow = true;
+//     torusMesh.receiveShadow = true;
+//     groupMesh.add( torusMesh );
+//     createConvexTriangleShapeAddToCompound(compoundShape, torusMesh);
+//
+//     //Koppen/Lathe:
+//     let points = [];
+//     for (let x = 0; x < 1; x=x+0.1) {
+//         let y = Math.pow(x,5)*2;
+//         points.push(new THREE.Vector2(x*20,y*13));
+//     }
+//     let latheGeometry = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
+//
+//     let latheMesh = new THREE.Mesh(latheGeometry, cupMaterial);
+//     latheMesh.castShadow = true;
+//     latheMesh.receiveShadow = true;
+//     // latheMesh.updateMatrix();
+//     // latheMesh.updateMatrixWorld(true);
+//     groupMesh.add( latheMesh );
+//     createConvexTriangleShapeAddToCompound(compoundShape, latheMesh);
+//
+//     // Kaffen, sylinder:
+//     let coffeeGeometry = new THREE.CylinderGeometry( 18, 18, 0.2, 32 );
+//     let coffeeMaterial = new THREE.MeshPhongMaterial({color:0x7F4600});
+//     let coffeeMesh = new THREE.Mesh( coffeeGeometry, coffeeMaterial );
+//     coffeeMesh.position.x = 0;
+//     coffeeMesh.position.y = 24;
+//     coffeeMesh.position.z = 0;
+//     groupMesh.add( coffeeMesh );
+//     createConvexTriangleShapeAddToCompound(compoundShape, coffeeMesh);
+// }
 
 function golfclub() {
     let position = {x: 40, y: 16.51, z: 40};
