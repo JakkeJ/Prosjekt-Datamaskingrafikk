@@ -2,8 +2,6 @@
 
 import './style.css';
 import * as THREE from "three";
-import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
-import GUI from 'lil-gui'
 import * as TWEEN from '@tweenjs/tween.js' // HUSK: npm install @tweenjs/tween.js
 import {
     createConvexTriangleShapeAddToCompound,
@@ -18,7 +16,6 @@ import {
     moveRigidBodyAnimation, rotateRigidBody
 } from "./movable.js";
 
-
 import {
     createThreeScene,
     onWindowResize,
@@ -31,6 +28,10 @@ import {
     addLights,
     water,
     arrow,
+    createPivotMarker,
+    localToWorld,
+    addLineBetweenObjects,
+    updateLines
 } from "./threeHelpers.js";
 
 import {
@@ -38,6 +39,11 @@ import {
     updatePhysics,
     createAmmoRigidBody
 } from "./ammoHelpers.js"
+
+import {
+    createAmmoMesh,
+    ground
+} from "./threeAmmoHelpers.js";
 
 
 export const ri = {
@@ -152,7 +158,6 @@ function animate(currentTime) {
     waterMesh.material.uniforms.uTime.value = elapsed;
 }
 
-
 function threeAmmoObjects() {
     ground()
     water()
@@ -175,7 +180,7 @@ function threeAmmoObjects() {
 
     cannon();
     golfclub();
-    // newtonCradle();
+    newtonCradle();
     spiral();
 
     // let position = {x: 10, y: 3, z: 10};
@@ -218,32 +223,6 @@ function threeAmmoObjects() {
     rails(position, 0, -5, true)
 
 
-}
-
-
-function ground() {
-    const position = {x: 0, y: -2.5, z: 0};
-    const size = {x: 100, y:5, z: 100};
-
-    // THREE
-    const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
-    const texture = ri.textures.grass;
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-    texture.repeat.set(10,10);
-    const material = new THREE.MeshStandardMaterial({
-        map: texture,
-        side: THREE.DoubleSide});
-    const mesh = new THREE.Mesh(geometry, material);
-
-    mesh.name = 'ground';
-    // mesh.castShadow = true;
-    mesh.receiveShadow = true;
-
-    ri.scene.add(mesh);
-
-    // AMMO
-    let shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
-    createAmmoRigidBody(shape, mesh, 0.7, 0.8, position, 0);
 }
 
 
@@ -292,7 +271,6 @@ function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0x
     createAmmoRigidBody(shape, mesh, restitution, friction, position, mass);
 }
 
-
 function tableMesh(groupMesh, compoundShape, size, rotation, height, name = 'table', color = 0xFFFFFF) {
     let material = new THREE.MeshStandardMaterial({
         color: color,
@@ -332,7 +310,6 @@ function tableMesh(groupMesh, compoundShape, size, rotation, height, name = 'tab
     geometry = new THREE.BoxGeometry(width, height, width);
     createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
 }
-
 
 function funnel(position, upperRadius = 2.7, lowerRadius = 0.5, height = 2) {
     // let rotation = {x: 0, z: 0};
@@ -376,7 +353,6 @@ function funnel(position, upperRadius = 2.7, lowerRadius = 0.5, height = 2) {
     ball(ballPosition, lowerRadius*0.9, 5, 0.85)
 }
 
-
 function rails(position, rotation = 180, tilt = 20, length = 4, guardrails = false) {
     let material = new THREE.MeshStandardMaterial({
         color: 0xFFFFFF,
@@ -418,7 +394,6 @@ function rails(position, rotation = 180, tilt = 20, length = 4, guardrails = fal
 
     createAmmoRigidBody(compoundShape, groupMesh, 0, 0.8, position, 0);
 }
-
 
 function domino(position, starter = true) {
     const tableSize = {x: 5, y: 0.05, z: 10};
@@ -493,62 +468,6 @@ function domino(position, starter = true) {
         ballPosition.y -= 0.5;
         ballPosition.z += 0.7;
         rails(ballPosition, 90, 20, 1);
-    }
-}
-
-function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, texture, groupMesh, compoundShape, name = "",rotateType) {
-    let shape;
-    if (shapeType === 'box') {
-        shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
-
-    } else if (shapeType === 'cylinder') {
-        if (size.radius1){
-            shape = new Ammo.btCylinderShape(new Ammo.btVector3(size.radius1, size.height/2, size.radius2));
-        }
-        else{
-            shape = new Ammo.btCylinderShape(new Ammo.btVector3(size.x, size.z/2, size.y));
-        }
-
-    } else if (shapeType === 'sphere') {
-        shape = new Ammo.btSphereShape(size.radius);
-    } else if (shapeType === 'triangleShape') {
-        shape = generateTriangleShape(size, false)
-    }
-
-    let mesh = new THREE.Mesh(geometry, texture);
-    mesh.name = name
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.position.set(meshPosition.x, meshPosition.y, meshPosition.z);
-    if (rotateType === 'quaternion_norm') {
-        mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), meshRotation);
-    } else {
-        mesh.rotateX(meshRotation.x);
-        mesh.rotateY(meshRotation.y);
-        mesh.rotateZ(meshRotation.z);
-    }
-
-
-    let rotation = new THREE.Quaternion();
-    if (meshRotation.x !== 0) {
-        rotation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), meshRotation.x)}
-    if (meshRotation.y !== 0) {
-        rotation.setFromAxisAngle(new THREE.Vector3(0, 1, 0), meshRotation.y)}
-    if (meshRotation.z !== 0) {
-        rotation.setFromAxisAngle(new THREE.Vector3(0, 0, 1), meshRotation.z)}
-
-    let transform = new Ammo.btTransform();
-    transform.setIdentity();
-    transform.setOrigin(new Ammo.btVector3(meshPosition.x, meshPosition.y, meshPosition.z));
-    transform.setRotation(new Ammo.btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
-
-    groupMesh.add(mesh);
-    compoundShape.addChildShape(transform, shape);
-
-    return {
-        mesh,
-        transform,
-        shape
     }
 }
 
@@ -627,7 +546,6 @@ function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
     ball(ballPosition2, 0.20, 3)
 
 }
-
 
 function golfclub() {
     let position = {x: 40, y: 16.51, z: 40};
@@ -955,95 +873,6 @@ function newtonCradle() {
     // };
     // ball(testBallPosition, 0.3, 1000);
 
-}
-
-//Helper for hinge
-function createPivotMarker(position, color = 0xff0000) {
-    let geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 32, 32);
-    let material = new THREE.MeshBasicMaterial({ color: color });
-    let marker = new THREE.Mesh(geometry, material);
-    marker.position.copy(position);
-    marker.rotateZ(Math.PI / 2);
-    return marker;
-}
-
-function localToWorld(body, localPoint) {
-    let worldTransform = body.getWorldTransform();
-    let position = worldTransform.getOrigin();
-    let orientation = worldTransform.getRotation();
-
-    let localVec = new THREE.Vector3(localPoint.x(), localPoint.y(), localPoint.z());
-    let quaternion = new THREE.Quaternion(orientation.x(), orientation.y(), orientation.z(), orientation.w());
-    localVec.applyQuaternion(quaternion);
-
-    localVec.add(new THREE.Vector3(position.x(), position.y(), position.z()));
-    return localVec;
-}
-
-//Werner sin funksjon en gang i tida...
-function addLineBetweenObjects(nameMeshStart, nameMeshEnd, meshPositionStart, meshPositionEnd, childName, lineName) {
-    ri.scene.updateMatrixWorld(true);
-    let lineMeshStartPosition = ri.scene.getObjectByName(nameMeshStart);
-    let lineMeshEndPosition = ri.scene.getObjectByName(nameMeshEnd).getObjectByName(childName);
-
-    // Wire / Line:
-    // Definerer Line-meshet (beståemde av to punkter):
-    const lineMaterial = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 30 } );
-    const points = [];
-    // Finner start- og endepunktmesh:
-    const startPoint = new THREE.Vector3();
-    const endPoint = new THREE.Vector3();
-    // NB! Bruker world-position:
-    lineMeshStartPosition.getWorldPosition(startPoint);
-
-    startPoint.set(startPoint.x, meshPositionEnd.y, meshPositionEnd.z);
-
-    lineMeshEndPosition.getWorldPosition(endPoint);
-    endPoint.set(endPoint.x, endPoint.y, meshPositionStart.z);
-
-    points.push(startPoint);
-    points.push(endPoint);
-    const lineGeometry = new THREE.BufferGeometry().setFromPoints( points );
-    const springLineMesh = new THREE.Line( lineGeometry, lineMaterial );
-    springLineMesh.name = lineName;
-    // NB! Linemeshet legges til scene-objektet.
-    ri.scene.add(springLineMesh);
-}
-
-function updateLines() {
-    for (let i = 1; i <= 8; ++i) {
-        let ballMesh = ri.scene.getObjectByName("ball" + i + "Mesh");
-        if (ballMesh && ballMesh.userData.physicsBody) {
-            let ballPhysicsBody = ballMesh.userData.physicsBody;
-            let ballMotionState = ballPhysicsBody.getMotionState();
-
-            if (ballMotionState) {
-                let ballTransform = new Ammo.btTransform();
-                ballMotionState.getWorldTransform(ballTransform);
-                let ballPosition = ballTransform.getOrigin();
-
-                // Update the line connected to this ball
-                let line1 = ri.scene.getObjectByName("lineToTopBar1_" + i);
-                let line2 = ri.scene.getObjectByName("lineToTopBar2_" + i);
-                if (line1) {
-                    let points = line1.geometry.attributes.position.array;
-                    points[0] = ballPosition.x();
-                    points[1] = ballPosition.y();
-                    points[2] = ballPosition.z();
-                    line1.geometry.attributes.position.needsUpdate = true;
-                }
-                if (line2) {
-                    let points = line2.geometry.attributes.position.array;
-                    points[0] = ballPosition.x();
-                    points[1] = ballPosition.y();
-                    points[2] = ballPosition.z();
-                    line2.geometry.attributes.position.needsUpdate = true;
-                }
-
-                Ammo.destroy(ballTransform);
-            }
-        }
-    }
 }
 
 function updateHingeMarkers() {
