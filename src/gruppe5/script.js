@@ -33,7 +33,11 @@ import {
     arrow,
 } from "./threeHelpers.js";
 
-import {createAmmoWorld} from "./ammoHelpers.js"
+import {
+    createAmmoWorld,
+    updatePhysics,
+    createAmmoRigidBody
+} from "./ammoHelpers.js"
 
 
 export const ri = {
@@ -146,59 +150,6 @@ function animate(currentTime) {
 
     let waterMesh = ri.scene.getObjectByName("myWater")
     waterMesh.material.uniforms.uTime.value = elapsed;
-}
-
-
-// Hentet fra kodeeksempel modul7/ammoShapes1, modifisert
-export function createAmmoRigidBody(shape, threeMesh, restitution=0.7, friction=0.8, position={x:0, y:50, z:0}, mass=1, useLocalScaling=true) {
-
-    let transform = new Ammo.btTransform();
-    transform.setIdentity();
-    transform.setOrigin(new Ammo.btVector3(position.x, position.y, position.z));
-
-    let quaternion = threeMesh.quaternion;
-    transform.setRotation(new Ammo.btQuaternion(quaternion.x, quaternion.y, quaternion.z, quaternion.w));
-
-    if (useLocalScaling) {
-        let scale = threeMesh.scale;
-        shape.setLocalScaling(new Ammo.btVector3(scale.x, scale.y, scale.z));
-    }
-
-    let motionState = new Ammo.btDefaultMotionState(transform);
-    let localInertia = new Ammo.btVector3(0, 0, 0);
-    shape.calculateLocalInertia(mass, localInertia);
-
-    let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, shape, localInertia);
-    let rigidBody = new Ammo.btRigidBody(rbInfo);
-    rigidBody.setRestitution(restitution);
-    rigidBody.setFriction(friction);
-
-    // All remaining work using rigidBody, no return needed
-    threeMesh.userData.physicsBody = rigidBody;
-    phy.ammoPhysicsWorld.addRigidBody(rigidBody);  // Add to ammo physics world:
-
-    phy.rigidBodies.push(threeMesh);
-    rigidBody.threeMesh = threeMesh;
-
-    return rigidBody;
-}
-
-
-// Hentet fra kodeeksempel modul7/ammoShapes1
-function updatePhysics(deltaTime) {
-    phy.ammoPhysicsWorld.stepSimulation(deltaTime, 10);
-    for (let i = 0; i < phy.rigidBodies.length; i++) {
-        let mesh = phy.rigidBodies[i];
-        let rigidBody = mesh.userData.physicsBody;
-        let motionState = rigidBody.getMotionState();
-        if (motionState) {
-            motionState.getWorldTransform(phy.transform);
-            let p = phy.transform.getOrigin();
-            let q = phy.transform.getRotation();
-            mesh.position.set(p.x(), p.y(), p.z());
-            mesh.quaternion.set(q.x(), q.y(), q.z(), q.w());
-        }
-    }
 }
 
 
@@ -547,10 +498,10 @@ function domino(position, starter = true) {
 
 function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, texture, groupMesh, compoundShape, name = "",rotateType) {
     let shape;
-    if (shapeType == 'box') {
+    if (shapeType === 'box') {
         shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
 
-    } else if (shapeType == 'cylinder') {
+    } else if (shapeType === 'cylinder') {
         if (size.radius1){
             shape = new Ammo.btCylinderShape(new Ammo.btVector3(size.radius1, size.height/2, size.radius2));
         }
@@ -558,9 +509,9 @@ function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, t
             shape = new Ammo.btCylinderShape(new Ammo.btVector3(size.x, size.z/2, size.y));
         }
 
-    } else if (shapeType == 'sphere') {
+    } else if (shapeType === 'sphere') {
         shape = new Ammo.btSphereShape(size.radius);
-    } else if (shapeType == 'triangleShape') {
+    } else if (shapeType === 'triangleShape') {
         shape = generateTriangleShape(size, false)
     }
 
@@ -579,11 +530,11 @@ function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, t
 
 
     let rotation = new THREE.Quaternion();
-    if (meshRotation.x != 0) {
+    if (meshRotation.x !== 0) {
         rotation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), meshRotation.x)}
-    if (meshRotation.y != 0) {
+    if (meshRotation.y !== 0) {
         rotation.setFromAxisAngle(new THREE.Vector3(0, 1, 0), meshRotation.y)}
-    if (meshRotation.z != 0) {
+    if (meshRotation.z !== 0) {
         rotation.setFromAxisAngle(new THREE.Vector3(0, 0, 1), meshRotation.z)}
 
     let transform = new Ammo.btTransform();

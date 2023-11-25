@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import {addMeshToScene} from "./myThreeHelper.js";
-import {createAmmoRigidBody} from "./script.js";
+import {createAmmoRigidBody} from "./ammoHelpers.js";
 import {phy} from "./script.js";
 import {
     COLLISION_GROUP_BOX, COLLISION_GROUP_MOVEABLE, COLLISION_GROUP_PLANE,
