@@ -120,11 +120,7 @@ export function onDocumentMouseDown(event) {
         // Can only click a ball 1 time
         if (ball.name === 'ball'){
             ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(0, 0, 3 ));
-            console.log(ball.userData)
             ball.name = 'ball_'
-        } else if (ball.name === 'ball7Mesh') {
-            console.log(ball.userData)
-            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(30, 0, 0 ));
         }
     }
 }
@@ -142,7 +138,7 @@ export function addLights() {
 
 
 // Kode hentet fra oblig 3
-export function ambientLight() {
+function ambientLight() {
     ri.ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     ri.ambientLight.visible = true;
     ri.scene.add(ri.ambientLight);
@@ -157,7 +153,7 @@ export function ambientLight() {
 
 
 // Kode hentet fra oblig 3
-export function directionalLight() {
+function directionalLight() {
     ri.directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     ri.directionalLight.position.set(1, 40, 0);
     ri.directionalLight.castShadow = true;
@@ -331,3 +327,93 @@ export function arrow(position = {x:0, y:10, z:0}) {
     tween2.start();
 }
 
+
+//Helper for hinge
+export function createPivotMarker(position, color = 0xff0000) {
+    let geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 32, 32);
+    let material = new THREE.MeshBasicMaterial({ color: color });
+    let marker = new THREE.Mesh(geometry, material);
+    marker.position.copy(position);
+    marker.rotateZ(Math.PI / 2);
+    return marker;
+}
+
+export function localToWorld(body, localPoint) {
+    let worldTransform = body.getWorldTransform();
+    let position = worldTransform.getOrigin();
+    let orientation = worldTransform.getRotation();
+
+    let localVec = new THREE.Vector3(localPoint.x(), localPoint.y(), localPoint.z());
+    let quaternion = new THREE.Quaternion(orientation.x(), orientation.y(), orientation.z(), orientation.w());
+    localVec.applyQuaternion(quaternion);
+
+    localVec.add(new THREE.Vector3(position.x(), position.y(), position.z()));
+    return localVec;
+}
+
+
+//Werner sin funksjon en gang i tida...
+export function addLineBetweenObjects(nameMeshStart, nameMeshEnd, meshPositionStart, meshPositionEnd, childName, lineName) {
+    ri.scene.updateMatrixWorld(true);
+    let lineMeshStartPosition = ri.scene.getObjectByName(nameMeshStart);
+    let lineMeshEndPosition = ri.scene.getObjectByName(nameMeshEnd).getObjectByName(childName);
+
+    // Wire / Line:
+    // Definerer Line-meshet (beståemde av to punkter):
+    const lineMaterial = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 30 } );
+    const points = [];
+    // Finner start- og endepunktmesh:
+    const startPoint = new THREE.Vector3();
+    const endPoint = new THREE.Vector3();
+    // NB! Bruker world-position:
+    lineMeshStartPosition.getWorldPosition(startPoint);
+
+    startPoint.set(startPoint.x, meshPositionEnd.y, meshPositionEnd.z);
+
+    lineMeshEndPosition.getWorldPosition(endPoint);
+    endPoint.set(endPoint.x, endPoint.y, meshPositionStart.z);
+
+    points.push(startPoint);
+    points.push(endPoint);
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints( points );
+    const springLineMesh = new THREE.Line( lineGeometry, lineMaterial );
+    springLineMesh.name = lineName;
+    // NB! Linemeshet legges til scene-objektet.
+    ri.scene.add(springLineMesh);
+}
+
+export function updateLines() {
+    for (let i = 1; i <= 8; ++i) {
+        let ballMesh = ri.scene.getObjectByName("ball" + i + "Mesh");
+        if (ballMesh && ballMesh.userData.physicsBody) {
+            let ballPhysicsBody = ballMesh.userData.physicsBody;
+            let ballMotionState = ballPhysicsBody.getMotionState();
+
+            if (ballMotionState) {
+                let ballTransform = new Ammo.btTransform();
+                ballMotionState.getWorldTransform(ballTransform);
+                let ballPosition = ballTransform.getOrigin();
+
+                // Update the line connected to this ball
+                let line1 = ri.scene.getObjectByName("lineToTopBar1_" + i);
+                let line2 = ri.scene.getObjectByName("lineToTopBar2_" + i);
+                if (line1) {
+                    let points = line1.geometry.attributes.position.array;
+                    points[0] = ballPosition.x();
+                    points[1] = ballPosition.y();
+                    points[2] = ballPosition.z();
+                    line1.geometry.attributes.position.needsUpdate = true;
+                }
+                if (line2) {
+                    let points = line2.geometry.attributes.position.array;
+                    points[0] = ballPosition.x();
+                    points[1] = ballPosition.y();
+                    points[2] = ballPosition.z();
+                    line2.geometry.attributes.position.needsUpdate = true;
+                }
+
+                Ammo.destroy(ballTransform);
+            }
+        }
+    }
+}
