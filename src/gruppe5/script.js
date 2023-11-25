@@ -75,7 +75,6 @@ function createThreeScene() {
 
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     ri.camera.position.set( -15, 7, 15 );
-
     // ri.camera.position.set( -5, 10, -10 ); // Temp position
 
     ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
@@ -276,8 +275,6 @@ function animate(currentTime) {
 }
 
 
-
-
 function addLights() {
     ambientLight();
     directionalLight();
@@ -389,25 +386,6 @@ function updatePhysics(deltaTime) {
 }
 
 
-// Kode hentet fra oblig 3
-// Vet ikke om vi blir å bruke denne
-// function createMesh(geometry, material, parent, name = "", translateY = 0, translateZ = 0, rotateX = 0, rotateY = 0, rotateZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1) {
-//     const mesh = new THREE.Mesh(geometry, material);
-//
-//     mesh.translateY(translateY);
-//     mesh.translateZ(translateZ);
-//     mesh.rotateX(rotateX);
-//     mesh.rotateY(rotateY);
-//     mesh.rotateZ(rotateZ);
-//     mesh.scale.set(scaleX, scaleY, scaleZ);
-//     mesh.name = name;
-//     mesh.castShadow = true;
-//     mesh.receiveShadow = true;
-//     parent.add(mesh);
-//     return mesh;
-// }
-
-
 function threeAmmoObjects() {
     ground()
     water()
@@ -422,7 +400,7 @@ function threeAmmoObjects() {
     let dominoPosition = {x: 9.85, y: 1.6, z: -8};
     // dominoPosition = {x: 0, y: 1.6, z: 0};
     domino(dominoPosition)
-    
+
 
     let position = {x: 14, y: 7.05, z: -30.5}
     plinko(position);
