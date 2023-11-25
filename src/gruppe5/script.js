@@ -1134,7 +1134,7 @@ function updateHingeMarkers() {
 function spiral() {
     const numTurns = 20;
     const height = numTurns/5;
-    const boxSize = 0.1; // Size of each box
+    const boxSize = 0.05; // Size of each box
     const radius = 0.5;    // Radius of the spiral
     let spiralMesh = new THREE.Group();
     spiralMesh.position.set(-10, 0.1, 10);
@@ -1171,6 +1171,7 @@ function spiral() {
     let spiralBody = createAmmoRigidBody(spiralShape, spiralMesh, 1, 1, spiralMesh.position, 0);
     ri.scene.add(spiralMesh);
 }
+
 
 function steps(position, rotation = 0, numberOfSteps = 6) {
     let groupMesh = new THREE.Group();
