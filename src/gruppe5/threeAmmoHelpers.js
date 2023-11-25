@@ -154,26 +154,3 @@ export function createHeightFieldShape(heightData, heightMapPixelWidth, heightMa
 }
 
 
-export function ground() {
-    const position = {x: 0, y: -2.5, z: 0};
-    const size = {x: 100, y:5, z: 100};
-
-    // THREE
-    const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
-    const texture = ri.textures.grass;
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-    texture.repeat.set(10,10);
-    const material = new THREE.MeshStandardMaterial({
-        map: texture,
-        side: THREE.DoubleSide});
-    const mesh = new THREE.Mesh(geometry, material);
-
-    mesh.name = 'ground';
-    mesh.receiveShadow = true;
-
-    ri.scene.add(mesh);
-
-    // AMMO
-    let shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
-    createAmmoRigidBody(shape, mesh, 0.7, 0.8, position, 0);
-}
