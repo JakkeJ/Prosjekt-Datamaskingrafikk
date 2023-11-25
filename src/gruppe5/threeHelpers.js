@@ -338,6 +338,7 @@ export function createPivotMarker(position, color = 0xff0000) {
     return marker;
 }
 
+
 export function localToWorld(body, localPoint) {
     let worldTransform = body.getWorldTransform();
     let position = worldTransform.getOrigin();
@@ -381,6 +382,7 @@ export function addLineBetweenObjects(nameMeshStart, nameMeshEnd, meshPositionSt
     // NB! Linemeshet legges til scene-objektet.
     ri.scene.add(springLineMesh);
 }
+
 
 export function updateLines() {
     for (let i = 1; i <= 8; ++i) {

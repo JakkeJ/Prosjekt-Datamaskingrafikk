@@ -7,6 +7,7 @@ import {
     COLLISION_GROUP_SPHERE, COLLISION_GROUP_SPRING
 } from "./myAmmoHelper";
 
+
 export function createMovable(color=0xffaaff, position={x:0, y:0.7, z:-40}) {
     const sideLength = 1.5;
     const mass = 0; //Merk!
@@ -66,6 +67,7 @@ export function moveRigidBody(movableMesh, direction) {
     motionState.setWorldTransform(transform);
 }
 
+
 export function moveRigidBodyAnimation(movableMesh, position, direction) {
     let transform = new Ammo.btTransform();
     let motionState = movableMesh.userData.physicsBody.getMotionState();
@@ -73,6 +75,7 @@ export function moveRigidBodyAnimation(movableMesh, position, direction) {
     transform.setOrigin(new Ammo.btVector3(position.x + direction.x, position.y + direction.y, position.z + direction.z,));
     motionState.setWorldTransform(transform);
 }
+
 
 export function rotateRigidBody(movableMesh, rotation) {
     let transform = new Ammo.btTransform();
