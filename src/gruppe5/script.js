@@ -719,7 +719,7 @@ function cannon() {
     cannonBodyMesh.material.opacity = 0.6;
 
    
-    createAmmoMesh('triangleShape', cannonBodyShapeGeo, cannonBodyMesh, {x: 0, y: -1.5, z: 0}, {x: 0, y: 0, z: 0}, material, bottomSpringMesh, cannonBodyShape, 'cannonBody')
+    createAmmoMesh('triangleShape', cannonBodyShapeGeo, cannonBodyMesh, {x: 0, y: -1.5, z: 0}, {x: 0, y: 0, z: 0}, blackColor, bottomSpringMesh, cannonBodyShape, 'cannonBody')
     cannonBodyMesh.collisionResponse = (mesh1) => {
         ri.springs.cannonSpring.enableSpring(1, true);
         console.log("im here")
