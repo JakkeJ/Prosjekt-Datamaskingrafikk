@@ -39,6 +39,7 @@ export const ri = {
         cannonSpring: undefined,
     },
     camera: undefined,
+    controls: undefined,
     renderer: undefined,
     scene: undefined,
     raycaster: undefined,
@@ -139,6 +140,7 @@ function animate(currentTime) {
     const delta = ri.clock.getDelta();
     const elapsed = ri.clock.getElapsedTime();
 
+
     updatePhysics(delta)
     updateLines();
     updateHingeMarkers();
@@ -214,7 +216,7 @@ function threeAmmoObjects() {
     ball(position, 0.2, 0);
 
     position = {x: -5, y: 1.2, z: 10.2};
-    rails(position, Math.PI, 15, 6)
+    rails(position, Math.PI, 15, 6, false, 0.0)
 
     position = {x: 0, y: 10, z: -20};
     ball(position, 0.3, 1, 0.97, 1);
@@ -958,36 +960,69 @@ function updateHingeMarkers() {
 }
 
 function spiral(angle = -Math.PI/8, position = {x: -10, y: 0.1, z: 10}, turns = 50, name = "spiral") {
-    const numTurns = 50;
-    const height = numTurns/5;
+    const numTurns = 70;
+    const height = numTurns/8;
     const boxSize = 0.05;
     const radius = 0.5;
     let spiralMesh = new THREE.Group();
-    spiralMesh.position.set(-10, 0.1, 10);
-    spiralMesh.rotation.set(0,0,angle)
+    spiralMesh.position.set(position.x, position.y, position.z);
+    spiralMesh.rotation.set(0,-angle, angle);
     spiralMesh.name = name;
+
+    let spiralMeshNoCollision = new THREE.Group();
+    spiralMeshNoCollision.position.set(position.x, position.y, position.z);
+    spiralMeshNoCollision.rotation.set(0,-angle, angle);
+    spiralMeshNoCollision.name = name + "NoCollision";
+
     let cylinderMesh = new THREE.Group();
-    cylinderMesh.position.set(-10, 0.1, 10);
-    cylinderMesh.rotation.set(0,0,angle)
+    cylinderMesh.position.set(position.x, position.y, position.z);
+    cylinderMesh.rotation.set(0,-angle, angle);
     cylinderMesh.name = name + "Cylinder";
     let spiralShape = new Ammo.btCompoundShape();
     let cylinderShape = new Ammo.btCompoundShape();
     const materialDarkGrey = new THREE.MeshPhongMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
     const transparent = new THREE.MeshPhongMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide})
     const boxGeometry = new THREE.BoxGeometry(boxSize*10, boxSize, boxSize);
-    const centerCylinderGeometry = new THREE.CylinderGeometry(radius/2, radius/2, numTurns/5, 32, 1, false);
-    createAmmoMesh('cylinder', centerCylinderGeometry, {radius1: radius/2, radius2: radius/2, height: numTurns/5}, {x: 0, y: numTurns/5/2, z: 0}, {x: 0, y: 0, z: 0}, materialDarkGrey, cylinderMesh, cylinderShape, cylinderMesh.name + "Ammo")
-    for (let i = 0; i < numTurns * 20; i++) {
-        const angle = (i / 120) * Math.PI * 2;
-        const x = radius * Math.cos(angle);
-        const y = (height / (numTurns * 20)) * i;
-        const z = radius * Math.sin(angle);
+    const centerCylinderGeometry = new THREE.CylinderGeometry(radius/2, radius/2, numTurns/8, 32, 1, false);
+    createAmmoMesh('cylinder', centerCylinderGeometry, {radius1: radius/2, radius2: radius/2, height: numTurns/5}, {x: 0, y: numTurns/15.5, z: 0}, {x: 0, y: 0, z: 0}, materialDarkGrey, cylinderMesh, cylinderShape, cylinderMesh.name + "Ammo");
+
+    const totalSteps = numTurns * 20;
+    const reducingAtStep = totalSteps - (numTurns * 2.3);
+    const reductionPerStep = (boxSize * 10) / (numTurns * 2.3);
+    let max = 0;
+    for (let i = 0; i < (numTurns * 20) + 20; i++) {
+        const spiralAngle = (i / 120) * Math.PI * 2;
+        const x = radius * Math.cos(spiralAngle);
+        let y;
+
+
+
+        if (i === numTurns * 20) {
+            max = (height / (numTurns * 20)) * i;
+            y = max;
+        } else if (i > numTurns * 20) {
+            console.log(max)
+            y = max;
+        } else {
+            y = (height / (numTurns * 20)) * i;
+        }
+
+        const z = radius * Math.sin(spiralAngle);
         const position = {x: x, y: y, z: z}
         const radialVector = new THREE.Vector3(x, 0, z);
         radialVector.normalize();
+
+        let wallBoxHeight = boxSize * 10;
+
+        if (i >= reducingAtStep) {
+            const taperingOffset = (i - reducingAtStep) * reductionPerStep;
+            wallBoxHeight = Math.max(0, wallBoxHeight - taperingOffset);
+        }
+
         const remainingHeight = height - position.y;
-        const wallBoxHeight = Math.min(boxSize * 10, remainingHeight);
-        const wallBoxGeometry = new THREE.BoxGeometry(boxSize, wallBoxHeight*2, boxSize);
+        wallBoxHeight = Math.min(wallBoxHeight, remainingHeight);
+
+        const wallBoxGeometry = new THREE.BoxGeometry(boxSize, wallBoxHeight * 2, boxSize);
         const wallBoxPosition = {
             x: position.x + radialVector.x * boxSize * 5,
             y: position.y + wallBoxHeight,
@@ -996,16 +1031,29 @@ function spiral(angle = -Math.PI/8, position = {x: -10, y: 0.1, z: 10}, turns = 
 
         let wallBoxRotation = new THREE.Vector3(0, 0, 0);
 
-        // Create and add the wall box
-        let wall = createAmmoMesh('box', wallBoxGeometry, {x: 0, y: 1, z: 0}, wallBoxPosition, wallBoxRotation, transparent, spiralMesh, spiralShape, "", "quaternion_norm");
-        wall.mesh.material.transparent = true;
-        wall.mesh.material.opacity = 0.1;
+        let wall;
+        if (i > numTurns * 18) {
+            wall = createAmmoMesh('box', wallBoxGeometry, {x: 0, y: 0, z: 0}, wallBoxPosition, wallBoxRotation, transparent, spiralMeshNoCollision, spiralShape, "", "quaternion_norm");
+        } else {
+            wall = createAmmoMesh('box', wallBoxGeometry, {x: 0, y: 1, z: 0}, wallBoxPosition, wallBoxRotation, transparent, spiralMesh, spiralShape, "", "quaternion_norm");
+            wall.mesh.material.transparent = true;
+            wall.mesh.material.opacity = 0.1;
+        }
+
+
         let spiralStep = createAmmoMesh('box', boxGeometry, {x: 0, y: 0, z: 0}, {x: position.x, y: position.y, z: position.z}, {x: radialVector.x, y: radialVector.y, z: radialVector.z}, materialDarkGrey, spiralMesh, spiralShape, name + "Step" + i, "quaternion_norm");
     }
-    let spiralBody = createAmmoRigidBody(spiralShape, spiralMesh, 1, 1, spiralMesh.position, 0);
-    let cylinderBody = createAmmoRigidBody(cylinderShape, cylinderMesh, 1, 1, cylinderMesh.position, 0)
+    let spiralBody = createAmmoRigidBody(spiralShape, spiralMesh, 1, 0.1, spiralMesh.position, 0);
+    let cylinderBody = createAmmoRigidBody(cylinderShape, cylinderMesh, 1, 0.1, cylinderMesh.position, 0);
+    //let stopBoxShape = new Ammo.btCompoundShape();
+    //let stopBoxMesh = new THREE.Group();
+    //let stopBoxGeometry = new THREE.BoxGeometry(0.5, 0.9, 0.05);
+    //createAmmoMesh('box', stopBoxGeometry, {x: 0.5, y: 0.9, z: 0.05}, {x: -6.2, y: 8.4, z: 9.7}, {x: 0,y: Math.PI/6,z: 0}, materialDarkGrey, stopBoxMesh, spiralShape, "stopBox");
+    //createAmmoRigidBody(stopBoxShape, stopBoxMesh, 0.1, 0, {x: 0, y: 0, z: 0}, 0);
     ri.scene.add(spiralMesh);
+    ri.scene.add(spiralMeshNoCollision);
     ri.scene.add(cylinderMesh);
+    //ri.scene.add(stopBoxMesh);
 }
 
 
