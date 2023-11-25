@@ -23,8 +23,8 @@ export function createThreeScene() {
     ri.lilGui = new GUI();
 
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    ri.camera.position.set( -15, 7, 15 );
-    // ri.camera.position.set( -5, 10, -10 ); // Temp position
+    ri.camera.position.set(-15, 7, 15);
+    ri.camera.position.set(15, 7, -15); // Temp position
 
     ri.controls = new PointerLockControls(ri.camera, ri.renderer.domElement);
     ri.controls.movementSpeed = 10;
