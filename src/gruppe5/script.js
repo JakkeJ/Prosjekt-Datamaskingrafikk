@@ -52,7 +52,7 @@ export const ri = {
 export const phy = {
     ammoPhysicsWorld: undefined,
     rigidBodies: [],
-    checkCollisions: true
+    checkCollisions: true,
 }
 
 
