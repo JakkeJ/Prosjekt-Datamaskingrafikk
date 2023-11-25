@@ -52,6 +52,7 @@ export const ri = {
 export const phy = {
     ammoPhysicsWorld: undefined,
     rigidBodies: [],
+    checkCollisions: true,
 }
 
 
@@ -211,8 +212,11 @@ function threeAmmoObjects() {
     ball(position, 0.5, 5)
 
     position = {x: -30, y: 2, z: 20};
-    // cube(position, {x:1,y:1,z:1}, 0,'cube', 2)
-    steps(position,90, 10)
+    steps(position,90, 8)
+
+    // position = {x: -40, y: -4, z: 20};
+    // steps(position,90, 5)
+
 
     position = {x: 10, y: 0, z: 5};
     ball(position, 0.2, 0);
@@ -224,7 +228,7 @@ function threeAmmoObjects() {
 }
 
 
-function ball(position, radius, mass, restitution = 0.7, friction = 0.8) {
+function ball(position, radius = 0.3, mass = 5, restitution = 0.7, friction = 0.8) {
     // THREE
     const geometry = new THREE.SphereGeometry(radius, 32, 32);
     const material = new THREE.MeshStandardMaterial({
@@ -305,9 +309,6 @@ function tableMesh(groupMesh, compoundShape, size, rotation, height, name = 'tab
 }
 
 function funnel(position, upperRadius = 2.7, lowerRadius = 0.5, height = 2) {
-    // let rotation = {x: 0, z: 0};
-
-    //Ammo-container:
     const compoundShape = new Ammo.btCompoundShape();
 
     const material = new THREE.MeshStandardMaterial({
@@ -951,26 +952,27 @@ function spiral() {
 
 
 function steps(position, rotation = 0, numberOfSteps = 6) {
-    let groupMesh = new THREE.Group();
-    let stepMesh1 = new THREE.Group();
-    let stepMesh2 = new THREE.Group();
-    let wallGroupMesh = new THREE.Group();
-    let compoundShape1 = new Ammo.btCompoundShape();
-    let compoundShape2 = new Ammo.btCompoundShape();
-    let wallCompoundShape = new Ammo.btCompoundShape();
+    const groupMesh = new THREE.Group();
+    const stepMesh1 = new THREE.Group();
+    const stepMesh2 = new THREE.Group();
+    const wallGroupMesh = new THREE.Group();
+    const compoundShape1 = new Ammo.btCompoundShape();
+    const compoundShape2 = new Ammo.btCompoundShape();
+    const wallCompoundShape = new Ammo.btCompoundShape();
 
-    let mass = 0;
-    let size = {x:1.5,y:8,z:1.5};
-    let name = 'steps'
-    let offset = 2 // height offset per step
+    const mass = 0;
+    // const size = {x:1.5,y:8,z:1.5};
+    const size = {x:1,y:8,z:1};
+    const name = 'steps'
+    const offset = 2 // height offset per step
 
-    let stepShape = new THREE.Shape();
+    const stepShape = new THREE.Shape();
     stepShape.moveTo( -size.x/2,-size.y/2 );
     stepShape.lineTo(-size.x/2, size.y/2);
     stepShape.lineTo(size.x/2, size.y/2 * 0.8);
     stepShape.lineTo(size.x/2, -size.y/2);
 
-    let wallShape = new THREE.Shape();
+    const wallShape = new THREE.Shape();
     wallShape.moveTo( -size.x/2,0 );
     wallShape.lineTo(-size.x/2, size.y/2 + offset);
     wallShape.lineTo(-size.x/2 + numberOfSteps*size.x, size.y/2 + numberOfSteps*offset);
@@ -985,20 +987,20 @@ function steps(position, rotation = 0, numberOfSteps = 6) {
         bevelEnabled: false,
     };
 
-    let stepGeometry = new THREE.ExtrudeGeometry( stepShape, stepExtrudeSettings );
-    let stepMaterial = new THREE.MeshStandardMaterial({
-        color: 0xff0044,
+    const stepGeometry = new THREE.ExtrudeGeometry( stepShape, stepExtrudeSettings );
+    const stepMaterial = new THREE.MeshStandardMaterial({
+        color: 0xBC6A00,
         side: THREE.DoubleSide});
 
-    let wallGeometry = new THREE.ExtrudeGeometry( wallShape, wallExtrudeSettings );
-    let wallMaterial = new THREE.MeshStandardMaterial({
+    const wallGeometry = new THREE.ExtrudeGeometry( wallShape, wallExtrudeSettings );
+    const wallMaterial = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         side: THREE.DoubleSide,
         transparent: true,
         opacity: 0.3});
 
-    let mesh = new THREE.Mesh(stepGeometry, new THREE.MeshBasicMaterial());
-    let wallMesh = new THREE.Mesh(wallGeometry, new THREE.MeshBasicMaterial());
+    const mesh = new THREE.Mesh(stepGeometry, new THREE.MeshBasicMaterial());
+    const wallMesh = new THREE.Mesh(wallGeometry, new THREE.MeshBasicMaterial());
 
     let useFirst = true;
 
@@ -1027,9 +1029,9 @@ function steps(position, rotation = 0, numberOfSteps = 6) {
 
     ri.scene.add(groupMesh);
 
-    let rigidBody1 = createAmmoRigidBody(compoundShape1, stepMesh1, 0.1, 0.1, position, mass);
-    let rigidBody2 = createAmmoRigidBody(compoundShape2, stepMesh2, 0.1, 0.1, position, mass);
-    let wallRigidBody = createAmmoRigidBody(wallCompoundShape, wallGroupMesh, 0.1, 0.1, position, mass);
+    const rigidBody1 = createAmmoRigidBody(compoundShape1, stepMesh1, 0.1, 0.1, position, mass);
+    const rigidBody2 = createAmmoRigidBody(compoundShape2, stepMesh2, 0.1, 0.1, position, mass);
+    const wallRigidBody = createAmmoRigidBody(wallCompoundShape, wallGroupMesh, 0.1, 0.1, position, mass);
 
     // Make object movable:
     rigidBody1.setCollisionFlags(rigidBody1.getCollisionFlags() | 2);  // 2 = BODYFLAG_KINEMATIC_OBJECT: Betyr kinematic object, masse=0 men kan flyttes!
@@ -1037,9 +1039,8 @@ function steps(position, rotation = 0, numberOfSteps = 6) {
     rigidBody2.setCollisionFlags(rigidBody2.getCollisionFlags() | 2);  // 2 = BODYFLAG_KINEMATIC_OBJECT: Betyr kinematic object, masse=0 men kan flyttes!
     rigidBody2.setActivationState(4);  // 4 = BODYSTATE_DISABLE_DEACTIVATION, dvs. "Never sleep".
 
-    let val = 0.03;
-    val = offset
-    let duration = 1100;
+    const val = offset;
+    const duration = 1100;
 
     function newTween(value, duration, mesh2move) {
         return new TWEEN.Tween({y: 0})
@@ -1063,15 +1064,16 @@ function steps(position, rotation = 0, numberOfSteps = 6) {
     tween2.chain(tween1, tween4)
 
     tween1.start()
+    tween4.start()
 
     // Ball for testing
     let ballPos = {x:position.x, y:position.y +  size.y/2, z:position.z + size.z/2}
-    ball(ballPos, 0.4, 10, 0.1)
-    rails(ballPos, rotation, -5, 8)
+    ball(ballPos, 0.3, 10, 0.1)
+    rails(ballPos, rotation, -5, 8, true)
     ballPos.z += 7.5
     ballPos.y += 2
-    ball(ballPos, 0.4, 10, 0.1)
-    groupMesh.tween = tween1
+    ball(ballPos, 0.3, 10, 0.1)
+    // groupMesh.tween = tween1
 }
 
 
@@ -1104,7 +1106,7 @@ function terrain(position = {x: 0, y: 5, z: 0}) {
 
     geometry.rotateX( - Math.PI / 2 );
     // Setter y-verdien til PlaneGeometry i forhold til høydeverdiene. Gjennomløper alle vertekser:
-    let vertices = geometry.attributes.position.array;
+    const vertices = geometry.attributes.position.array;
     // Sentrerer vha. delta:
     // Ammo-shapen blir (automatisk) sentrert om origo basert på terrainMinHeight og terrainMaxHeight.
     // Må derfor korrigere THREE.PlaneGeometry sine y-verdier i forhold til dette.
@@ -1119,8 +1121,7 @@ function terrain(position = {x: 0, y: 5, z: 0}) {
 
     const material = new THREE.MeshStandardMaterial({
         map: texture,
-        side: THREE.DoubleSide,
-        needsUpdate: true
+        side: THREE.DoubleSide
     });
 
     const mesh = new THREE.Mesh( geometry, material );
