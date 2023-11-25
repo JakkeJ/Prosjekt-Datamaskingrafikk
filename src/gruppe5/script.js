@@ -1092,7 +1092,7 @@ function golfclub() {
     let stopperValues = {x: 0.2, y: 0.2, z: 10};
     let stopperGeo = new THREE.CylinderGeometry(stopperValues.x, stopperValues.y, stopperValues.z, 36, 1);
     let stopper = createAmmoMesh('cylinder', stopperGeo, stopperValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, lightGreyColor, golfClubStopperMesh, golfClubStopperShape);
-    let golfClubStopperRigid = createAmmoRigidBody(golfClubStopperShape, golfClubStopperMesh, 0, 1, golfClubStopperMesh.position, 10);
+    let golfClubStopperRigid = createAmmoRigidBody(golfClubStopperShape, golfClubStopperMesh, 0, 1, golfClubStopperMesh.position, 3);
     
     
     ri.scene.add(golfClubStopperMesh);
@@ -1108,10 +1108,10 @@ function golfclub() {
 function cannon() {
     //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra: https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/springGeneric6DofSpringConstraint.js?ref_type=heads
     let position = {x: 47, y: 3.76, z: 20};
-    let rotationDegree =65*Math.PI/180;
+    let rotationDegree =66.2*Math.PI/180;
     let rotationAxis = 'X';
-    let bottomSpringValues = {x: 0.5, y: 0.5, z: 0.2};
-    let topSpringValues = {x: 0.5, y: 0.5, z: 0.2};
+    let bottomSpringValues = {x: 0.9, y: 0.9, z: 0.2};
+    let topSpringValues = {x: 0.9, y: 0.9, z: 0.2};
 
     const lightGreyColor = new THREE.MeshStandardMaterial({color: 0xFCFCFF, side: THREE.DoubleSide, roughness: 0.7, metalness: 0.5}); 
     const brownColor = new THREE.MeshStandardMaterial({color: 0xBC6A00,  side: THREE.DoubleSide, roughness: 0.3});
@@ -1153,7 +1153,7 @@ function cannon() {
     spring.setAngularUpperLimit(new Ammo.btVector3(0, 0, 0));
 
     spring.enableSpring(1, false);
-    spring.setStiffness(1, 5000);
+    spring.setStiffness(1, 6000);
     spring.setDamping(1, 100);
     spring.setEquilibriumPoint(1, 2);
 
@@ -1235,7 +1235,7 @@ function cannon() {
         {ballPosition = {x: position.x-2, y: position.y+1, z: position.z};}
     else {ballPosition = {x: position.x, y: position.y, z: position.z+1.2};};
     let ballRadius = 0.4
-    let ballMass = 5
+    let ballMass = 10
     ball(ballPosition, ballRadius, ballMass);
 
 }
