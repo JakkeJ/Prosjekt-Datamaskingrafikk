@@ -73,3 +73,14 @@ export function moveRigidBodyAnimation(movableMesh, position, direction) {
     transform.setOrigin(new Ammo.btVector3(position.x + direction.x, position.y + direction.y, position.z + direction.z,));
     motionState.setWorldTransform(transform);
 }
+
+export function rotateRigidBody(movableMesh, rotation) {
+    let transform = new Ammo.btTransform();
+    let motionState = movableMesh.userData.physicsBody.getMotionState();
+    motionState.getWorldTransform(transform);
+    let quaternion = new THREE.Quaternion();
+    quaternion.setFromEuler(rotation);
+    let ammoQuaternion = new Ammo.btQuaternion(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
+    transform.setRotation(ammoQuaternion);
+    motionState.setWorldTransform(transform);
+}
