@@ -14,7 +14,7 @@ import {degToRad} from "three/src/math/MathUtils.js";
 import {
     createMovable,
     moveRigidBody,
-    moveRigidBodyAnimation
+    moveRigidBodyAnimation, rotateRigidBody
 } from "./movable.js";
 import {inflate} from "three/addons/libs/fflate.module.js";
 
@@ -74,7 +74,8 @@ function createThreeScene() {
     ri.lilGui = new GUI();
 
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    ri.camera.position.set( 25, 10, -0 );
+    ri.camera.position.set( -15, 7, 15 );
+
     // ri.camera.position.set( 20, 10, -20 ); // Temp position
 
     ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
@@ -127,6 +128,22 @@ function keyPresses() {
     if (ri.currentlyPressedKeys['KeyS']) {	//S
         moveRigidBody(movableMesh,{x: 0, y: 0, z: 0.2});
     }
+
+    const spiral = ri.scene.getObjectByName("spiral");
+    if (ri.currentlyPressedKeys['KeyT']) {
+        // Create a quaternion for the incremental rotation
+        let deltaRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 80);
+
+        // Multiply the spiral's current quaternion by the incremental rotation
+        spiral.quaternion.multiply(deltaRotation);
+
+        // Extract the Euler rotation from the updated quaternion if needed
+        let eulerRotation = new THREE.Euler().setFromQuaternion(spiral.quaternion, 'XYZ');
+
+        // Apply the rotation to the rigid body
+        rotateRigidBody(spiral, eulerRotation);
+    }
+
     const steps =  ri.scene.getObjectByName("steps");
     let stepsStarted = false
     if (ri.currentlyPressedKeys['KeyE']) {	//E
@@ -222,6 +239,8 @@ function addToScene() {
     ri.textures.darkGrey = loader.load('static/assets/textures/darkGreyTexture.png')
     ri.textures.water = loader.load('static/assets/textures/water.jpg')
     ri.textures.cloud = loader.load('static/assets/textures/cloud.png')
+    ri.textures.darkBlue = loader.load('static/assets/textures/darkblueTexture.png')
+    ri.textures.grey = loader.load('static/assets/textures/greyTexture.png')
 
     manager.onLoad = () => {
         addLights()
@@ -393,8 +412,8 @@ function threeAmmoObjects() {
     ground()
     water()
 
-    let ballPosition = {x: -10, y: 30.5, z: 10};
-    let ballRadius = 3.5
+    let ballPosition = {x: -10.7, y: 5.5, z: 10.5};
+    let ballRadius = 0.2
     let ballMass = 10
     ball(ballPosition, ballRadius, ballMass, 0.1, 0.5)
 
@@ -411,7 +430,7 @@ function threeAmmoObjects() {
     golfclub();
     newtonCradle();
     spiral();
-    
+
     // let position = {x: 10, y: 3, z: 10};
     let position = {x: 15, y: 5, z: -10};
     funnel(position, 2.7, 0.3, 2)
@@ -446,7 +465,10 @@ function threeAmmoObjects() {
     steps(position,90, 10)
 
     position = {x: 10, y: 0, z: 5};
-    ball(position, 0.2, 0)
+    ball(position, 0.2, 0);
+
+    position = {x: -10, y: 4.2, z: 10.5};
+    rails(position, 0, -5, true)
 
     // arrow()
 }
@@ -835,7 +857,7 @@ function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRotation, t
     let shape;
     if (shapeType == 'box') {
         shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
-        
+
     } else if (shapeType == 'cylinder') {
         if (size.radius1){
             shape = new Ammo.btCylinderShape(new Ammo.btVector3(size.radius1, size.height/2, size.radius2));
@@ -898,37 +920,39 @@ function plinko() {
     let backFrameValues = {x: 0.8, y: 8.5, z: 0.8};
     let frontBottomFrameValues = {x: 20.01, y: 0.4, z: 0.2};
 
-    const materialJohnny = new THREE.MeshStandardMaterial({map: ri.textures.johnny, side: THREE.DoubleSide});
-    const colorGrey = new THREE.MeshStandardMaterial({color: 0xffffff, side: THREE.DoubleSide});
+    const orangeColor = new THREE.MeshStandardMaterial({color: 0xF47004, side: THREE.DoubleSide, roughness: 0.7, metalness: 0.5}); 
+    const brownColor = new THREE.MeshStandardMaterial({color: 0xBC6A00,  side: THREE.DoubleSide, roughness: 0.3});
+    const blackColor = new THREE.MeshStandardMaterial({color: 0x000500,  side: THREE.DoubleSide, roughness: 0.3, metalness: 0.8});
+
     let plinkoMesh = new THREE.Group();
     plinkoMesh.position.set(14, 7.05, -30.5);
-    plinkoMesh.rotateY(90*Math.PI/180); 
-    plinkoMesh.rotateX(-45*Math.PI/180); 
+    plinkoMesh.rotateY(90*Math.PI/180);
+    plinkoMesh.rotateX(-45*Math.PI/180);
     let plinkoShape = new Ammo.btCompoundShape();
 
     let boardGeo = new THREE.BoxGeometry(boardValues.x, boardValues.y, boardValues.z);
-    let plinkoBoard = createAmmoMesh('box', boardGeo, boardValues, {x:-5, y: 0, z:0}, {x: 0, y: 0, z: 0}, colorGrey, plinkoMesh, plinkoShape);
+    let plinkoBoard = createAmmoMesh('box', boardGeo, boardValues, {x:-5, y: 0, z:0}, {x: 0, y: 0, z: 0}, orangeColor, plinkoMesh, plinkoShape);
     
     let fenceGeo = new THREE.BoxGeometry(fenceValues.x, fenceValues.y, fenceValues.z);
-    let fence = createAmmoMesh('box', fenceGeo, fenceValues, {x:0.2, y: 0.4, z: 1.2}, {x: 0, y: -45*Math.PI/180, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
-    let secondFence = createAmmoMesh('box', fenceGeo, fenceValues, {x:-10.2, y: 0.4, z: 1.2}, {x: 0, y: 45*Math.PI/180, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+    let fence = createAmmoMesh('box', fenceGeo, fenceValues, {x:0.2, y: 0.4, z: 1.2}, {x: 0, y: -45*Math.PI/180, z: 0}, brownColor, plinkoMesh, plinkoShape);
+    let secondFence = createAmmoMesh('box', fenceGeo, fenceValues, {x:-10.2, y: 0.4, z: 1.2}, {x: 0, y: 45*Math.PI/180, z: 0}, brownColor, plinkoMesh, plinkoShape);
 
     let rampGeo = new THREE.BoxGeometry(rampValues.x, rampValues.y, rampValues.z);
-    let ramp = createAmmoMesh('box', rampGeo, rampValues, {x:-5.05, y: 0.4, z: -4.65}, {x: 0, y: 83*Math.PI/180, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+    let ramp = createAmmoMesh('box', rampGeo, rampValues, {x:-5.05, y: 0.4, z: -4.65}, {x: 0, y: 83*Math.PI/180, z: 0}, brownColor, plinkoMesh, plinkoShape);
 
     let topFrameGeo = new THREE.BoxGeometry(topFrameValues.x, topFrameValues.y, topFrameValues.z);
-    let topFrame = createAmmoMesh('box', topFrameGeo, topFrameValues, {x: -5, y: -0.24, z: 6.206}, {x: -45*Math.PI/180, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+    let topFrame = createAmmoMesh('box', topFrameGeo, topFrameValues, {x: -5, y: -0.24, z: 6.206}, {x: -45*Math.PI/180, y: 0, z: 0}, brownColor, plinkoMesh, plinkoShape);
 
     let frontBottomFrameGeo = new THREE.BoxGeometry(frontBottomFrameValues.x, frontBottomFrameValues.y, frontBottomFrameValues.z);
-    let bottomFrontFrame = createAmmoMesh('box', frontBottomFrameGeo, frontBottomFrameValues, {x: -5, y: -0.075, z: -6.075}, {x: -135*Math.PI/180, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+    let bottomFrontFrame = createAmmoMesh('box', frontBottomFrameGeo, frontBottomFrameValues, {x: -5, y: -0.075, z: -6.075}, {x: -135*Math.PI/180, y: 0, z: 0}, brownColor, plinkoMesh, plinkoShape);
 
     let bottomFrameGeo = new THREE.BoxGeometry(sideFrameValues.x, sideFrameValues.y, sideFrameValues.z);
-    let bottomLeftFrame = createAmmoMesh('box', bottomFrameGeo, sideFrameValues, {x: 4.602, y: -3.3, z: -2.85}, {x: 45*Math.PI/180, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
-    let bottomRightFrame = createAmmoMesh('box', bottomFrameGeo, sideFrameValues, {x: -14.602, y: -3.3, z: -2.85}, {x: 45*Math.PI/180, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+    let bottomLeftFrame = createAmmoMesh('box', bottomFrameGeo, sideFrameValues, {x: 4.602, y: -3.3, z: -2.85}, {x: 45*Math.PI/180, y: 0, z: 0}, brownColor, plinkoMesh, plinkoShape);
+    let bottomRightFrame = createAmmoMesh('box', bottomFrameGeo, sideFrameValues, {x: -14.602, y: -3.3, z: -2.85}, {x: 45*Math.PI/180, y: 0, z: 0}, brownColor, plinkoMesh, plinkoShape);
     
     let backFrameGeo = new THREE.BoxGeometry(backFrameValues.x, backFrameValues.y, backFrameValues.z);
-    let backLeftFrame = createAmmoMesh('box', backFrameGeo, sideFrameValues, {x: 4.602, y: -3.2, z: 3.245}, {x: 45*Math.PI/180, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
-    let backRightFrame = createAmmoMesh('box', backFrameGeo, sideFrameValues, {x: -14.602, y: -3.2, z: 3.245}, {x: 45*Math.PI/180, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+    let backLeftFrame = createAmmoMesh('box', backFrameGeo, sideFrameValues, {x: 4.602, y: -3.2, z: 3.245}, {x: 45*Math.PI/180, y: 0, z: 0}, brownColor, plinkoMesh, plinkoShape);
+    let backRightFrame = createAmmoMesh('box', backFrameGeo, sideFrameValues, {x: -14.602, y: -3.2, z: 3.245}, {x: 45*Math.PI/180, y: 0, z: 0}, brownColor, plinkoMesh, plinkoShape);
 
     let pegGeo = new THREE.CylinderGeometry(pegValues.x, pegValues.y, pegValues.z, 36, 1);
 
@@ -937,7 +961,7 @@ function plinko() {
     let count = 1;
     for (let i = 0; i < 18; i++){
         for (let j = 0; j < count; j++) {
-            let peg = createAmmoMesh('cylinder', pegGeo, pegValues, {x: x+j, y: 0.4, z: 5.5+y}, {x: 0, y: 0, z: 0}, materialJohnny, plinkoMesh, plinkoShape);
+            let peg = createAmmoMesh('cylinder', pegGeo, pegValues, {x: x+j, y: 0.4, z: 5.5+y}, {x: 0, y: 0, z: 0}, blackColor, plinkoMesh, plinkoShape);
             
         }
         count +=1
@@ -946,10 +970,10 @@ function plinko() {
     }
 
     createAmmoRigidBody(plinkoShape, plinkoMesh, 1, 1, plinkoMesh.position, 0);
-    
+
     ri.scene.add(plinkoMesh);
 
-    const ballPosition = {x: 18.8, y: 11.5, z: -25.5}; //x: 17, y: 12, z: -27 
+    const ballPosition = {x: 18.8, y: 11.5, z: -25.5}; //x: 17, y: 12, z: -27
     ball(ballPosition, 0.2, 5)
 
     const ballPosition2 = {x: 18.9, y: 20, z: -25.5}; //x: 19, y: 20, z: -26
@@ -962,7 +986,7 @@ function createCoffeeCupTriangleMesh(
     mass = 100,
     color=0x00FF09,
     position={x:-20, y:50, z:20},
-    ) {
+) {
     //Ammo-container:
     let compoundShape = new Ammo.btCompoundShape();
     //Three-container:
@@ -1041,22 +1065,23 @@ function golfclub() {
     let connectorValues = {x: 0.15, y: 0.15, z: 0.4};
     let clubValues = {x: 0.3, y: 0.5, z: 1.5};
     
-    const materialJohnny = new THREE.MeshStandardMaterial({map: ri.textures.johnny, side: THREE.DoubleSide});
-    const colorGrey = new THREE.MeshStandardMaterial({color: 0xffffff, side: THREE.DoubleSide});
+    const lightGreyColor = new THREE.MeshStandardMaterial({color: 0xFCFCFF, side: THREE.DoubleSide, roughness: 0.7, metalness: 0.5}); 
+    const brownColor = new THREE.MeshStandardMaterial({color: 0xBC6A00,  side: THREE.DoubleSide, roughness: 0.3});
+    const blackColor = new THREE.MeshStandardMaterial({color: 0x000500,  side: THREE.DoubleSide, roughness: 0.3});
 
     let golfClubMesh = new THREE.Group();
     golfClubMesh.position.set( position.x, position.y, position.z);
-    golfClubMesh.rotateZ(145*Math.PI/180); 
+    golfClubMesh.rotateZ(145*Math.PI/180);
     let golfClubShape = new Ammo.btCompoundShape();
 
     let handleBarGeo = new THREE.CylinderGeometry(handleBarValues.x, handleBarValues.y, handleBarValues.z, 36, 1);
-    let handleBar = createAmmoMesh('cylinder', handleBarGeo, handleBarValues, {x: 0, y: 7, z: 0}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubMesh, golfClubShape);
+    let handleBar = createAmmoMesh('cylinder', handleBarGeo, handleBarValues, {x: 0, y: 7, z: 0}, {x: 0, y: 0, z: 0}, blackColor, golfClubMesh, golfClubShape);
     let shaftGeo = new THREE.CylinderGeometry(shaftValues.x, shaftValues.y, shaftValues.z, 36, 1);
-    let shaft = createAmmoMesh('cylinder', shaftGeo, handleBarValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, colorGrey, golfClubMesh, golfClubShape);
+    let shaft = createAmmoMesh('cylinder', shaftGeo, handleBarValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, lightGreyColor, golfClubMesh, golfClubShape);
     let connectorGeo = new THREE.CylinderGeometry(connectorValues.x, connectorValues.y, connectorValues.z, 36, 1);
-    let connector = createAmmoMesh('cylinder', connectorGeo, connectorValues, {x: 0, y: -5, z: 0}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubMesh, golfClubShape);
+    let connector = createAmmoMesh('cylinder', connectorGeo, connectorValues, {x: 0, y: -5, z: 0}, {x: 0, y: 0, z: 0}, blackColor, golfClubMesh, golfClubShape);
     let clubGeo = new THREE.BoxGeometry(clubValues.x, clubValues.y, clubValues.z);
-    let club = createAmmoMesh('box', clubGeo, clubValues, {x: 0, y: -5.4, z: 0.6}, {x: 0, y: 0, z: 0}, colorGrey, golfClubMesh, golfClubShape);
+    let club = createAmmoMesh('box', clubGeo, clubValues, {x: 0, y: -5.4, z: 0.6}, {x: 0, y: 0, z: 0}, lightGreyColor, golfClubMesh, golfClubShape);
     
     let golfClubRigid = createAmmoRigidBody(golfClubShape, golfClubMesh, 0, 0, golfClubMesh.position, 20);
 
@@ -1064,25 +1089,25 @@ function golfclub() {
     let golfClubStandMesh = new THREE.Group();
     golfClubStandMesh.position.set( position.x, position.y, position.z);
     let golfClubStandShape = new Ammo.btCompoundShape();
-    
+
     let hingeValues = {x: 0.4, y: 0.4, z: 8};
     let LegValues = {x: 1.4, y: 17, z: 1.4};
     let topBarValues = {x: 0.4, y: 0.4, z: 6};
     let stopperHingeValues = {x: 0.1, y: 0.1, z: 1};
 
     let hingeGeo = new THREE.CylinderGeometry(hingeValues.x, hingeValues.y, hingeValues.z, 36, 1);
-    let hinge = createAmmoMesh('cylinder', hingeGeo, hingeValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, colorGrey, golfClubStandMesh, golfClubStandShape);
+    let hinge = createAmmoMesh('cylinder', hingeGeo, hingeValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, lightGreyColor, golfClubStandMesh, golfClubStandShape);
     let leftLegGeo = new THREE.BoxGeometry(LegValues.x, LegValues.y, LegValues.z);
-    let leftLeg = createAmmoMesh('box', leftLegGeo, LegValues, {x: 0, y: -8, z: -4}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubStandMesh, golfClubStandShape);
-    let rightLeg = createAmmoMesh('box', leftLegGeo, LegValues, {x: 0, y: -8, z: 4}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubStandMesh, golfClubStandShape);
-    let backLeftLeg = createAmmoMesh('box', leftLegGeo, LegValues, {x: 6, y: -8, z: -4}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubStandMesh, golfClubStandShape);
-    let backRightLeg = createAmmoMesh('box', leftLegGeo, LegValues, {x: 6, y: -8, z: 4}, {x: 0, y: 0, z: 0}, materialJohnny, golfClubStandMesh, golfClubStandShape);
+    let leftLeg = createAmmoMesh('box', leftLegGeo, LegValues, {x: 0, y: -8, z: -4}, {x: 0, y: 0, z: 0}, brownColor, golfClubStandMesh, golfClubStandShape);
+    let rightLeg = createAmmoMesh('box', leftLegGeo, LegValues, {x: 0, y: -8, z: 4}, {x: 0, y: 0, z: 0}, brownColor, golfClubStandMesh, golfClubStandShape);
+    let backLeftLeg = createAmmoMesh('box', leftLegGeo, LegValues, {x: 6, y: -8, z: -4}, {x: 0, y: 0, z: 0}, brownColor, golfClubStandMesh, golfClubStandShape);
+    let backRightLeg = createAmmoMesh('box', leftLegGeo, LegValues, {x: 6, y: -8, z: 4}, {x: 0, y: 0, z: 0}, brownColor, golfClubStandMesh, golfClubStandShape);
     let topBarGeo = new THREE.CylinderGeometry(topBarValues.x, topBarValues.y, topBarValues.z, 36, 1);
-    let topLeftBar = createAmmoMesh('cylinder', topBarGeo, topBarValues, {x: 2.5, y: 0, z: -4}, {x: 0, y: 0, z: 90*Math.PI/180}, colorGrey, golfClubStandMesh, golfClubStandShape);
-    let topRightBar = createAmmoMesh('cylinder', topBarGeo, topBarValues, {x: 2.5, y: 0, z: 4}, {x: 0, y: 0, z: 90*Math.PI/180}, colorGrey, golfClubStandMesh, golfClubStandShape);
+    let topLeftBar = createAmmoMesh('cylinder', topBarGeo, topBarValues, {x: 2.5, y: 0, z: -4}, {x: 0, y: 0, z: 90*Math.PI/180}, lightGreyColor, golfClubStandMesh, golfClubStandShape);
+    let topRightBar = createAmmoMesh('cylinder', topBarGeo, topBarValues, {x: 2.5, y: 0, z: 4}, {x: 0, y: 0, z: 90*Math.PI/180}, lightGreyColor, golfClubStandMesh, golfClubStandShape);
     let stopperHingeGeo = new THREE.CylinderGeometry(stopperHingeValues.x, stopperHingeValues.y, stopperHingeValues.z, 36, 1);
-    let stopperLeftHinge = createAmmoMesh('cylinder', stopperHingeGeo, stopperHingeValues, {x: 7, y: -7.5, z: -4}, {x: 0, y: 0, z: 90*Math.PI/180}, colorGrey, golfClubStandMesh, golfClubStandShape);
-    let stopperRightHinge = createAmmoMesh('cylinder', stopperHingeGeo, stopperHingeValues, {x: 7, y: -7.5, z: 4}, {x: 0, y: 0, z: 90*Math.PI/180}, colorGrey, golfClubStandMesh, golfClubStandShape);
+    let stopperLeftHinge = createAmmoMesh('cylinder', stopperHingeGeo, stopperHingeValues, {x: 7, y: -7.5, z: -4}, {x: 0, y: 0, z: 90*Math.PI/180}, lightGreyColor, golfClubStandMesh, golfClubStandShape);
+    let stopperRightHinge = createAmmoMesh('cylinder', stopperHingeGeo, stopperHingeValues, {x: 7, y: -7.5, z: 4}, {x: 0, y: 0, z: 90*Math.PI/180}, lightGreyColor, golfClubStandMesh, golfClubStandShape);
 
     let golfClubStandRigid = createAmmoRigidBody(golfClubStandShape, golfClubStandMesh, 0, 1, golfClubStandMesh.position, 0);
     //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/armHingeConstraint.js?ref_type=heads
@@ -1098,47 +1123,61 @@ function golfclub() {
     let golfClubStopperMesh = new THREE.Group();
     golfClubStopperMesh.position.set(position.x + 7.2, position.y -7, position.z);
     let golfClubStopperShape = new Ammo.btCompoundShape();
-    let stopperValues = {x: 0.2, y: 0.2, z: 10}; 
+    let stopperValues = {x: 0.2, y: 0.2, z: 10};
     let stopperGeo = new THREE.CylinderGeometry(stopperValues.x, stopperValues.y, stopperValues.z, 36, 1);
-    let stopper = createAmmoMesh('cylinder', stopperGeo, stopperValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, colorGrey, golfClubStopperMesh, golfClubStopperShape);
-    let golfClubStopperRigid = createAmmoRigidBody(golfClubStopperShape, golfClubStopperMesh, 0, 0, golfClubStopperMesh.position, 10);
+    let stopper = createAmmoMesh('cylinder', stopperGeo, stopperValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, lightGreyColor, golfClubStopperMesh, golfClubStopperShape);
+    let golfClubStopperRigid = createAmmoRigidBody(golfClubStopperShape, golfClubStopperMesh, 0, 1, golfClubStopperMesh.position, 3);
     
     
     ri.scene.add(golfClubStopperMesh);
     ri.scene.add(golfClubStandMesh);
     ri.scene.add(golfClubMesh);
+
+    let ballPosition = {x: position.x, y: position.y-15.5, z: position.z};
+    let ballRadius = 1
+    let ballMass = 0.1
+    ball(ballPosition, ballRadius, ballMass);
 }
 
 function cannon() {
     //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra: https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/springGeneric6DofSpringConstraint.js?ref_type=heads
-    let position = {x: 47, y: 6, z: 20};
-    let rotationDegree =75*Math.PI/180;
-    let bottomSpringValues = {x: 0.5, y: 0.5, z: 0.2};
-    let topSpringValues = {x: 0.5, y: 0.5, z: 0.2};
+    let position = {x: 47, y: 3.76, z: 20};
+    let rotationDegree =66.2*Math.PI/180;
+    let rotationAxis = 'X';
+    let bottomSpringValues = {x: 0.9, y: 0.9, z: 0.2};
+    let topSpringValues = {x: 0.9, y: 0.9, z: 0.2};
 
-    const materialJohnny = new THREE.MeshStandardMaterial({map: ri.textures.johnny, side: THREE.DoubleSide});
-    const colorGrey = new THREE.MeshStandardMaterial({color: 0xffffff, side: THREE.DoubleSide});
+    const lightGreyColor = new THREE.MeshStandardMaterial({color: 0xFCFCFF, side: THREE.DoubleSide, roughness: 0.7, metalness: 0.5}); 
+    const brownColor = new THREE.MeshStandardMaterial({color: 0xBC6A00,  side: THREE.DoubleSide, roughness: 0.3});
+    const blackColor = new THREE.MeshStandardMaterial({color: 0x000500,  side: THREE.DoubleSide, roughness: 0.3, metalness: 0.8});
 
     let bottomSpringMesh = new THREE.Group();
     bottomSpringMesh.position.set(position.x, position.y ,position.z);
-    bottomSpringMesh.rotateX(rotationDegree)
-    let bottomSpringShape = new Ammo.btCompoundShape();
     
+    if (rotationAxis == "Z") 
+        {bottomSpringMesh.rotateZ(rotationDegree)}
+    else {bottomSpringMesh.rotateX(rotationDegree)};
+
+    let bottomSpringShape = new Ammo.btCompoundShape();
+
     let bottomSpringGeo = new THREE.CylinderGeometry(bottomSpringValues.x, bottomSpringValues.y, bottomSpringValues.z, 36, 1);
-    let bottomSpring = createAmmoMesh('cylinder', bottomSpringGeo, bottomSpringValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, materialJohnny, bottomSpringMesh, bottomSpringShape);
+    let bottomSpring = createAmmoMesh('cylinder', bottomSpringGeo, bottomSpringValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, lightGreyColor, bottomSpringMesh, bottomSpringShape);
 
     let topSpringMesh = new THREE.Group();
     topSpringMesh.position.set(position.x, position.y+0.1 ,position.z);
-    topSpringMesh.rotateX(rotationDegree)
+    if (rotationAxis == "Z") 
+        {topSpringMesh.rotateZ(rotationDegree)}
+    else {topSpringMesh.rotateX(rotationDegree)};
+
     let topSpringShape = new Ammo.btCompoundShape();
     let topSpringGeo = new THREE.CylinderGeometry(topSpringValues.x, topSpringValues.y, topSpringValues.z, 36, 1);
-    let topSpring2 = createAmmoMesh('cylinder', topSpringGeo, topSpringValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, colorGrey, topSpringMesh, topSpringShape);
+    let topSpring2 = createAmmoMesh('cylinder', topSpringGeo, topSpringValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, blackColor, topSpringMesh, topSpringShape);
 
     let rigidTopSpring = createAmmoRigidBody(bottomSpringShape, bottomSpringMesh, 1, 1, bottomSpringMesh.position, 0);
     let rigidBottomSpring = createAmmoRigidBody(topSpringShape, topSpringMesh, 1, 1, topSpringMesh.position, 10);
     rigidTopSpring.setActivationState(4);
     rigidBottomSpring.setActivationState(4);
-    
+
     let spring = new Ammo.btGeneric6DofSpringConstraint(rigidTopSpring, rigidBottomSpring, bottomSpring.transform, topSpring2.transform, false);
     spring.name = "cannonSpring";
 
@@ -1148,10 +1187,10 @@ function cannon() {
     spring.setAngularUpperLimit(new Ammo.btVector3(0, 0, 0));
 
     spring.enableSpring(1, false);
-    spring.setStiffness(1, 5000);
+    spring.setStiffness(1, 6000);
     spring.setDamping(1, 100);
     spring.setEquilibriumPoint(1, 2);
-    
+
     phy.ammoPhysicsWorld.addConstraint(spring, false);
     ri.springs.cannonSpring = spring;
 
@@ -1164,46 +1203,71 @@ function cannon() {
         metalness: 0.4,
         roughness: 0.3});
 
-    
+
     let height = 8;
     let radius = 1;
     let points = [
         new THREE.Vector2(radius, height*0.1),
-        new THREE.Vector2(radius, height*0.3),
-        new THREE.Vector2(radius*0.8, height*0.5),
-        new THREE.Vector2(radius*0.8, height*0.6),
-        new THREE.Vector2(radius*0.8, height*0.8),
-        new THREE.Vector2(radius*0.9, height*0.8),
-        new THREE.Vector2(radius*0.9, height*0.9),
-        new THREE.Vector2(radius*0.6, height*0.9),
+        new THREE.Vector2(radius, height*1),
     ];
 
-    
+
 
     let cannonBodyGeo = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
     let cannonBodyMesh = new THREE.Mesh(cannonBodyGeo, material);
-    cannonBodyMesh.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), rotationDegree)
+    
+    if (rotationAxis == "Z") 
+        {cannonBodyMesh.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), rotationDegree)}
+    else {cannonBodyMesh.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), rotationDegree)};
+
     cannonBodyMesh.name = 'cannonBody';
     cannonBodyMesh.castShadow = true;
     cannonBodyMesh.receiveShadow = true;
 
     cannonBodyMesh.material.transparent = true;
-    cannonBodyMesh.material.opacity = 1;
+    cannonBodyMesh.material.opacity = 0.1;
 
    
-    createAmmoMesh('triangleShape', cannonBodyGeo, cannonBodyMesh, {x: 0, y: -1.5, z: 0}, {x: 0, y: 0, z: 0}, material, bottomSpringMesh, cannonBodyShape, 'cannonBody')
+    createAmmoMesh('triangleShape', cannonBodyGeo, cannonBodyMesh, {x: 0, y: -1.5, z: 0}, {x: 0, y: 0, z: 0}, blackColor, bottomSpringMesh, cannonBodyShape, 'cannonBody')
     createAmmoRigidBody(cannonBodyShape, cannonBodyMesh, 0.4, 0.6, {x: position.x, y: position.y, z: position.z}, 0);
-
+    
 
     //cannonEnd
     let cannonEndValues = {radius: 1, segments: 32}
     let cannonEndGeo = new THREE.SphereGeometry(cannonEndValues.radius, cannonEndValues.segments, cannonEndValues.segments, 0 , Math.PI);
-    let cannonEnd = createAmmoMesh('sphere', cannonEndGeo, cannonEndValues, {x: 0, y: -0.5, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, material, bottomSpringMesh, bottomSpringShape);
+    let cannonEnd = createAmmoMesh('sphere', cannonEndGeo, cannonEndValues, {x: 0, y: -0.5, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, blackColor, bottomSpringMesh, bottomSpringShape);
     
+    //cannonStand
+    let cannonStandMesh = new THREE.Group();
+    cannonStandMesh.position.set(position.x, position.y ,position.z);
+    cannonStandMesh.rotateY(90*Math.PI/180);
+
+    if (rotationAxis == "Z") 
+        {cannonStandMesh.rotateY(0*Math.PI/180);}
+    else {cannonStandMesh.rotateY(90*Math.PI/180);};
+
+    let cannonStandShape = new Ammo.btCompoundShape();
+    let cannonStandValues = {x: 0.4, y: 4.5, z: 2};
+    let cannonStandBottomValues = {x: 0.4, y: 2.8, z: 2};
+    let axisStandValues = {x: 0.2, y: 0.2, z: 0.3};
+    let cannonStandGeo = new THREE.BoxGeometry(cannonStandValues.x, cannonStandValues.y, cannonStandValues.z);
+    let cannonStandBottomGeo = new THREE.BoxGeometry(cannonStandBottomValues.x, cannonStandBottomValues.y, cannonStandBottomValues.z);
+    let leftLeg = createAmmoMesh('box', cannonStandGeo, cannonStandValues, {x: -1.2, y: -1.5, z: 0}, {x: 0, y: 0, z: 0}, brownColor, cannonStandMesh, cannonStandShape);
+    let rightLeg = createAmmoMesh('box', cannonStandGeo, cannonStandValues, {x: 1.2, y: -1.5, z: 0}, {x: 0, y: 0, z: 0}, brownColor, cannonStandMesh, cannonStandShape);
+    let standBottom = createAmmoMesh('box', cannonStandBottomGeo, cannonStandBottomValues, {x: 0, y: -3.55, z: 0}, {x: 0, y: 0, z: 90*Math.PI/180}, brownColor, cannonStandMesh, cannonStandShape);
+    let axisGeo = new THREE.CylinderGeometry(axisStandValues.x, axisStandValues.y, axisStandValues.z, 36, 1);
+    let leftAxis = createAmmoMesh('cylinder', axisGeo, axisStandValues, {x: -1.35, y: 0, z: 0}, {x: 0, y: 0, z: 90*Math.PI/180}, blackColor, cannonStandMesh, cannonStandShape)
+    let rightAxis = createAmmoMesh('cylinder', axisGeo, axisStandValues, {x: 1.35, y: 0, z: 0}, {x: 0, y: 0, z: 90*Math.PI/180}, blackColor, cannonStandMesh, cannonStandShape)
+
+
     ri.scene.add(bottomSpringMesh);
     ri.scene.add(topSpringMesh);
+    ri.scene.add(cannonStandMesh);
 
-    let ballPosition = {x: position.x, y: 6, z: position.z};
+    let ballPosition = {x: position.x-0.1, y: position.y+1, z: position.z};
+    if (rotationAxis == "Z") 
+        {ballPosition = {x: position.x-2, y: position.y+1, z: position.z};}
+    else {ballPosition = {x: position.x, y: position.y, z: position.z+1.2};};
     let ballRadius = 0.4
     let ballMass = 10
     ball(ballPosition, ballRadius, ballMass);
@@ -1511,26 +1575,41 @@ function arrow(position = {x:0, y:10, z:0}) {
 
 
 function spiral() {
-    const numTurns = 10;
+    const numTurns = 20;
     const height = numTurns/5;
-    const boxSize = 0.05; // Size of each box
+    const boxSize = 0.1; // Size of each box
     const radius = 0.5;    // Radius of the spiral
     let spiralMesh = new THREE.Group();
-    spiralMesh.position.set(-10, 10, 10);
+    spiralMesh.position.set(-10, 0.1, 10);
+    spiralMesh.name = "spiral";
     let spiralShape = new Ammo.btCompoundShape();
-    const materialDarkGrey = new THREE.MeshStandardMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
-    const boxMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
+    const materialDarkGrey = new THREE.MeshPhongMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
+    const transparent = new THREE.MeshPhongMaterial()
     const boxGeometry = new THREE.BoxGeometry(boxSize*10, boxSize, boxSize);
+    const centerCylinderGeometry = new THREE.CylinderGeometry(radius/2, radius/2, numTurns/5, 32, 1, false);
+    createAmmoMesh('cylinder', centerCylinderGeometry, {x: 0, y: 0, z: 0}, {x: 0, y: numTurns/5/2, z: 0}, {x: 0, y: 0, z: 0}, materialDarkGrey, spiralMesh, spiralShape, "")
     for (let i = 0; i < numTurns * 20; i++) {
-        const angle = (i / 40) * Math.PI * 2; // Full circle for each turn
+        const angle = (i / 120) * Math.PI * 2; // Full circle for each turn
         const x = radius * Math.cos(angle);
         const y = (height / (numTurns * 20)) * i;
         const z = radius * Math.sin(angle);
         const position = {x: x, y: y, z: z}
         const radialVector = new THREE.Vector3(x, 0, z);
         radialVector.normalize();
+        const remainingHeight = height - position.y;
+        const wallBoxHeight = Math.min(boxSize * 10, remainingHeight);
+        const wallBoxGeometry = new THREE.BoxGeometry(boxSize, wallBoxHeight, boxSize);
+        const wallBoxPosition = {
+            x: position.x + radialVector.x * boxSize * 5,
+            y: position.y + wallBoxHeight / 2, // Center the box vertically based on its height
+            z: position.z + radialVector.z * boxSize * 5
+        };
 
-        let spiralStep = createAmmoMesh('box', boxGeometry, {x: 0, y: 0, z: 0}, position, {x: radialVector.x, y: radialVector.y, z: radialVector.z}, materialDarkGrey, spiralMesh, spiralShape, "", "quaternion_norm");
+        let wallBoxRotation = new THREE.Vector3(0, 0, 0); // Assuming vertical along the Y-axis
+
+        // Create and add the wall box
+        createAmmoMesh('box', wallBoxGeometry, {x: 0, y: 0, z: 0}, wallBoxPosition, wallBoxRotation, materialDarkGrey, spiralMesh, spiralShape, "", "quaternion_norm");
+        let spiralStep = createAmmoMesh('box', boxGeometry, {x: 0, y: 0, z: 0}, {x: position.x, y: position.y, z: position.z}, {x: radialVector.x, y: radialVector.y, z: radialVector.z}, materialDarkGrey, spiralMesh, spiralShape, "", "quaternion_norm");
     }
     let spiralBody = createAmmoRigidBody(spiralShape, spiralMesh, 1, 1, spiralMesh.position, 0);
     ri.scene.add(spiralMesh);
