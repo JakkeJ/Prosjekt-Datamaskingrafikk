@@ -783,7 +783,7 @@ function newtonCradle() {
     let bottomBoxConnectorValues = {x: 2, y: 0.25, z: 0.25};
     let riserBoxValues = {x: 0.25, y: 4, z: 0.25};
     let ballValues = {radius: 0.3, segments: 32};
-    let cradleMeshPosition = {x: 0, y: 10, z: 0};
+    let cradleMeshPosition = {x: 0, y: -2, z: 0};
     let cradleMesh = new THREE.Group();
     cradleMesh.name = "cradleMesh";
     cradleMesh.position.set( cradleMeshPosition.x, cradleMeshPosition.y, cradleMeshPosition.z);
@@ -809,35 +809,43 @@ function newtonCradle() {
     let cradleRigid = createAmmoRigidBody(cradleShape, cradleMesh, 0.1, 1, cradleMesh.position, 0);
 
     let ballShape = new Ammo.btCompoundShape();
+
+    let ballList = [];
+
     let anchorShape = new Ammo.btCompoundShape()
     let anchorSize = {x: 0.1, y: 0.1, z: 0.1};
     let anchorGeo = new THREE.BoxGeometry(anchorSize.x,anchorSize.y,anchorSize.z);
     let ballGeo = new THREE.SphereGeometry(ballValues.radius, ballValues.segments, ballValues.segments);
     let ballPosition = ballValues.radius * 7;
-    for (let i = 1; i <= 8; ++i) {
+    for (let i = 0; i < 8; ++i) {
         let anchor1Mesh = new THREE.Group();
         anchor1Mesh.name = "anchor1Mesh" + i;
         let anchor1 = createAmmoMesh('box', anchorGeo, anchorSize, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, transparent, anchor1Mesh, anchorShape);
-        let anchor1Body = createAmmoRigidBody(anchorShape, anchor1Mesh, 0, 1, {x: -1, y: 4-0.125, z: ballPosition}, 0);
+        let anchor1Body = createAmmoRigidBody(anchorShape, anchor1Mesh, 0, 1, {x: cradleMeshPosition.x - 1, y: cradleMeshPosition.y+6-0.125, z: cradleMeshPosition.z + ballPosition}, 0);
         ri.scene.add(anchor1Mesh);
 
         let anchor2Mesh = new THREE.Group();
         anchor2Mesh.name = "anchor2Mesh" + i;
         let anchor2 = createAmmoMesh('box', anchorGeo, anchorSize, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, transparent, anchor2Mesh, anchorShape);
-        let anchor2Body = createAmmoRigidBody(anchorShape, anchor2Mesh, 0, 1, {x: 1, y: 4-0.125, z: ballPosition}, 0);
+        let anchor2Body = createAmmoRigidBody(anchorShape, anchor2Mesh, 0, 1, {x: cradleMeshPosition.x + 1, y: cradleMeshPosition.y + 6-0.125, z: ballPosition}, 0);
         ri.scene.add(anchor2Mesh);
 
         let ballMesh = new THREE.Group();
-        ballMesh.name = "ball" + i + "Mesh";
-        let ball = createAmmoMesh('sphere', ballGeo, ballValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, transparent, ballMesh, ballShape);
+        ballList[i] = new THREE.Group();
+        ballList[i].name = "ball" + i + "Mesh";
+        let ball = createAmmoMesh('sphere', ballGeo, ballValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, transparent, ballList[i], ballShape, ballList[i].name);
         let ballBody;
-        if (i === 8) {
-            ballBody = createAmmoRigidBody(ballShape, ballMesh, 0.75,1.0, {x: 0, y: 1 - 0.125, z: ballPosition}, 1000);
+
+        if (i === 7) {
+            ballBody = createAmmoRigidBody(ballShape, ballList[i], 0.99,1.0, {x: cradleMeshPosition.x, y: cradleMeshPosition.y + 1 - 0.125, z: cradleMeshPosition.z + ballPosition}, 1);
+            ballBody.setActivationState(4);
+            ballBody.applyCentralImpulse( new Ammo.btVector3(0, 0, -30 ));
         } else {
-            ballBody = createAmmoRigidBody(ballShape, ballMesh, 0.75,1.0, {x: 0, y: 1 - 0.125, z: ballPosition}, 1000);
+            ballBody = createAmmoRigidBody(ballShape, ballList[i], 0.99,1.0, {x: cradleMeshPosition.x, y: cradleMeshPosition.y + 1 - 0.125, z: cradleMeshPosition.z + ballPosition}, 1);
+            ballBody.setActivationState(4);
         }
-        ballBody.threeMesh = ballMesh;
-        ri.scene.add(ballMesh);
+
+        ri.scene.add(ballList[i]);
 
         let anchorPivot = new Ammo.btVector3(1, 0, 0);
         let ballPivot = new Ammo.btVector3(0, 3, 0);
@@ -851,17 +859,14 @@ function newtonCradle() {
         addLineBetweenObjects("anchor1Mesh" + i, "cradleMesh", {x: 0, y: 0, z: ballPosition}, {x: 0, y: 0, z: ballPosition}, cradleTopBar1.mesh.name, "lineToTopBar1_" + i);
         addLineBetweenObjects("anchor2Mesh" + i, "cradleMesh", {x: 0, y: 0, z: ballPosition}, {x: 0, y: 0, z: ballPosition}, cradleTopBar2.mesh.name, "lineToTopBar2_" + i);
 
-        let anchorWorldPivot = localToWorld(anchor1Body, anchorPivot);
-        let ballWorldPivot = localToWorld(ballBody, ballPivot);
-
-        let anchorPivotMarker = createPivotMarker(anchorWorldPivot, 0x00ffff);
-        let ballPivotMarker = createPivotMarker(ballWorldPivot);
-
-        anchorPivotMarker.name = "anchorMarker_" + i;
-        ballPivotMarker.name = "ballMarker_" + i;
-
-        ri.scene.add(anchorPivotMarker);
-        ri.scene.add(ballPivotMarker);
+        //let anchorWorldPivot = localToWorld(anchor1Body, anchorPivot);
+        //let ballWorldPivot = localToWorld(ballBody, ballPivot);
+        //let anchorPivotMarker = createPivotMarker(anchorWorldPivot, 0x00ffff);
+        //let ballPivotMarker = createPivotMarker(ballWorldPivot);
+        //anchorPivotMarker.name = "anchorMarker_" + i;
+        //ballPivotMarker.name = "ballMarker_" + i;
+        //ri.scene.add(anchorPivotMarker);
+        //ri.scene.add(ballPivotMarker);
 
         ballPosition = ballPosition - (ballValues.radius * 2);
     }
@@ -887,7 +892,7 @@ function newtonCradle() {
 }
 
 function updateHingeMarkers() {
-    for (let i = 1; i <= 8; ++i) {
+    for (let i = 0; i < 8; ++i) {
         let anchorMesh = ri.scene.getObjectByName("anchor1Mesh" + i);
         let ballMesh = ri.scene.getObjectByName("ball" + i + "Mesh");
 
@@ -1062,7 +1067,6 @@ function steps(position, rotation = 0, numberOfSteps = 6) {
             .repeat(1)
             .onUpdate(function (newPosition) {
                 // groupMesh.position.y = position.y + newPosition.y
-                console.log('Pos1',position.y)
                 moveRigidBodyAnimation(mesh2move, position, {x: 0, y: newPosition.y, z: 0})
             })
     }
@@ -1077,7 +1081,7 @@ function steps(position, rotation = 0, numberOfSteps = 6) {
     tween1.chain(tween2, tween3)
     tween2.chain(tween1, tween4)
 
-    // tween1.start()
+    tween1.start()
 
     // Ball for testing
     let ballPos = {x:position.x, y:position.y +  size.y/2, z:position.z + size.z/2}
