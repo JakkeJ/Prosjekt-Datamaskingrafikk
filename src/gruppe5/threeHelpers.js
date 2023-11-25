@@ -66,7 +66,7 @@ export function keyPresses() {
     const spiral = ri.scene.getObjectByName("spiral");
     if (ri.currentlyPressedKeys['KeyT']) {
         // Create a quaternion for the incremental rotation
-        let deltaRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 80);
+        let deltaRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 42);
 
         // Multiply the spiral's current quaternion by the incremental rotation
         spiral.quaternion.multiply(deltaRotation);
@@ -385,7 +385,7 @@ export function addLineBetweenObjects(nameMeshStart, nameMeshEnd, meshPositionSt
 
 
 export function updateLines() {
-    for (let i = 1; i <= 8; ++i) {
+    for (let i = 0; i < 8; ++i) {
         let ballMesh = ri.scene.getObjectByName("ball" + i + "Mesh");
         if (ballMesh && ballMesh.userData.physicsBody) {
             let ballPhysicsBody = ballMesh.userData.physicsBody;
