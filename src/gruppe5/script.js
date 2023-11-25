@@ -52,6 +52,7 @@ export const ri = {
 export const phy = {
     ammoPhysicsWorld: undefined,
     rigidBodies: [],
+    checkCollisions: true
 }
 
 
@@ -113,6 +114,7 @@ function addToScene() {
     ri.textures.cloud = loader.load('static/assets/textures/cloud.png')
     ri.textures.darkBlue = loader.load('static/assets/textures/darkblueTexture.png')
     ri.textures.grey = loader.load('static/assets/textures/greyTexture.png')
+    ri.textures.target = loader.load('static/assets/textures/target.png')
 
     ri.textures.heightmap1 = loader.load('static/assets/textures/heightmap1.png')
     ri.textures.heightmap2 = loader.load('static/assets/textures/heightmap2.png')
@@ -142,7 +144,6 @@ function animate(currentTime) {
     updateHingeMarkers();
     renderCamera();
     keyPresses();
-
     TWEEN.update(currentTime);
 
     const waterMesh = ri.scene.getObjectByName("myWater")
@@ -764,9 +765,7 @@ function cannon() {
 
 function cannonTarget() {
 
-    const lightGreyColor = new THREE.MeshStandardMaterial({color: 0xFCFCFF, side: THREE.DoubleSide, roughness: 0.7, metalness: 0.5}); 
-    const brownColor = new THREE.MeshStandardMaterial({color: 0xBC6A00,  side: THREE.DoubleSide, roughness: 0.3});
-    const blackColor = new THREE.MeshStandardMaterial({color: 0x000500,  side: THREE.DoubleSide, roughness: 0.3, metalness: 0.8});
+    const targetTexture = new THREE.MeshStandardMaterial({map: ri.textures.target,  side: THREE.DoubleSide});
 
     let position = {x: 45, y: 25, z: 20};
     let targetMesh = new THREE.Group();
@@ -776,11 +775,11 @@ function cannonTarget() {
 
     let targetValues = {x: 5, y: 5, z: 0.5}
     let targetGeo = new THREE.CylinderGeometry(targetValues.x, targetValues.y, targetValues.z, 36, 1);
-    let target = createAmmoMesh('cylinder', targetGeo, targetValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, blackColor, targetMesh, targetShape)
-    createAmmoRigidBody(targetShape, targetMesh, 0, 0.6, {x: position.x, y: position.y, z: position.z}, 0);
+    let target = createAmmoMesh('cylinder', targetGeo, targetValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, targetTexture, targetMesh, targetShape, 'target')
+    let targetBody = createAmmoRigidBody(targetShape, targetMesh, 0, 0.6, {x: position.x, y: position.y, z: position.z}, 0);
     position.y -= 10
     position.z -= 3
-    funnel(position, 10, 0.5, 4);
+    funnel(position, 7, 0.5, 4);
 
     let railPosition = {x: position.x-0.5 , y: position.y -0.5 , z: position.z-3 };
     rails(railPosition, 97, 15, 21, true, 0);

@@ -56,7 +56,6 @@ export function createAmmoRigidBody(shape, threeMesh, restitution=0.7, friction=
     let rigidBody = new Ammo.btRigidBody(rbInfo);
     rigidBody.setRestitution(restitution);
     rigidBody.setFriction(friction);
-
     // All remaining work using rigidBody, no return needed
     threeMesh.userData.physicsBody = rigidBody;
     phy.ammoPhysicsWorld.addRigidBody(rigidBody);  // Add to ammo physics world:
