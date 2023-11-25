@@ -41,7 +41,7 @@ import {
 } from "./ammoHelpers.js"
 
 import {
-    createAmmoMesh,
+    createAmmoMesh, createHeightFieldShape, getHeigtdataFromImage,
     ground
 } from "./threeAmmoHelpers.js";
 
@@ -127,6 +127,10 @@ function addToScene() {
     ri.textures.darkBlue = loader.load('static/assets/textures/darkblueTexture.png')
     ri.textures.grey = loader.load('static/assets/textures/greyTexture.png')
 
+    ri.textures.heightmap1 = loader.load('static/assets/textures/heightmap1.png')
+    ri.textures.heightmap2 = loader.load('static/assets/textures/heightmap2.png')
+    ri.textures.heightmap3 = loader.load('static/assets/textures/heightmap3.png')
+
     manager.onLoad = () => {
         addLights()
 
@@ -159,8 +163,15 @@ function animate(currentTime) {
 }
 
 function threeAmmoObjects() {
+    let position
     ground()
     water()
+
+    position = {x: 30, y: 5, z: -24}
+    terrain(position)
+    position.x += 2
+    position.y += 3
+    ball(position, 0.6, 4)
 
     let ballPosition = {x: -10.7, y: 5.5, z: 10.5};
     let ballRadius = 0.2
@@ -173,7 +184,7 @@ function threeAmmoObjects() {
     // dominoPosition = {x: 0, y: 1.6, z: 0};
     domino(dominoPosition)
 
-    let position = {x: 14, y: 7.05, z: -30.5}
+    position = {x: 14, y: 7.05, z: -30.5}
     plinko(position);
     position = {x:16, y:15, z:-26}
     arrow(position)
@@ -1076,4 +1087,74 @@ function steps(position, rotation = 0, numberOfSteps = 6) {
     ballPos.y += 2
     ball(ballPos, 0.4, 10, 0.1)
     groupMesh.tween = tween1
+}
+
+
+// Basert på kode hentet fra kodeeksempel modul8/ammoTerrain1
+function terrain(position = {x: 0, y: 5, z: 0}) {
+    const planeLength = 10;
+    const heightDivisor = 100
+
+    const heightmap = ri.textures.heightmap1;
+    const texture = ri.textures.grass;
+    texture.wrapS = texture.wrapT= THREE.RepeatWrapping;
+    texture.repeat.set(3, 3);
+
+    const heightmapWidth = heightmap.image.width;
+    const heightmapHeight = heightmap.image.height;
+
+    const heightData = getHeigtdataFromImage(heightmap.image, heightmapWidth, heightmapHeight, heightDivisor);
+
+    // Ammo shape (ammoHeightFieldShape):
+    const heightFieldData = createHeightFieldShape(heightData, heightmapWidth, heightmapHeight);
+    heightFieldData.heightFieldShape.setMargin( 0.05 );
+
+    // Three
+    const geometry = new THREE.PlaneGeometry(
+        planeLength,
+        planeLength,
+        heightmapWidth - 1,
+        heightmapHeight - 1
+    );
+
+    geometry.rotateX( - Math.PI / 2 );
+    // Setter y-verdien til PlaneGeometry i forhold til høydeverdiene. Gjennomløper alle vertekser:
+    let vertices = geometry.attributes.position.array;
+    // Sentrerer vha. delta:
+    // Ammo-shapen blir (automatisk) sentrert om origo basert på terrainMinHeight og terrainMaxHeight.
+    // Må derfor korrigere THREE.PlaneGeometry sine y-verdier i forhold til dette.
+    // Justerer tilsvarende delta = minHeigt + (maxHeight - minHeight)/2.
+    const delta = (heightFieldData.terrainMinHeight + ((heightFieldData.terrainMaxHeight-heightFieldData.terrainMinHeight)/2));
+    for ( let i = 0; i< heightData.length; i++) {
+        // 1 + (i*3) siden det er y-verdien som endres:
+        vertices[ 1 + (i*3) ] = heightData[i] - delta ;
+    }
+    // Oppdater normaler (for korrekt belysning):
+    geometry.computeVertexNormals();
+
+    const material = new THREE.MeshStandardMaterial({
+        map: texture,
+        side: THREE.DoubleSide,
+        needsUpdate: true
+    });
+
+    const mesh = new THREE.Mesh( geometry, material );
+    mesh.name = 'terrain';
+    mesh.receiveShadow = true;
+
+    ri.scene.add(mesh);
+
+    const scaleX = planeLength / ( heightmapWidth - 1 );
+    const scaleZ = planeLength / ( heightmapHeight - 1 );
+    heightFieldData.heightFieldShape.setLocalScaling( new Ammo.btVector3( scaleX, 1, scaleZ ) );
+
+    createAmmoRigidBody(
+        heightFieldData.heightFieldShape,
+        mesh,
+        0.5,
+        0.3,
+        position,
+        0,
+        false
+    );
 }
