@@ -143,7 +143,7 @@ function animate(currentTime) {
 
     const delta = ri.clock.getDelta();
     const elapsed = ri.clock.getElapsedTime();
-
+    ri.controls.update(delta);
 
     updatePhysics(delta)
     updateLines();

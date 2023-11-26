@@ -26,11 +26,10 @@ export function createThreeScene() {
     ri.camera.position.set(-15, 7, 15);
     ri.camera.position.set(15, 7, -15); // Temp position
 
-    ri.controls = new PointerLockControls(ri.camera, ri.renderer.domElement);
+    ri.controls = new FirstPersonControls(ri.camera, ri.renderer.domElement);
     ri.controls.movementSpeed = 10;
-    ri.controls.lookSpeed = 1.0;
+    ri.controls.lookSpeed = 0.4;
     ri.controls.lookVertical = true;
-    //ri.controls.enableDamping = false;
 }
 
 
@@ -54,7 +53,7 @@ export function keyPresses() {
     if (ri.currentlyPressedKeys['KeyW']) {
         ri.controls.moveForward = true;
     }
-    if (ri.currentlyPressedKeys['mousedown']) {
+    if (ri.currentlyPressedKeys['KeyL'] && (ri.controls.isLocked) ) {
         ri.controls.lock();
     }
     if (ri.currentlyPressedKeys['KeyS']) {
