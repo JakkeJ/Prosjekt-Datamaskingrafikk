@@ -450,7 +450,7 @@ export function domino(position, starter = true) {
 
         ballPosition.y += 0.35;
         ballPosition.z -= 0.9;
-        rails(ballPosition, -90, 0, 1);
+        rails(ballPosition, -90, 0.5, 1);
 
         ballPosition.y += 0.5;
         ballPosition.z -= 0.5;
@@ -458,7 +458,7 @@ export function domino(position, starter = true) {
 
         // Ball to end domino:
         ballPosition = {x: position.x + 0, y: position.y + 0, z: position.z + 5.2};
-        rails(ballPosition, 90, 0, 1);
+        rails(ballPosition, 90, -0.5, 1);
 
         ballPosition.y += 0.5;
         ballPosition.z += 0.3;
@@ -474,7 +474,7 @@ export function domino(position, starter = true) {
 export function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
 
 
-    ball({x: position.x+4.5, y: position.y+4.5, z: position.z+5}, 0.20, 2)
+    ball({x: position.x+4.5, y: position.y+4.5, z: position.z+5}, 0.20, 8)
 
     const boardValues = {x: 20, y: 0.2, z: 12};
     const pegValues = {x: 0.08, y: 0.04, z: 0.5};
