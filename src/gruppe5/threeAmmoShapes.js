@@ -113,7 +113,6 @@ export function steps(position, rotation = 0, numberOfSteps = 6) {
     const wallCompoundShape = new Ammo.btCompoundShape();
 
     const mass = 0;
-    // const size = {x:1.5,y:8,z:1.5};
     const size = {x:1,y:8,z:1};
     const name = 'steps'
     const offset = 2 // height offset per step
@@ -157,10 +156,10 @@ export function steps(position, rotation = 0, numberOfSteps = 6) {
     let useFirst = true;
 
     for (let i = 0; i <numberOfSteps; i++) {
-        if (useFirst) {// createAmmoMesh('box', geometry, size, {x: i * size.x, y: 0, z: 0}, {x: 0, y: 0, z: 0},material, stepMesh1, compoundShape1, 'step1')
+        if (useFirst) {
             createAmmoMesh('triangleShape', stepGeometry, mesh, {x: i * size.x, y: i * offset, z: -size.z/2}, {x: 0, y: 0, z: 0}, stepMaterial, stepMesh1, compoundShape1, 'step1')// stepMesh1.add(mesh)
         }
-        else {// createAmmoMesh('box', geometry, size, {x: i * size.x, y: 0, z: 0}, {x: 0, y: 0, z: 0},material, stepMesh2, compoundShape2, 'step2')
+        else {
             createAmmoMesh('triangleShape', stepGeometry, mesh, {x: i * size.x, y: i * offset, z: -size.z/2}, {x: 0, y: 0, z: 0}, stepMaterial, stepMesh2, compoundShape2, 'step1')// stepMesh2.add(mesh)
         }
         useFirst = !useFirst;
@@ -186,10 +185,10 @@ export function steps(position, rotation = 0, numberOfSteps = 6) {
     const wallRigidBody = createAmmoRigidBody(wallCompoundShape, wallGroupMesh, 0.1, 0.1, position, mass);
 
     // Make object movable:
-    rigidBody1.setCollisionFlags(rigidBody1.getCollisionFlags() | 2);  // 2 = BODYFLAG_KINEMATIC_OBJECT: Betyr kinematic object, masse=0 men kan flyttes!
-    rigidBody1.setActivationState(4);  // 4 = BODYSTATE_DISABLE_DEACTIVATION, dvs. "Never sleep".
-    rigidBody2.setCollisionFlags(rigidBody2.getCollisionFlags() | 2);  // 2 = BODYFLAG_KINEMATIC_OBJECT: Betyr kinematic object, masse=0 men kan flyttes!
-    rigidBody2.setActivationState(4);  // 4 = BODYSTATE_DISABLE_DEACTIVATION, dvs. "Never sleep".
+    rigidBody1.setCollisionFlags(rigidBody1.getCollisionFlags() | 2);  // 2 = BODYFLAG_KINEMATIC_OBJECT
+    rigidBody1.setActivationState(4);                                  // 4 = BODYSTATE_DISABLE_DEACTIVATION, dvs. "Never sleep"
+    rigidBody2.setCollisionFlags(rigidBody2.getCollisionFlags() | 2);  // 2 = BODYFLAG_KINEMATIC_OBJECT
+    rigidBody2.setActivationState(4);                                  // 4 = BODYSTATE_DISABLE_DEACTIVATION, dvs. "Never sleep"
 
     const val = offset;
     const duration = 1100;
@@ -200,7 +199,6 @@ export function steps(position, rotation = 0, numberOfSteps = 6) {
             .yoyo(true)
             .repeat(1)
             .onUpdate(function (newPosition) {
-                // groupMesh.position.y = position.y + newPosition.y
                 moveRigidBodyAnimation(mesh2move, position, {x: 0, y: newPosition.y, z: 0})
             })
     }
@@ -218,14 +216,6 @@ export function steps(position, rotation = 0, numberOfSteps = 6) {
     tween1.start()
     tween4.start()
 
-    // Ball for testing
-    // let ballPos = {x:position.x, y:position.y +  size.y/2, z:position.z + size.z/2}
-    // ball(ballPos, 0.3, 10, 0.1)
-    // rails(ballPos, rotation, -5, 8, true)
-    // ballPos.z += 7.5
-    // ballPos.y += 2
-    // ball(ballPos, 0.3, 10, 0.1)
-    // groupMesh.tween = tween1
 }
 
 
@@ -340,14 +330,7 @@ export function funnel(position, upperRadius = 2.7, lowerRadius = 0.5, height = 
     ri.scene.add(mesh);
 
     createTriangleShapeAddToCompound(compoundShape, mesh);
-
     createAmmoRigidBody(compoundShape, mesh, 0.4, 0.6, position, 0);
-    
-    // Ball+rail to test funnel
-    /*let railPosition = {x: position.x + upperRadius*0.9, y: position.y + height + 1, z: position.z + 5}
-    rails(railPosition, -90, 10, 5)
-    let ballPosition = {x: railPosition.x, y: railPosition.y + 0.6, z: railPosition.z - 0.2}
-    ball(ballPosition, lowerRadius*0.9, 5, 0.85)*/
 }
 
 
@@ -415,7 +398,7 @@ export function domino(position, starter = true) {
         {x: posX + 2.5, y: posY, z: posZ + 0.5, rot: 0},
         {x: posX + 2.5, y: posY, z: posZ + 0.9, rot: 0},
         {x: posX + 2.5, y: posY, z: posZ + 1.3, rot: 0},
-        {x: posX + 2.55, y: posY, z: posZ + 1.7, rot: 10}, // turn left
+        {x: posX + 2.55, y: posY, z: posZ + 1.7, rot: 10},
         {x: posX + 2.65, y: posY, z: posZ + 2.1, rot: 20},
         {x: posX + 2.8, y: posY, z: posZ + 2.5, rot: 25},
         {x: posX + 3.0, y: posY, z: posZ + 2.9, rot: 25},
@@ -446,7 +429,6 @@ export function domino(position, starter = true) {
         // Ball to start first domino:
         let ballPosition = {x: position.x + 0, y: position.y + 1, z: position.z - 5.6};
         rails(ballPosition, -90, -20, 1);
-        // ball(ballPosition, 0.45, 0);
 
         ballPosition.y += 0.35;
         ballPosition.z -= 0.9;
@@ -545,7 +527,7 @@ export function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
 }
 
 
-export function golfclub(position = {x: -40, y: 16.51, z: 40}) { //{x: 40, y: 16.51, z: 40}
+export function golfclub(position = {x: -40, y: 16.51, z: 40}) {
     const rotation = -90
     const handleBarValues = {x: 0.2, y: 0.1, z: 4};
     const shaftValues = {x: 0.1, y: 0.1, z: 10};
@@ -567,7 +549,7 @@ export function golfclub(position = {x: -40, y: 16.51, z: 40}) { //{x: 40, y: 16
         if (!audioGolfClubPlayed) {
             ri.audio.ballHit.play()
             audioGolfClubPlayed = true;
-        };
+        }
     };
 
     let golfClubShape = new Ammo.btCompoundShape();
@@ -582,7 +564,6 @@ export function golfclub(position = {x: -40, y: 16.51, z: 40}) { //{x: 40, y: 16
     let club = createAmmoMesh('box', clubGeo, clubValues, {x: 0, y: -5.4, z: 0.6}, {x: 0, y: 0, z: 0}, lightGreyColor, golfClubMesh, golfClubShape);
 
     let golfClubRigid = createAmmoRigidBody(golfClubShape, golfClubMesh, 0, 0, golfClubMesh.position, 2);
-
 
     let golfClubStandMesh = new THREE.Group();
     golfClubStandMesh.position.set( position.x, position.y, position.z);
@@ -633,7 +614,7 @@ export function golfclub(position = {x: -40, y: 16.51, z: 40}) { //{x: 40, y: 16
         if (!audioStopperPlayed) {
             ri.audio.ballHit.play()
             audioStopperPlayed = true;
-        };
+        }
     };
 
     let golfClubStopperRigid = createAmmoRigidBody(golfClubStopperShape, golfClubStopperMesh, 0, 1, golfClubStopperMesh.position, 0.3);
@@ -665,7 +646,7 @@ export function cannon() {
     bottomSpringMesh.position.set(position.x, position.y ,position.z);
     bottomSpringMesh.name = 'cannon';
 
-    if (rotationAxis == "Z")
+    if (rotationAxis === "Z")
     {bottomSpringMesh.rotateZ(rotationDegree)}
     else {bottomSpringMesh.rotateX(rotationDegree)};
 
@@ -676,9 +657,9 @@ export function cannon() {
 
     let topSpringMesh = new THREE.Group();
     topSpringMesh.position.set(position.x, position.y+0.1 ,position.z);
-    if (rotationAxis == "Z")
+    if (rotationAxis === "Z")
     {topSpringMesh.rotateZ(rotationDegree)}
-    else {topSpringMesh.rotateX(rotationDegree)};
+    else {topSpringMesh.rotateX(rotationDegree)}
 
     let topSpringShape = new Ammo.btCompoundShape();
     let topSpringGeo = new THREE.CylinderGeometry(topSpringValues.x, topSpringValues.y, topSpringValues.z, 36, 1);
@@ -708,13 +689,12 @@ export function cannon() {
     //cannonbody LatheGeometry
     let cannonBodyShape = new Ammo.btCompoundShape();
 
-
     let height = 8;
     let radius = 0.5;
     let points = [
         new THREE.Vector2(radius, height*0.1),
-        new THREE.Vector2(radius, height*1),
-        new THREE.Vector2(radius*1.8, height*1),
+        new THREE.Vector2(radius, height),
+        new THREE.Vector2(radius*1.8, height),
         new THREE.Vector2(radius*1.8, height*0.9),
         new THREE.Vector2(radius*1.8, height*0.9),
         new THREE.Vector2(radius*1.5, height*0.9),
@@ -726,14 +706,13 @@ export function cannon() {
     let cannonBodyShapeGeo = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
     let cannonBodyMesh = new THREE.Mesh(cannonBodyShapeGeo);
 
-    if (rotationAxis == "Z")
+    if (rotationAxis === "Z")
     {cannonBodyMesh.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), rotationDegree)}
     else {cannonBodyMesh.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), rotationDegree)};
 
     cannonBodyMesh.name = 'cannonBody';
     cannonBodyMesh.castShadow = true;
     cannonBodyMesh.receiveShadow = true;
-
 
     let audioCannonPlayed = false;
     createAmmoMesh('triangleShape', cannonBodyShapeGeo, cannonBodyMesh, {x: 0, y: -1.5, z: 0}, {x: 0, y: 0, z: 0}, blackColor, bottomSpringMesh, cannonBodyShape, 'cannonBody')
@@ -742,7 +721,7 @@ export function cannon() {
         if (!audioCannonPlayed) {
             ri.audio.ballHit.play()
             audioCannonPlayed = true;
-        };
+        }
 
     };
     createAmmoRigidBody(cannonBodyShape, cannonBodyMesh, 0.4, 0.6, {x: position.x, y: position.y, z: position.z}, 0);
@@ -757,9 +736,11 @@ export function cannon() {
     cannonStandMesh.position.set(position.x, position.y ,position.z);
     cannonStandMesh.rotateY(90*Math.PI/180);
 
-    if (rotationAxis == "Z")
-    {cannonStandMesh.rotateY(0*Math.PI/180);}
-    else {cannonStandMesh.rotateY(90*Math.PI/180);};
+    if (rotationAxis === "Z") {
+        cannonStandMesh.rotateY(0*Math.PI/180);
+    } else {
+        cannonStandMesh.rotateY(90*Math.PI/180);
+    }
 
     let cannonStandShape = new Ammo.btCompoundShape();
     let cannonStandValues = {x: 0.4, y: 4.5, z: 2};
@@ -774,13 +755,12 @@ export function cannon() {
     let leftAxis = createAmmoMesh('cylinder', axisGeo, axisStandValues, {x: -1.35, y: 0, z: 0}, {x: 0, y: 0, z: 90*Math.PI/180}, blackColor, cannonStandMesh, cannonStandShape)
     let rightAxis = createAmmoMesh('cylinder', axisGeo, axisStandValues, {x: 1.35, y: 0, z: 0}, {x: 0, y: 0, z: 90*Math.PI/180}, blackColor, cannonStandMesh, cannonStandShape)
 
-
     ri.scene.add(bottomSpringMesh);
     ri.scene.add(topSpringMesh);
     ri.scene.add(cannonStandMesh);
 
     let ballPosition = {x: position.x-5, y: position.y+1, z: position.z+1};
-    if (rotationAxis == "Z")
+    if (rotationAxis === "Z")
     {ballPosition = {x: position.x-0.9, y: position.y+0.3, z: position.z};}
     else {ballPosition = {x: position.x, y: position.y+0.2, z: position.z+1};};
     let ballRadius = 0.45
@@ -788,12 +768,10 @@ export function cannon() {
     ball(ballPosition, ballRadius, ballMass, 0.7, 0.8, 'cannonBall');
     ball({x: position.x-3.5, y: position.y+2.5, z: position.z-2.5}, ballRadius, ballMass, 0.7, 0.8);
     rails({x: position.x-3.5, y: position.y+1.5, z: position.z-3}, 90, 20, 2, true, 1);
-
 }
 
 
 export function cannonTarget() {
-
     const targetTexture = new THREE.MeshStandardMaterial({map: ri.textures.target,  side: THREE.DoubleSide});
 
     let position = {x: -20, y: 25.2, z: 40}; //x: 45, y: 25, z: 20
@@ -814,7 +792,7 @@ export function cannonTarget() {
         if (!audioTargetPlayed) {
             ri.audio.ballHit.play();
             audioTargetPlayed = true;
-        };
+        }
 
     };
     let targetBody = createAmmoRigidBody(targetShape, targetMesh, 0, 0.6, {x: position.x, y: position.y, z: position.z}, 0);
@@ -826,7 +804,6 @@ export function cannonTarget() {
     rails(railPosition, 21, 15, 21, true, 0);
 
     ri.scene.add(targetMesh);
-
 }
 
 
@@ -1084,7 +1061,6 @@ export function tv(position = {x: -40, y: 3, z: -10}, rotation = 70) {
     const tvSize = {x: 16, y: 9, z: 0.6};
     const tvPosition = {x: 0, y: baseSize.y + standSize.y + (tvSize.y / 2), z: 0};
 
-
     const baseGeometry = new THREE.BoxGeometry(baseSize.x, baseSize.y, baseSize.z);
     const standGeometry = new THREE.BoxGeometry(standSize.x, standSize.y, standSize.z);
     const horizontalFrameGeo = new THREE.BoxGeometry(tvSize.x, frameThickness, tvSize.z);
@@ -1134,6 +1110,8 @@ export function tv(position = {x: -40, y: 3, z: -10}, rotation = 70) {
     createAmmoMesh('box', baseGeometry, baseSize, basePosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape, 'tvBase');
     createAmmoMesh('box', standGeometry, standSize, standPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape, 'tvStand');
 
+    ri.scene.add(groupMesh);
+
     // Ammo
     const tvShape = new Ammo.btBoxShape(new Ammo.btVector3(tvSize.x/2, tvSize.y/2, tvSize.z/2));
     let transform = new Ammo.btTransform();
@@ -1142,19 +1120,13 @@ export function tv(position = {x: -40, y: 3, z: -10}, rotation = 70) {
     compoundShape.addChildShape(transform, tvShape);
 
     let audioTvPlayed = false;
-    ri.scene.add(groupMesh);
     groupMesh.collisionResponse = (mesh) => {
         ri.scene.getObjectByName("screen").material.opacity = 1
         if (!audioTvPlayed) {
             ri.audio.ballHit.play();
             audioTvPlayed = true;
-        };
+        }
     };
 
-    const rigidBody = createAmmoRigidBody(compoundShape, groupMesh, 0, 0.9, position, 0.5);
-
-    // Ball for testing
-    position.y += 20;
-    position.x;
-    //ball(position, 0.3, 20)
+    createAmmoRigidBody(compoundShape, groupMesh, 0, 0.9, position, 0.5);
 }
