@@ -189,7 +189,6 @@ function animate(currentTime) {
 
 
 function threeAmmoObjects() {
-    let position
     ground()
     water()
     rgMachine()
