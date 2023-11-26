@@ -21,10 +21,10 @@ export function createThreeScene() {
     ri.lilGui = new GUI();
 
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    ri.camera.position.set(5, 25, -5);
+    ri.camera.position.set(15, 25, -20);
 
     ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
-    ri.controls.target = new THREE.Vector3(20, 16, -10);
+    ri.controls.target = new THREE.Vector3(20, 23, -20);
 }
 
 
@@ -290,8 +290,8 @@ export function arrow(position = {x:0, y:10, z:0}) {
     };
 
     let geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-    let material = new THREE.MeshStandardMaterial({
-        color: 0xd10000,
+    let material = new THREE.MeshBasicMaterial({
+        color: 0xcc0000,
         metalness: 0.5,
         roughness: 0.3});
     let mesh = new THREE.Mesh(geometry, material);
