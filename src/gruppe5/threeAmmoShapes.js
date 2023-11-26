@@ -395,7 +395,7 @@ export function rails(position, rotation = 180, tilt = 20, length = 4, guardrail
 
 
 export function domino(position, starter = true) {
-    const tableSize = {x: 5, y: 0.05, z: 10};
+    const tableSize = {x: 5, y: 0.2, z: 10};
 
     const groupMesh = new THREE.Group();
     const compoundShape = new Ammo.btCompoundShape();
@@ -408,7 +408,7 @@ export function domino(position, starter = true) {
 
     const dominoSize = {x: 0.4, y: 0.8, z: 0.08};
     const posX = position.x - 2.5;
-    const posY = position.y + 0.5;
+    const posY = position.y + 0.5 + tableSize.y / 2;
     const posZ = position.z - 5;
     const dominoPositions = [
         {x: posX + 2.5, y: posY, z: posZ + 0.1, rot: 0},
@@ -472,10 +472,6 @@ export function domino(position, starter = true) {
 
 
 export function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
-
-
-    // ball({x: position.x+4.5, y: position.y+4.5, z: position.z+5}, 0.20, 8)
-
     const boardValues = {x: 20, y: 0.2, z: 12};
     const pegValues = {x: 0.08, y: 0.04, z: 0.5};
     const fenceValues = {x: 0.2, y: 0.8, z: 13};
@@ -536,7 +532,7 @@ export function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
 
     createAmmoRigidBody(plinkoShape, plinkoMesh, 1, 1, plinkoMesh.position, 0);
 
-    const tableSize = {x: 12, y: 0.05, z: 22};
+    const tableSize = {x: 12, y: 0.4, z: 22};
     const table = new THREE.Group();
     table.position.set(position.x+0.5, position.y-4.6, position.z+5);
     const tableShape = new Ammo.btCompoundShape();
