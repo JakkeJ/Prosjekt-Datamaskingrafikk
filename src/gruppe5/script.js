@@ -61,7 +61,8 @@ export const ri = {
     lilGui: undefined,
     balls: [],
     textures: {},
-    uniforms: {}
+    uniforms: {},
+    audio: {},
 }
 
 export const phy = {
@@ -95,6 +96,18 @@ export function main() {
 
 function addToScene() {
     const manager = new THREE.LoadingManager();
+
+    const listener = new THREE.AudioListener();
+    ri.camera.add( listener );
+    ri.audio.ballHit = new THREE.Audio( listener );
+
+    //https://threejs.org/docs/#api/en/audio/Audio
+    const audioLoader = new THREE.AudioLoader();
+    audioLoader.load('static/assets/wave/ballhit.wav', function( buffer ) {
+        ri.audio.ballHit.setBuffer(buffer);
+        ri.audio.ballHit.setVolume(0.5);
+    });
+
     const cubeLoader = new THREE.CubeTextureLoader();
     // Skybox textures: https://opengameart.org/content/cloudy-skyboxes
     const paths = [

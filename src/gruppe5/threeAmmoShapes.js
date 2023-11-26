@@ -342,7 +342,7 @@ export function funnel(position, upperRadius = 2.7, lowerRadius = 0.5, height = 
     createTriangleShapeAddToCompound(compoundShape, mesh);
 
     createAmmoRigidBody(compoundShape, mesh, 0.4, 0.6, position, 0);
-
+    
     // Ball+rail to test funnel
     /*let railPosition = {x: position.x + upperRadius*0.9, y: position.y + height + 1, z: position.z + 5}
     rails(railPosition, -90, 10, 5)
@@ -487,6 +487,7 @@ export function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
 
     const plinkoMesh = new THREE.Group();
     plinkoMesh.position.set(position.x, position.y, position.z);
+    plinkoMesh.name = 'plinkoPeg'
     plinkoMesh.rotateY(90*Math.PI/180);
     plinkoMesh.rotateX(-45*Math.PI/180);
     const plinkoShape = new Ammo.btCompoundShape();
@@ -522,14 +523,14 @@ export function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
     let count = 1;
     for (let i = 0; i < 18; i++){
         for (let j = 0; j < count; j++) {
-            let peg = createAmmoMesh('cylinder', pegGeo, pegValues, {x: x+j, y: 0.4, z: 5.5+y}, {x: 0, y: 0, z: 0}, blackColor, plinkoMesh, plinkoShape);
-
+            let peg = createAmmoMesh('cylinder', pegGeo, pegValues, {x: x+j, y: 0.4, z: 5.5+y}, {x: 0, y: 0, z: 0}, blackColor, plinkoMesh, plinkoShape, 'plinkoPeg');
+            
         }
         count +=1
         x += -0.5;
         y += -0.5;
     }
-
+    
     createAmmoRigidBody(plinkoShape, plinkoMesh, 1, 1, plinkoMesh.position, 0);
 
     const tableSize = {x: 12, y: 0.4, z: 22};
@@ -557,8 +558,17 @@ export function golfclub(position = {x: -40, y: 16.51, z: 40}) { //{x: 40, y: 16
 
     let golfClubMesh = new THREE.Group();
     golfClubMesh.position.set( position.x, position.y, position.z);
+    golfClubMesh.name = "golfClub";
     golfClubMesh.rotateY(rotation * Math.PI/180);
     golfClubMesh.rotateZ(46.8 * Math.PI/180);
+
+    let audioGolfClubPlayed = false;
+    golfClubMesh.collisionResponse = (mesh1) => {
+        if (!audioGolfClubPlayed) {
+            ri.audio.ballHit.play()
+            audioGolfClubPlayed = true;
+        };
+    };
 
     let golfClubShape = new Ammo.btCompoundShape();
 
@@ -611,12 +621,21 @@ export function golfclub(position = {x: -40, y: 16.51, z: 40}) { //{x: 40, y: 16
     phy.ammoPhysicsWorld.addConstraint(ClubHinge, true);
 
     let golfClubStopperMesh = new THREE.Group();
+    golfClubStopperMesh.name = "golfClubStopper";
     golfClubStopperMesh.position.set(position.x, position.y -7, position.z + 7);
-    golfClubStopperMesh.rotateY(rotation * Math.PI/180); // ?
+    golfClubStopperMesh.rotateY(rotation * Math.PI/180); 
     let golfClubStopperShape = new Ammo.btCompoundShape();
     let stopperValues = {x: 0.2, y: 0.2, z: 10};
     let stopperGeo = new THREE.CylinderGeometry(stopperValues.x, stopperValues.y, stopperValues.z, 36, 1);
     let stopper = createAmmoMesh('cylinder', stopperGeo, stopperValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, lightGreyColor, golfClubStopperMesh, golfClubStopperShape);
+    let audioStopperPlayed = false;
+    golfClubStopperMesh.collisionResponse = (mesh1) => {
+        if (!audioStopperPlayed) {
+            ri.audio.ballHit.play()
+            audioStopperPlayed = true;
+        };
+    };
+
     let golfClubStopperRigid = createAmmoRigidBody(golfClubStopperShape, golfClubStopperMesh, 0, 1, golfClubStopperMesh.position, 0.3);
 
     ri.scene.add(golfClubStopperMesh);
@@ -689,12 +708,6 @@ export function cannon() {
     //cannonbody LatheGeometry
     let cannonBodyShape = new Ammo.btCompoundShape();
 
-    let material = new THREE.MeshStandardMaterial({
-        color: 0xFFFFFF,
-        side: THREE.DoubleSide,
-        metalness: 0.4,
-        roughness: 0.3});
-
 
     let height = 8;
     let radius = 0.5;
@@ -711,7 +724,7 @@ export function cannon() {
     ];
 
     let cannonBodyShapeGeo = new THREE.LatheGeometry(points, 128, 0, 2 * Math.PI);
-    let cannonBodyMesh = new THREE.Mesh(cannonBodyShapeGeo, material);
+    let cannonBodyMesh = new THREE.Mesh(cannonBodyShapeGeo);
 
     if (rotationAxis == "Z")
     {cannonBodyMesh.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), rotationDegree)}
@@ -721,14 +734,15 @@ export function cannon() {
     cannonBodyMesh.castShadow = true;
     cannonBodyMesh.receiveShadow = true;
 
-    cannonBodyMesh.material.transparent = true;
-    cannonBodyMesh.material.opacity = 0.6;
 
-
+    let audioCannonPlayed = false;
     createAmmoMesh('triangleShape', cannonBodyShapeGeo, cannonBodyMesh, {x: 0, y: -1.5, z: 0}, {x: 0, y: 0, z: 0}, blackColor, bottomSpringMesh, cannonBodyShape, 'cannonBody')
     cannonBodyMesh.collisionResponse = (mesh1) => {
         ri.springs.cannonSpring.enableSpring(1, true);
-        console.log("im here")
+        if (!audioCannonPlayed) {
+            ri.audio.ballHit.play()
+            audioCannonPlayed = true;
+        };
 
     };
     createAmmoRigidBody(cannonBodyShape, cannonBodyMesh, 0.4, 0.6, {x: position.x, y: position.y, z: position.z}, 0);
@@ -765,9 +779,9 @@ export function cannon() {
     ri.scene.add(topSpringMesh);
     ri.scene.add(cannonStandMesh);
 
-    let ballPosition = {x: position.x, y: position.y+1, z: position.z+1};
+    let ballPosition = {x: position.x-5, y: position.y+1, z: position.z+1};
     if (rotationAxis == "Z")
-    {ballPosition = {x: position.x-2, y: position.y+1, z: position.z};}
+    {ballPosition = {x: position.x-0.9, y: position.y+0.3, z: position.z};}
     else {ballPosition = {x: position.x, y: position.y+0.2, z: position.z+1};};
     let ballRadius = 0.45
     let ballMass = 20
@@ -794,8 +808,13 @@ export function cannonTarget() {
     let targetGeo = new THREE.CylinderGeometry(targetValues.x, targetValues.y, targetValues.z, 36, 1);
     let target = createAmmoMesh('cylinder', targetGeo, targetValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, targetTexture, targetMesh, targetShape)
 
+    let audioTargetPlayed = false;
     targetMesh.collisionResponse = (mesh1) => {
         ri.springs.cannonSpring.setDamping(1, 0);
+        if (!audioTargetPlayed) {
+            ri.audio.ballHit.play();
+            audioTargetPlayed = true;
+        };
 
     };
     let targetBody = createAmmoRigidBody(targetShape, targetMesh, 0, 0.6, {x: position.x, y: position.y, z: position.z}, 0);
