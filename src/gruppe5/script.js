@@ -28,11 +28,7 @@ import {
     createAmmoRigidBody
 } from "./ammoHelpers.js"
 import {
-<<<<<<< Updated upstream
     createAmmoMesh, createHeightFieldShape, getHeigtdataFromImage,
-=======
-    createAmmoMesh, createHeightFieldShape, getHeightdataFromImage, updateLines, updateHingeMarkers
->>>>>>> Stashed changes
 } from "./threeAmmoHelpers.js";
 import {
     ground,
@@ -128,8 +124,6 @@ function addToScene() {
     ri.textures.heightmap1 = loader.load('static/assets/textures/heightmap1.png')
     ri.textures.heightmap2 = loader.load('static/assets/textures/heightmap2.png')
     ri.textures.heightmap3 = loader.load('static/assets/textures/heightmap3.png')
-    ri.textures.heightmap4 = loader.load('static/assets/textures/heightmap4.png')
-    ri.textures.heightmap5 = loader.load('static/assets/textures/heightmap5.png')
 
     manager.onLoad = () => {
         addLights()
@@ -188,7 +182,6 @@ function threeAmmoObjects() {
     golfclub();
     newtonCradle();
     spiral();
-    terrain();
 
     // let position = {x: 10, y: 3, z: 10};
     position = {x: 15, y: 5, z: -10};
