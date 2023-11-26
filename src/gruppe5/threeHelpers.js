@@ -380,38 +380,3 @@ export function addLineBetweenObjects(nameMeshStart, nameMeshEnd, meshPositionSt
 }
 
 
-export function updateLines() {
-    for (let i = 0; i < 8; ++i) {
-        let ballMesh = ri.scene.getObjectByName("ball" + i + "Mesh");
-        if (ballMesh && ballMesh.userData.physicsBody) {
-            let ballPhysicsBody = ballMesh.userData.physicsBody;
-            let ballMotionState = ballPhysicsBody.getMotionState();
-
-            if (ballMotionState) {
-                let ballTransform = new Ammo.btTransform();
-                ballMotionState.getWorldTransform(ballTransform);
-                let ballPosition = ballTransform.getOrigin();
-
-                // Update the line connected to this ball
-                let line1 = ri.scene.getObjectByName("lineToTopBar1_" + i);
-                let line2 = ri.scene.getObjectByName("lineToTopBar2_" + i);
-                if (line1) {
-                    let points = line1.geometry.attributes.position.array;
-                    points[0] = ballPosition.x();
-                    points[1] = ballPosition.y();
-                    points[2] = ballPosition.z();
-                    line1.geometry.attributes.position.needsUpdate = true;
-                }
-                if (line2) {
-                    let points = line2.geometry.attributes.position.array;
-                    points[0] = ballPosition.x();
-                    points[1] = ballPosition.y();
-                    points[2] = ballPosition.z();
-                    line2.geometry.attributes.position.needsUpdate = true;
-                }
-
-                Ammo.destroy(ballTransform);
-            }
-        }
-    }
-}
