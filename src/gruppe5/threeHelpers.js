@@ -49,6 +49,7 @@ export function keyPresses() {
 
     const forward = new THREE.Vector3(0, 0, -1);
     const side = new THREE.Vector3(-1, 0, 0);
+    const upward = new THREE.Vector3(0, 1, 0);
     const rotation = new THREE.Euler(0, 0, 0, 'YXZ');
     rotation.setFromQuaternion(ri.camera.quaternion);
 
@@ -66,6 +67,12 @@ export function keyPresses() {
     }
     if (ri.currentlyPressedKeys['KeyD']) {
         ri.camera.position.addScaledVector(side, -moveSpeed * ri.deltaTime);
+    }
+    if (ri.currentlyPressedKeys['Space']) {
+        ri.camera.position.addScaledVector(upward, moveSpeed * ri.deltaTime * 0.7);
+    }
+    if (ri.currentlyPressedKeys['ShiftLeft']) {
+        ri.camera.position.addScaledVector(upward, -moveSpeed * ri.deltaTime * 0.7);
     }
 
     const lookAtTarget = new THREE.Vector3().copy(ri.camera.position).add(forward);
