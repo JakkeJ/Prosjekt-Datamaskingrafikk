@@ -1093,7 +1093,7 @@ export function tv(position = {x: -40, y: 3, z: -10}, rotation = 70) {
     groupMesh.collisionResponse = (mesh) => {
         ri.scene.getObjectByName("screen").material.opacity = 1
         if (!audioTvPlayed) {
-            ri.audio.ballHit.play();
+            ri.audio.tv.play();
             audioTvPlayed = true;
         }
     };

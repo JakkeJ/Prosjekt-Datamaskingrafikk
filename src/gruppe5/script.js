@@ -96,6 +96,7 @@ function addToScene() {
     ri.camera.add( listener );
     ri.audio.ballHit = new THREE.Audio( listener );
     ri.audio.explosion = new THREE.Audio( listener );
+    ri.audio.tv = new THREE.Audio(listener);
 
     const audioLoader = new THREE.AudioLoader();
     audioLoader.load('static/assets/wave/ballhit.wav', function( buffer ) {
@@ -106,6 +107,13 @@ function addToScene() {
     audioLoader.load('static/assets/wave/explosion-6055.mp3', function( buffer ) {
         ri.audio.explosion.setBuffer(buffer);
         ri.audio.explosion.setVolume(0.5);
+    });
+
+    // TV lyd fra: https://www.youtube.com/watch?v=gp5DWmsXUtw
+    // Om rettighet: Det er ikke nevnt at dette er noe med copyright, og det er lastet opp som en lydeffekt på YouTube
+    audioLoader.load('static/assets/wave/tv.mp3', function( buffer ) {
+        ri.audio.tv.setBuffer(buffer);
+        ri.audio.tv.setVolume(0.5);
     });
 
     const cubeLoader = new THREE.CubeTextureLoader();
@@ -268,7 +276,7 @@ function rgMachine() {
     createAmmoRigidBody(boxShape, boxMesh, 0.0, 1.0, {x: 0, y: 0, z: 0}, 0)
     ri.scene.add(boxMesh);
 
-    position = {x: 44.8, y: 7.35, z: 29.6};
+    position = {x: 44.6, y: 7.35, z: 29.6};
     rails(position, 90, 15, 9.8, true, 0.0);
 
     cannon();
