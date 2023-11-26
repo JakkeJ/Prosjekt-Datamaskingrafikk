@@ -95,11 +95,17 @@ function addToScene() {
     const listener = new THREE.AudioListener();
     ri.camera.add( listener );
     ri.audio.ballHit = new THREE.Audio( listener );
+    ri.audio.explosion = new THREE.Audio( listener );
 
     const audioLoader = new THREE.AudioLoader();
     audioLoader.load('static/assets/wave/ballhit.wav', function( buffer ) {
         ri.audio.ballHit.setBuffer(buffer);
         ri.audio.ballHit.setVolume(0.5);
+    });
+    // explosion lyd hentet fra: https://pixabay.com/sound-effects/search/bang/
+    audioLoader.load('static/assets/wave/explosion-6055.mp3', function( buffer ) {
+        ri.audio.explosion.setBuffer(buffer);
+        ri.audio.explosion.setVolume(0.5);
     });
 
     const cubeLoader = new THREE.CubeTextureLoader();

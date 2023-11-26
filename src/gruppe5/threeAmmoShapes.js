@@ -719,7 +719,7 @@ export function cannon() {
     cannonBodyMesh.collisionResponse = (mesh1) => {
         ri.springs.cannonSpring.enableSpring(1, true);
         if (!audioCannonPlayed) {
-            ri.audio.ballHit.play()
+            ri.audio.explosion.play()
             audioCannonPlayed = true;
         }
 

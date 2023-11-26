@@ -21,10 +21,10 @@ export function createThreeScene() {
     ri.lilGui = new GUI();
 
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    ri.camera.position.set(-15, 7, 15);
+    ri.camera.position.set(5, 25, -5);
 
     ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
-
+    ri.controls.target = new THREE.Vector3(20, 16, -10);
 }
 
 
