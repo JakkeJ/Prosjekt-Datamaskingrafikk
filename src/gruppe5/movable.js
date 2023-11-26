@@ -1,11 +1,11 @@
 import * as THREE from "three";
 
 
-export function moveRigidBodyAnimation(movableMesh, position, direction) {
+export function moveRigidBodyAnimation(movableMesh, position, movement) {
     let transform = new Ammo.btTransform();
     let motionState = movableMesh.userData.physicsBody.getMotionState();
     motionState.getWorldTransform(transform);
-    transform.setOrigin(new Ammo.btVector3(position.x + direction.x, position.y + direction.y, position.z + direction.z,));
+    transform.setOrigin(new Ammo.btVector3(position.x + movement.x, position.y + movement.y, position.z + movement.z,));
     motionState.setWorldTransform(transform);
 }
 
