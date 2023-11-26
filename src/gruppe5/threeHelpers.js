@@ -117,7 +117,7 @@ export function onDocumentMouseDown(event) {
         // Can only click a ball 1 time
         if (ball.name === 'starterBall'){
             ball.material.color.setHex(Math.random() * 0xffffff);
-            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(0, 0, -40 ));
+            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(0, 0, -25 ));
             ball.name = 'ball'
         }
     }
