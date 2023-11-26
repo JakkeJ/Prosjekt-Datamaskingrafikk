@@ -205,9 +205,9 @@ function threeAmmoObjects() {
     // position = {x:16, y:15, z:-26}
     // arrow(position)
     //
-    cannon();
-    cannonTarget();
-    golfclub();
+    //cannon();
+    //cannonTarget();
+    //golfclub();
     newtonCradle();
     spiral();
     //
@@ -309,4 +309,10 @@ function rgMachine() {
 
     position = {x: position.x + 3.52, y: position.y - 4, z: position.z};
     steps(position,0, 8)
+
+    cannon();
+
+    cannonTarget();
+    
+    golfclub();
 }

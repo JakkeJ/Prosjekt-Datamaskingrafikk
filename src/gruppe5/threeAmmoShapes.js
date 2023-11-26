@@ -644,8 +644,8 @@ export function golfclub(position = {x: -40, y: 16.51, z: 40}) { //{x: 40, y: 16
 
     let ballPosition = {x: position.x, y: position.y-15.5, z: position.z};
     let ballRadius = 1
-    let ballMass = 0.1
-    ball(ballPosition, ballRadius, ballMass);
+    let ballMass = 0.01
+    ball(ballPosition, ballRadius, ballMass, 1, 1);
 }
 
 
@@ -1061,7 +1061,7 @@ export function spiral(angle = -Math.PI/8, position = {x: -10, y: 0.1, z: 10}, t
 }
 
 
-export function tv(position = {x: -10, y: 3, z: -10}, rotation = 0) {
+export function tv(position = {x: -40, y: 3, z: -10}, rotation = 70) {
     const groupMesh = new THREE.Group();
     const tvGeometry = new THREE.Group();
     const compoundShape = new Ammo.btCompoundShape();
@@ -1141,15 +1141,20 @@ export function tv(position = {x: -10, y: 3, z: -10}, rotation = 0) {
     transform.setOrigin(new Ammo.btVector3(tvPosition.x, tvPosition.y, tvPosition.z));
     compoundShape.addChildShape(transform, tvShape);
 
+    let audioTvPlayed = false;
     ri.scene.add(groupMesh);
     groupMesh.collisionResponse = (mesh) => {
         ri.scene.getObjectByName("screen").material.opacity = 1
+        if (!audioTvPlayed) {
+            ri.audio.ballHit.play();
+            audioTvPlayed = true;
+        };
     };
 
-    const rigidBody = createAmmoRigidBody(compoundShape, groupMesh, 0.3, 0.9, position, 100);
+    const rigidBody = createAmmoRigidBody(compoundShape, groupMesh, 0, 0.9, position, 100);
 
     // Ball for testing
     position.y += 20;
-    position.x += 6;
-    ball(position, 0.3, 20)
+    position.x;
+    //ball(position, 0.3, 20)
 }
