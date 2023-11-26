@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import {phy, ri} from "./script.js";
 import {createAmmoRigidBody} from "./ammoHelpers.js";
-import {createAmmoMesh, createHeightFieldShape, getHeigtdataFromImage} from "./threeAmmoHelpers.js";
+import {createAmmoMesh, createHeightFieldShape, getHeightdataFromImage} from "./threeAmmoHelpers.js";
 import * as TWEEN from "@tweenjs/tween.js";
 import {moveRigidBodyAnimation, rotateRigidBody} from "./movable.js";
 import {createTriangleShapeAddToCompound} from "./triangleMeshHelpers.js";
@@ -249,7 +249,7 @@ export function terrain(position = {x: 37, y: 15, z: 0.5}) {
     const heightmapWidth = heightmap.image.width;
     const heightmapHeight = heightmap.image.height;
 
-    const heightData = getHeigtdataFromImage(heightmap.image, heightmapWidth, heightmapHeight, heightDivisor);
+    const heightData = getHeightdataFromImage(heightmap.image, heightmapWidth, heightmapHeight, heightDivisor);
 
     // Ammo shape (ammoHeightFieldShape):
     const heightFieldData = createHeightFieldShape(heightData, heightmapWidth, heightmapHeight);

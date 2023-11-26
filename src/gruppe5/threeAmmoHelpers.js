@@ -61,7 +61,7 @@ export function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRota
 
 
 // Kode hentet fra kodeeksempel
-export function getHeigtdataFromImage(image, width, height, divisor= 3) {
+export function getHeightdataFromImage(image, width, height, divisor= 3) {
     // Lager et temporært canvas-objekt:
     let canvas = document.createElement('canvas');
     canvas.width = width;

@@ -13,8 +13,7 @@ import {
     renderCamera,
     addLights,
     water,
-    arrow,
-    addLineBetweenObjects
+    arrow
 } from "./threeHelpers.js";
 import {
     createAmmoRigidBody,
