@@ -45,7 +45,7 @@ export function handleKeyDown(event) {
 
 
 export function keyPresses() {
-    const moveSpeed = 50;
+    const moveSpeed = 35;
 
     const forward = new THREE.Vector3(0, 0, -1);
     const side = new THREE.Vector3(-1, 0, 0);
