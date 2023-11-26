@@ -26,10 +26,12 @@ export function createThreeScene() {
     ri.camera.position.set(-15, 7, 15);
     ri.camera.position.set(15, 7, -15); // Temp position
 
-    ri.controls = new FirstPersonControls(ri.camera, ri.renderer.domElement);
-    ri.controls.movementSpeed = 10;
-    ri.controls.lookSpeed = 0.4;
-    ri.controls.lookVertical = true;
+    ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
+
+    // ri.controls = new FirstPersonControls(ri.camera, ri.renderer.domElement);
+    // ri.controls.movementSpeed = 10;
+    // ri.controls.lookSpeed = 0.4;
+    // ri.controls.lookVertical = true;
 }
 
 
