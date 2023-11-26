@@ -539,6 +539,14 @@ function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
 
     createAmmoRigidBody(plinkoShape, plinkoMesh, 1, 1, plinkoMesh.position, 0);
 
+    const tableSize = {x: 12, y: 0.05, z: 22};
+    const table = new THREE.Group();
+    table.position.set(position.x+0.5, position.y-4.6, position.z+5);
+    const tableShape = new Ammo.btCompoundShape();
+
+    tableMesh(table, tableShape, tableSize, {x: 0, y: 0, z: 0}, position.y-4.6, 'plinkoTable',  0x823c17);
+
+    ri.scene.add(table);
     ri.scene.add(plinkoMesh);
 }
 
