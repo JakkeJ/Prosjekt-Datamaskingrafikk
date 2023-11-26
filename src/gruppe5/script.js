@@ -252,7 +252,7 @@ function rgMachine() {
     position = {x: 45, y: 1.15, z: 20.8};
     rails(position, 90, 12, 4, false, 0.0);
 
-    position = {x: 45, y: 3.4, z: 17.6};
+    position = {x: 45, y: 3.4, z: 17.5};
     ball(position, 0.2, 5, 0.0, 1.0);
 
     newtonCradle();
@@ -264,7 +264,7 @@ function rgMachine() {
     const boxShape = new Ammo.btCompoundShape();
     const materialDarkGrey = new THREE.MeshStandardMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
     const stopBoxGeometry = new THREE.BoxGeometry(0.5, 0.1, 1.3);
-    createAmmoMesh('box', stopBoxGeometry, {x: 0.5, y: 0.1, z: 1.3}, {x: position.x, y: position.y-0.11, z: position.z + 0.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, boxMesh, boxShape, "");
+    createAmmoMesh('box', stopBoxGeometry, {x: 0.5, y: 0.1, z: 1.3}, {x: position.x, y: position.y-0.11, z: position.z + 0.6}, {x: 0, y: 0, z: 0}, materialDarkGrey, boxMesh, boxShape, "");
     createAmmoRigidBody(boxShape, boxMesh, 0.0, 1.0, {x: 0, y: 0, z: 0}, 0)
     ri.scene.add(boxMesh);
 
