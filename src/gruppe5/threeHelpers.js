@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import GUI from "lil-gui";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
+import {FirstPersonControls} from "three/addons/controls/FirstPersonControls.js";
+import {PointerLockControls} from "three/addons/controls/PointerLockControls.js";
 import {ri} from "./script.js";
 import {moveRigidBody, rotateRigidBody} from "./movable.js";
 import * as TWEEN from "@tweenjs/tween.js";
@@ -24,7 +26,11 @@ export function createThreeScene() {
     ri.camera.position.set(-15, 7, 15);
     ri.camera.position.set(15, 7, -15); // Temp position
 
-    ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
+    ri.controls = new PointerLockControls(ri.camera, ri.renderer.domElement);
+    ri.controls.movementSpeed = 10;
+    ri.controls.lookSpeed = 1.0;
+    ri.controls.lookVertical = true;
+    //ri.controls.enableDamping = false;
 }
 
 
@@ -39,30 +45,30 @@ export function handleKeyUp(event) {
     ri.currentlyPressedKeys[event.code] = false;
 }
 
-
 export function handleKeyDown(event) {
     ri.currentlyPressedKeys[event.code] = true;
 }
 
 
 export function keyPresses() {
+    if (ri.currentlyPressedKeys['KeyW']) {
+        ri.controls.moveForward = true;
+    }
+    if (ri.currentlyPressedKeys['mousedown']) {
+        ri.controls.lock();
+    }
+    if (ri.currentlyPressedKeys['KeyS']) {
+        ri.controls.moveBackward = true;
+    }
+    if (ri.currentlyPressedKeys['KeyA']) {
+        ri.controls.moveLeft = true;
+    }
+    if (ri.currentlyPressedKeys['KeyD']) {
+        ri.controls.moveRight = true;
+    }
     if (ri.currentlyPressedKeys['KeyQ']) {
         ri.springs.cannonSpring.enableSpring(1, true);
     }
-    const movableMesh = ri.scene.getObjectByName("movable");
-    if (ri.currentlyPressedKeys['KeyA']) {	//A
-        moveRigidBody(movableMesh,{x: -0.2, y: 0, z: 0});
-    }
-    if (ri.currentlyPressedKeys['KeyD']) {	//D
-        moveRigidBody(movableMesh,{x: 0.2, y: 0, z: 0});
-    }
-    if (ri.currentlyPressedKeys['KeyW']) {	//W
-        moveRigidBody(movableMesh,{x: 0, y: 0, z: -0.2});
-    }
-    if (ri.currentlyPressedKeys['KeyS']) {	//S
-        moveRigidBody(movableMesh,{x: 0, y: 0, z: 0.2});
-    }
-
     const spiral = ri.scene.getObjectByName("spiral");
     if (ri.currentlyPressedKeys['KeyT']) {
         // Create a quaternion for the incremental rotation
