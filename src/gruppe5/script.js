@@ -282,11 +282,15 @@ function rgMachine() {
     arrow(position);
 
     // Domino
-    position = {x: plinkoPosition.x - 4.15, y: plinkoPosition.y - 3.9, z: plinkoPosition.z + 15};
-    rails(position, 90, -0.5, 1);
+    position = {x: plinkoPosition.x - 4.15, y: plinkoPosition.y - 5.3, z: plinkoPosition.z + 22.5};
+    domino(position, true)
 
-    let ballPosition = {x: position.x, y: position.y + 1, z: position.z + 0.5};
-    ball(ballPosition, 0.3, 10, 0.7, 0.1);
+    position = {x: position.x - 0.3, y: position.y - 1, z: position.z + 7.3};
+    rails(position, 90 + 45, 5, 2, true);
 
-    position = {x: position.x, y: position.y + 3, z: position.z + 0.25};
+    position = {x: position.x + 1.5, y: position.y - 0.5, z: position.z + 1.5};
+    rails(position, 180, 10, 3, true);
+
+    position = {x: position.x + 3.52, y: position.y - 4, z: position.z};
+    steps(position,0, 8)
 }
