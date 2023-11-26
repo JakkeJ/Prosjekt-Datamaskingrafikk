@@ -5,7 +5,7 @@ import {createTriangleShapeAddToCompound} from "./triangleMeshHelpers.js";
 import {degToRad} from "three/src/math/MathUtils.js";
 import {
     createMovable,
-    moveRigidBodyAnimation
+    moveRigidBodyAnimation, rotateRigidBody
 } from "./movable.js";
 import {
     createThreeScene,
@@ -61,7 +61,8 @@ export const ri = {
     lilGui: undefined,
     balls: [],
     textures: {},
-    uniforms: {}
+    uniforms: {},
+    spiralRotate: false,
 }
 
 export const phy = {
@@ -131,9 +132,7 @@ function addToScene() {
     ri.textures.grey = loader.load('static/assets/textures/greyTexture.png')
     ri.textures.target = loader.load('static/assets/textures/target.png')
 
-    ri.textures.heightmap1 = loader.load('static/assets/textures/heightmap1.png')
-    ri.textures.heightmap2 = loader.load('static/assets/textures/heightmap2.png')
-    ri.textures.heightmap3 = loader.load('static/assets/textures/heightmap3.png')
+    ri.textures.heightmap1 = loader.load('static/assets/textures/heightmap5.png')
 
     manager.onLoad = () => {
         addLights()
@@ -161,6 +160,15 @@ function animate(currentTime) {
     renderCamera();
     keyPresses();
     TWEEN.update(currentTime);
+    if (ri.spiralRotate) {
+        const spiral = ri.scene.getObjectByName("spiral");
+        const spiralNoCol = ri.scene.getObjectByName("spiralNoCollision");
+        let deltaRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 42);
+        spiral.quaternion.multiply(deltaRotation);
+        let eulerRotation = new THREE.Euler().setFromQuaternion(spiral.quaternion, 'XYZ');
+        rotateRigidBody(spiral, eulerRotation);
+        spiralNoCol.quaternion.multiply(deltaRotation);
+    }
 
     const waterMesh = ri.scene.getObjectByName("myWater")
     waterMesh.material.uniforms.uTime.value = elapsed;
@@ -172,82 +180,12 @@ function threeAmmoObjects() {
     ground()
     water()
     rgMachine()
-
-    // let ballPosition = {x: -5.2, y: 1.5, z: 10.2};
-    // let ballRadius = 0.2
-    // let ballMass = 10
-    // ball(ballPosition, ballRadius, ballMass, 0.1, 1.0)
-    //
-    //
-    // // Kan flyttes hvor som helst, kan ikke roteres
-    // let dominoPosition = {x: 9.85, y: 1.6, z: -8};
-    // let dominoPosition = {x: 0, y: 1.6, z: 0};
-    // domino(dominoPosition)
-    //
-    // position = {x: 14, y: 7.05, z: -30.5}
-    // plinko(position);
-    // position = {x:16, y:15, z:-26}
-    // arrow(position)
-    //
     cannon();
     cannonTarget();
     golfclub();
     newtonCradle();
     spiral();
-    //
-    // // let position = {x: 10, y: 3, z: 10};
-    // position = {x: 15, y: 5, z: -10};
-    // funnel(position, 2.7, 0.3, 2)
-    // position.y +=3
-    // ball(position, 0.5, 2)
-    // ball(position, 0.5, 2)
-    //
-    // position.x -= 1
-    // position.y -= 3.7
-    // // position = {x: 15, y: 3, z: -10};
-    // rails(position, 180, 10, 7, true)
-    //
-    //
-    // position.x += 7
-    // position.y -= 1.5
-    // // rails(position, 180, -5, 15)
-    //
-    // rails(position, 180, -0, 15, false)
-    //
-    // position.y += 1
-    // position.x += 5
-    // //ball(position, 0.5, 5)
-    //
-    // position.x += 1
-    // //ball(position, 0.5, 5)
-    //
-    // position.x += 1
-    // //ball(position, 0.5, 5)
-    //
-    // position.x += 1
-    // ball(position, 0.5, 5)
-    //
-    // position = {x: -30, y: 2, z: 20};
-    // steps(position,90, 8)
-    //
-    // // position = {x: -40, y: -4, z: 20};
-    // // steps(position,90, 5)
-    //
-    //
-    // position = {x: 10, y: 0, z: 5};
-    // ball(position, 0.2, 0);
-    //
-    // position = {x: -5, y: 1.2, z: 10.2};
-    // rails(position, Math.PI, 15, 6, false, 0.0)
-    //
-    // position = {x: 0, y: 10, z: -20};
-    // ball(position, 0.3, 1, 0.97, 1);
-    //
-    // position = {x: 0, y: 1.5, z: -5};
-    // rails(position, 270, -20, 18, false);
-    //
-    // position = {x: 0, y: 1.5, z: -5};
-    // rails(position, 90, -5, 1.4, false);
+    terrain();
 }
 
 
@@ -283,7 +221,7 @@ function rgMachine() {
 
     // Domino
     position = {x: plinkoPosition.x - 4.15, y: plinkoPosition.y - 5.3, z: plinkoPosition.z + 22.5};
-    domino(position, true)
+    domino(position, true);
 
     position = {x: position.x - 0.3, y: position.y - 1, z: position.z + 7.3};
     rails(position, 90 + 45, 5, 2, true);
@@ -292,5 +230,37 @@ function rgMachine() {
     rails(position, 180, 10, 3, true);
 
     position = {x: position.x + 3.52, y: position.y - 4, z: position.z};
-    steps(position,0, 8)
+    steps(position,0, 8);
+
+    position = {x: 45, y: 5.8, z: 1.5};
+    funnel(position, 3.5, 0.3, 5.5);
+
+    position = {x: 45, y: 4.7, z: 1};
+    rails(position, 90, 50, 3, true);
+
+    position = {x: 45, y: 2.5, z: 2.0};
+    rails(position, 90, -0.1, 5, true, 0.0);
+
+    position = {x: 45, y: 3.2, z: 3.1};
+    ball(position, 0.35, 1.0, 0.97, 0.0);
+
+    position = {x: 45, y: 3.3, z: 18.9};
+    rails(position, 90, 50, 3, false, 0.0);
+
+    position = {x: 45, y: 1.15, z: 20.8};
+    rails(position, 90, 12, 4, false, 0.0);
+
+    position = {x: 45, y: 3.4, z: 17.8};
+    ball(position, 0.2, 5, 0.0, 1.0);
+
+    const boxMesh = new THREE.Group();
+    const boxShape = new Ammo.btCompoundShape();
+    const materialDarkGrey = new THREE.MeshStandardMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
+    const stopBoxGeometry = new THREE.BoxGeometry(0.5, 0.1, 1.3);
+    createAmmoMesh('box', stopBoxGeometry, {x: 0.5, y: 0.1, z: 1.3}, {x: position.x, y: position.y-0.11, z: position.z + 0.3}, {x: 0, y: 0, z: 0}, materialDarkGrey, boxMesh, boxShape, "");
+    createAmmoRigidBody(boxShape, boxMesh, 0.0, 1.0, {x: 0, y: 0, z: 0}, 0)
+    ri.scene.add(boxMesh);
+
+    position = {x: 44.7, y: 7.4, z: 29.56};
+    rails(position, 90, 17, 9.8, true, 0.0);
 }

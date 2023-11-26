@@ -70,19 +70,9 @@ export function keyPresses() {
     if (ri.currentlyPressedKeys['KeyQ']) {
         ri.springs.cannonSpring.enableSpring(1, true);
     }
-    const spiral = ri.scene.getObjectByName("spiral");
+
     if (ri.currentlyPressedKeys['KeyT']) {
-        // Create a quaternion for the incremental rotation
-        let deltaRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 42);
 
-        // Multiply the spiral's current quaternion by the incremental rotation
-        spiral.quaternion.multiply(deltaRotation);
-
-        // Extract the Euler rotation from the updated quaternion if needed
-        let eulerRotation = new THREE.Euler().setFromQuaternion(spiral.quaternion, 'XYZ');
-
-        // Apply the rotation to the rigid body
-        rotateRigidBody(spiral, eulerRotation);
     }
 }
 

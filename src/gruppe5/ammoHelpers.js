@@ -67,25 +67,22 @@ function checkCollisions(deltaTime) {
                             console.log('Balls collide')
                             if (typeof threeMesh0.collisionResponse === 'function') {
                                 threeMesh0.collisionResponse(threeMesh0)
-                            };
+                            }
                             
                             if (typeof threeMesh1.collisionResponse === 'function') {
                                 threeMesh1.collisionResponse(threeMesh1)
-                            };
+                            }
                             
                         }
 
                         if ((threeMesh0.name === 'target' && threeMesh1.name === 'cannonBall') ||
                         threeMesh1.name === 'target' && threeMesh0.name === 'cannonBall') {
-    
                             if (typeof threeMesh0.collisionResponse === 'function') {
                                 threeMesh0.collisionResponse(threeMesh0)
-                            };
-                            
+                            }
                             if (typeof threeMesh1.collisionResponse === 'function') {
                                 threeMesh1.collisionResponse(threeMesh1)
-                            };
-                            
+                            }
                         }
 
                         if ((threeMesh0.name === 'cannonBody' && threeMesh1.name === 'ball') ||
@@ -93,14 +90,22 @@ function checkCollisions(deltaTime) {
                             
                             if (typeof threeMesh0.collisionResponse === 'function') {
                                 threeMesh0.collisionResponse(threeMesh0)
-                            };
+                            }
                             
                             if (typeof threeMesh1.collisionResponse === 'function') {
                                 threeMesh1.collisionResponse(threeMesh1) 
-                            };
-                            
+                            }
                         }
 
+                        if ((threeMesh0.name === 'ball' && threeMesh1.name === 'spiral') ||
+                            threeMesh0.name === 'spiral' && threeMesh1.name === 'ball') {
+                            if (typeof threeMesh0.collisionResponse === 'function') {
+                                threeMesh0.collisionResponse(threeMesh0)
+                            }
+                            if (typeof threeMesh1.collisionResponse === 'function') {
+                                threeMesh1.collisionResponse(threeMesh1)
+                            }
+                        }
                     }
                 }
             }
