@@ -22,14 +22,9 @@ export function createThreeScene() {
 
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     ri.camera.position.set(-15, 7, 15);
-    // ri.camera.position.set(40, 25, -35); // Temp position
 
     ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
 
-    // ri.controls = new FirstPersonControls(ri.camera, ri.renderer.domElement);
-    // ri.controls.movementSpeed = 10;
-    // ri.controls.lookSpeed = 0.4;
-    // ri.controls.lookVertical = true;
 }
 
 
@@ -50,29 +45,38 @@ export function handleKeyDown(event) {
 
 
 export function keyPresses() {
+    const moveSpeed = 50;
+
+    const forward = new THREE.Vector3(0, 0, -1);
+    const side = new THREE.Vector3(-1, 0, 0);
+    const rotation = new THREE.Euler(0, 0, 0, 'YXZ');
+    rotation.setFromQuaternion(ri.camera.quaternion);
+
+    forward.applyEuler(rotation);
+    side.applyEuler(rotation);
+
     if (ri.currentlyPressedKeys['KeyW']) {
-        ri.controls.moveForward = true;
-    }
-    if (ri.currentlyPressedKeys['KeyL'] && (ri.controls.isLocked) ) {
-        ri.controls.lock();
+        ri.camera.position.addScaledVector(forward, moveSpeed * ri.deltaTime);
     }
     if (ri.currentlyPressedKeys['KeyS']) {
-        ri.controls.moveBackward = true;
+        ri.camera.position.addScaledVector(forward, -moveSpeed * ri.deltaTime);
     }
     if (ri.currentlyPressedKeys['KeyA']) {
-        ri.controls.moveLeft = true;
+        ri.camera.position.addScaledVector(side, moveSpeed * ri.deltaTime);
     }
     if (ri.currentlyPressedKeys['KeyD']) {
-        ri.controls.moveRight = true;
-    }
-    if (ri.currentlyPressedKeys['KeyQ']) {
-        ri.springs.cannonSpring.enableSpring(1, true);
+        ri.camera.position.addScaledVector(side, -moveSpeed * ri.deltaTime);
     }
 
-    if (ri.currentlyPressedKeys['KeyT']) {
+    const lookAtTarget = new THREE.Vector3().copy(ri.camera.position).add(forward);
+    ri.camera.lookAt(lookAtTarget);
 
+    if (ri.controls.update) {
+        ri.controls.target.copy(lookAtTarget);
+        ri.controls.update();
     }
 }
+
 
 
 // Hentet fra kodeeksempel modul9/selectObject1
@@ -106,7 +110,7 @@ export function onDocumentMouseDown(event) {
         // Can only click a ball 1 time
         if (ball.name === 'starterBall'){
             ball.material.color.setHex(Math.random() * 0xffffff);
-            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(0, 0, -20 ));
+            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(0, 0, -40 ));
             ball.name = 'ball'
         }
     }

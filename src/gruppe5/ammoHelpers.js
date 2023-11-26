@@ -123,8 +123,8 @@ function checkCollisions(deltaTime) {
                             }
                         }
 
-                        if ((threeMesh0.name === 'TV' && threeMesh1.name === 'ball') ||
-                            threeMesh1.name === 'TV' && threeMesh0.name === 'ball') {
+                        if ((threeMesh0.name === 'TV' && threeMesh1.name === 'golfBall') ||
+                            threeMesh1.name === 'TV' && threeMesh0.name === 'golfBall') {
     
                             if (typeof threeMesh0.collisionResponse === 'function') {
                                 threeMesh0.collisionResponse(threeMesh0)

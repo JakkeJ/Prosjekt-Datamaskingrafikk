@@ -325,7 +325,7 @@ export function funnel(position, upperRadius = 2.7, lowerRadius = 0.5, height = 
     mesh.receiveShadow = true;
 
     mesh.material.transparent = true;
-    mesh.material.opacity = 0.5;
+    mesh.material.opacity = 1;
 
     ri.scene.add(mesh);
 
@@ -626,7 +626,7 @@ export function golfclub(position = {x: -40, y: 16.51, z: 40}) {
     let ballPosition = {x: position.x, y: position.y-15.5, z: position.z};
     let ballRadius = 1
     let ballMass = 0.01
-    ball(ballPosition, ballRadius, ballMass, 1, 1);
+    ball(ballPosition, ballRadius, ballMass, 1, 1, "golfBall");
 }
 
 
@@ -766,8 +766,6 @@ export function cannon() {
     let ballRadius = 0.45
     let ballMass = 20
     ball(ballPosition, ballRadius, ballMass, 0.7, 0.8, 'cannonBall');
-    ball({x: position.x-3.5, y: position.y+2.5, z: position.z-2.5}, ballRadius, ballMass, 0.7, 0.8);
-    rails({x: position.x-3.5, y: position.y+1.5, z: position.z-3}, 90, 20, 2, true, 1);
 }
 
 
@@ -808,9 +806,8 @@ export function cannonTarget() {
 
 
 export function newtonCradle() {
-    const materialDarkGrey = new THREE.MeshStandardMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
-    const transparent = new THREE.MeshStandardMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
-    const colorGrey = new THREE.MeshStandardMaterial({color: 0xffffff, side: THREE.DoubleSide});
+    const materialDarkBlue = new THREE.MeshStandardMaterial({map: ri.textures.darkBlue, side: THREE.DoubleSide, metalness: 0.9, roughness: 0.4});
+    const materialGrey = new THREE.MeshStandardMaterial({map: ri.textures.grey, side: THREE.DoubleSide, metalness: 0.7, roughness: 0.4});
 
     let topBoxValues = {x: 0.25, y: 0.25, z: 5};
     let bottomBoxConnectorValues = {x: 2, y: 0.25, z: 0.25};
@@ -827,16 +824,16 @@ export function newtonCradle() {
     let cradleBottomGeo = new THREE.BoxGeometry(topBoxValues.x, topBoxValues.y, topBoxValues.z);
 
     let cradleConnectorGeo = new THREE.BoxGeometry(bottomBoxConnectorValues.x, bottomBoxConnectorValues.y, bottomBoxConnectorValues.z);
-    let cradleConnectorBar1 = createAmmoMesh('box', cradleConnectorGeo, bottomBoxConnectorValues, {x: 0, y: 1+0.125, z: 2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
-    let cradleConnectorBar2 = createAmmoMesh('box', cradleConnectorGeo, bottomBoxConnectorValues, {x: 0, y: 1+0.125, z: -2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
+    let cradleConnectorBar1 = createAmmoMesh('box', cradleConnectorGeo, bottomBoxConnectorValues, {x: 0, y: 1+0.125, z: 2.5}, {x: 0, y: 0, z: 0}, materialDarkBlue, cradleMesh, cradleShape);
+    let cradleConnectorBar2 = createAmmoMesh('box', cradleConnectorGeo, bottomBoxConnectorValues, {x: 0, y: 1+0.125, z: -2.5}, {x: 0, y: 0, z: 0}, materialDarkBlue, cradleMesh, cradleShape);
 
     let cradleRiserGeo = new THREE.BoxGeometry(riserBoxValues.x, riserBoxValues.y, riserBoxValues.z);
-    let cradleRiserBar1  = createAmmoMesh('box', cradleRiserGeo, riserBoxValues, {x: 1, y: 4, z: 2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
-    let cradleRiserBar2  = createAmmoMesh('box', cradleRiserGeo, riserBoxValues, {x: 1, y: 4, z: -2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
-    let cradleRiserBar3  = createAmmoMesh('box', cradleRiserGeo, riserBoxValues, {x: -1, y: 4, z: 2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
-    let cradleRiserBar4  = createAmmoMesh('box', cradleRiserGeo, riserBoxValues, {x: -1, y: 4, z: -2.5}, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape);
-    let cradleTopBar1 = createAmmoMesh('box', cradleBottomGeo, topBoxValues, cradleTopBarPosition1, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape, "cradleTopBar1");
-    let cradleTopBar2 = createAmmoMesh('box', cradleBottomGeo, topBoxValues, cradleTopBarPosition2, {x: 0, y: 0, z: 0}, materialDarkGrey, cradleMesh, cradleShape, "cradleTopBar2");
+    let cradleRiserBar1  = createAmmoMesh('box', cradleRiserGeo, riserBoxValues, {x: 1, y: 4, z: 2.5}, {x: 0, y: 0, z: 0}, materialDarkBlue, cradleMesh, cradleShape);
+    let cradleRiserBar2  = createAmmoMesh('box', cradleRiserGeo, riserBoxValues, {x: 1, y: 4, z: -2.5}, {x: 0, y: 0, z: 0}, materialDarkBlue, cradleMesh, cradleShape);
+    let cradleRiserBar3  = createAmmoMesh('box', cradleRiserGeo, riserBoxValues, {x: -1, y: 4, z: 2.5}, {x: 0, y: 0, z: 0}, materialDarkBlue, cradleMesh, cradleShape);
+    let cradleRiserBar4  = createAmmoMesh('box', cradleRiserGeo, riserBoxValues, {x: -1, y: 4, z: -2.5}, {x: 0, y: 0, z: 0}, materialDarkBlue, cradleMesh, cradleShape);
+    let cradleTopBar1 = createAmmoMesh('box', cradleBottomGeo, topBoxValues, cradleTopBarPosition1, {x: 0, y: 0, z: 0}, materialDarkBlue, cradleMesh, cradleShape, "cradleTopBar1");
+    let cradleTopBar2 = createAmmoMesh('box', cradleBottomGeo, topBoxValues, cradleTopBarPosition2, {x: 0, y: 0, z: 0}, materialDarkBlue, cradleMesh, cradleShape, "cradleTopBar2");
 
     ri.scene.add(cradleMesh);
     let cradleRigid = createAmmoRigidBody(cradleShape, cradleMesh, 0.1, 1, cradleMesh.position, 0);
@@ -853,20 +850,20 @@ export function newtonCradle() {
     for (let i = 0; i < 8; ++i) {
         let anchor1Mesh = new THREE.Group();
         anchor1Mesh.name = "anchor1Mesh" + i;
-        let anchor1 = createAmmoMesh('box', anchorGeo, anchorSize, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, transparent, anchor1Mesh, anchorShape);
+        let anchor1 = createAmmoMesh('box', anchorGeo, anchorSize, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, materialDarkBlue, anchor1Mesh, anchorShape);
         let anchor1Body = createAmmoRigidBody(anchorShape, anchor1Mesh, 0, 1, {x: cradleMeshPosition.x - 1, y: cradleMeshPosition.y+7-0.125, z: cradleMeshPosition.z + ballPosition}, 0);
         ri.scene.add(anchor1Mesh);
 
         let anchor2Mesh = new THREE.Group();
         anchor2Mesh.name = "anchor2Mesh" + i;
-        let anchor2 = createAmmoMesh('box', anchorGeo, anchorSize, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, transparent, anchor2Mesh, anchorShape);
+        let anchor2 = createAmmoMesh('box', anchorGeo, anchorSize, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, materialDarkBlue, anchor2Mesh, anchorShape);
         let anchor2Body = createAmmoRigidBody(anchorShape, anchor2Mesh, 0, 1, {x: cradleMeshPosition.x + 1, y: cradleMeshPosition.y + 7-0.125, z: cradleMeshPosition.z + ballPosition}, 0);
         ri.scene.add(anchor2Mesh);
 
         let ballMesh = new THREE.Group();
         ballList[i] = new THREE.Group();
         ballList[i].name = "ball" + i + "Mesh";
-        let ball = createAmmoMesh('sphere', ballGeo, ballValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, transparent, ballList[i], ballShape, ballList[i].name);
+        let ball = createAmmoMesh('sphere', ballGeo, ballValues, {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 0}, materialGrey, ballList[i], ballShape, ballList[i].name);
         let ballBody;
 
         if (i === 7) {
@@ -876,7 +873,6 @@ export function newtonCradle() {
                 z: cradleMeshPosition.z + ballPosition
             }, 1);
             ballBody.setActivationState(4);
-            //ballBody.applyCentralImpulse(new Ammo.btVector3(0, 0, -30));
         } else if (i === 0){
             ballBody = createAmmoRigidBody(ballShape, ballList[i], 0.97, 0.0, {
                 x: cradleMeshPosition.x,
@@ -943,8 +939,8 @@ export function spiral(angle = -Math.PI/7, position = {x: 44.5, y: 0, z: 25}, tu
     cylinderMesh.name = name + "Cylinder";
     let spiralShape = new Ammo.btCompoundShape();
     let cylinderShape = new Ammo.btCompoundShape();
-    const materialDarkGrey = new THREE.MeshPhongMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide});
-    const transparent = new THREE.MeshPhongMaterial({map: ri.textures.darkGrey, side: THREE.DoubleSide})
+    const materialDarkGrey = new THREE.MeshStandardMaterial({map: ri.textures.grey, side: THREE.DoubleSide, metalness: 0.9, roughness: 0.4});
+    const transparent = new THREE.MeshStandardMaterial({map: ri.textures.grey, side: THREE.DoubleSide, metalness: 0.9, roughness: 0.4})
     const boxGeometry = new THREE.BoxGeometry(boxSize*10, boxSize, boxSize);
     const centerCylinderGeometry = new THREE.CylinderGeometry(radius/2, radius/2, numTurns/8, 32, 1, false);
     createAmmoMesh('cylinder', centerCylinderGeometry, {radius1: radius/2, radius2: radius/2, height: numTurns/5}, {x: 0, y: numTurns/15.5, z: 0}, {x: 0, y: 0, z: 0}, materialDarkGrey, cylinderMesh, cylinderShape, cylinderMesh.name + "Ammo");
@@ -961,7 +957,6 @@ export function spiral(angle = -Math.PI/7, position = {x: 44.5, y: 0, z: 25}, tu
             max = (height / (numTurns * 20)) * i;
             y = max;
         } else if (i > numTurns * 20) {
-            console.log(max)
             y = max;
         } else {
             y = (height / (numTurns * 20)) * i;
@@ -1021,7 +1016,7 @@ export function tv(position = {x: -40, y: 3, z: -10}, rotation = 70) {
 
     const texture = ri.textures.darthShader;
     const material = new THREE.MeshStandardMaterial({color: 0x999999,  side: THREE.DoubleSide, roughness: 0.3, metalness: 0.8});
-    const material2 = new THREE.MeshStandardMaterial({map: texture,   roughness: 0.1});
+    const material2 = new THREE.MeshBasicMaterial({map: texture});
     material2.transparent = true;
     material2.opacity = 0;
 
