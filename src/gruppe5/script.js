@@ -1,12 +1,6 @@
 import './style.css';
 import * as THREE from "three";
 import * as TWEEN from '@tweenjs/tween.js' // HUSK: npm install @tweenjs/tween.js
-import {createTriangleShapeAddToCompound} from "./triangleMeshHelpers.js";
-import {degToRad} from "three/src/math/MathUtils.js";
-import {
-    createMovable,
-    moveRigidBodyAnimation
-} from "./movable.js";
 import {
     createThreeScene,
     onWindowResize,
@@ -24,10 +18,9 @@ import {
 import {
     createAmmoWorld,
     updatePhysics,
-    createAmmoRigidBody
 } from "./ammoHelpers.js"
 import {
-    createAmmoMesh, createHeightFieldShape, getHeigtdataFromImage, updateLines, updateHingeMarkers
+    updateLines, updateHingeMarkers
 } from "./threeAmmoHelpers.js";
 import {
     ground, terrain,
@@ -43,8 +36,6 @@ import {
     plinko,
     spiral,
     tv,
-    cube,
-    tableMesh
 } from "./threeAmmoShapes.js";
 
 
@@ -69,7 +60,6 @@ export const ri = {
 export const phy = {
     ammoPhysicsWorld: undefined,
     rigidBodies: [],
-    checkCollisions: true,
 }
 
 
@@ -115,7 +105,7 @@ function addToScene() {
     });
 
     const cubeLoader = new THREE.CubeTextureLoader();
-    // Skybox textures: https://opengameart.org/content/cloudy-skyboxes
+    // Skybox textures from: https://opengameart.org/content/cloudy-skyboxes
     const path = 'static/assets/skybox/yellowcloud'
 
     cubeLoader.load(
@@ -135,7 +125,7 @@ function addToScene() {
     const loader = new THREE.TextureLoader(manager);
 
     ri.textures.johnny = loader.load('static/assets/textures/johnny.png');
-    // grass texture: https://opengameart.org/content/seamless-grass-texture
+    // grass texture from: https://opengameart.org/content/seamless-grass-texture
     ri.textures.grass = loader.load('static/assets/textures/grass.png');
     ri.textures.darkGrey = loader.load('static/assets/textures/darkGreyTexture.png');
     ri.textures.water = loader.load('static/assets/textures/water.jpg');
@@ -154,7 +144,6 @@ function addToScene() {
 
         // Three-Ammo objects:
         threeAmmoObjects();
-        createMovable();
 
         // Start animate loop
         animate(0)
@@ -186,7 +175,6 @@ function threeAmmoObjects() {
     ground()
     water()
     rgMachine()
-
     
     newtonCradle();
     spiral();
