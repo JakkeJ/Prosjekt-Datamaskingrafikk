@@ -24,10 +24,9 @@ import {
 import {
     createAmmoWorld,
     updatePhysics,
-    createAmmoRigidBody
 } from "./ammoHelpers.js"
 import {
-    createAmmoMesh, createHeightFieldShape, getHeigtdataFromImage, updateLines, updateHingeMarkers
+    updateLines, updateHingeMarkers
 } from "./threeAmmoHelpers.js";
 import {
     ground, terrain,
@@ -42,8 +41,7 @@ import {
     newtonCradle,
     plinko,
     spiral,
-    cube,
-    tableMesh
+    tv,
 } from "./threeAmmoShapes.js";
 
 
@@ -63,12 +61,12 @@ export const ri = {
     textures: {},
     uniforms: {},
     spiralRotate: false,
+    audio: {},
 }
 
 export const phy = {
     ammoPhysicsWorld: undefined,
     rigidBodies: [],
-    checkCollisions: true,
 }
 
 
@@ -96,15 +94,20 @@ export function main() {
 
 function addToScene() {
     const manager = new THREE.LoadingManager();
+
+    const listener = new THREE.AudioListener();
+    ri.camera.add( listener );
+    ri.audio.ballHit = new THREE.Audio( listener );
+
+    const audioLoader = new THREE.AudioLoader();
+    audioLoader.load('static/assets/wave/ballhit.wav', function( buffer ) {
+        ri.audio.ballHit.setBuffer(buffer);
+        ri.audio.ballHit.setVolume(0.5);
+    });
+
     const cubeLoader = new THREE.CubeTextureLoader();
-    // Skybox textures: https://opengameart.org/content/cloudy-skyboxes
-    const paths = [
-        'static/assets/skybox/bluecloud',
-        'static/assets/skybox/browncloud',
-        'static/assets/skybox/graycloud',
-        'static/assets/skybox/yellowcloud'
-    ]
-    const path = paths[3]
+    // Skybox textures from: https://opengameart.org/content/cloudy-skyboxes
+    const path = 'static/assets/skybox/yellowcloud'
 
     cubeLoader.load(
         [
@@ -123,14 +126,15 @@ function addToScene() {
     const loader = new THREE.TextureLoader(manager);
 
     ri.textures.johnny = loader.load('static/assets/textures/johnny.png');
-    // grass texture: https://opengameart.org/content/seamless-grass-texture
+    // grass texture from: https://opengameart.org/content/seamless-grass-texture
     ri.textures.grass = loader.load('static/assets/textures/grass.png');
-    ri.textures.darkGrey = loader.load('static/assets/textures/darkGreyTexture.png')
-    ri.textures.water = loader.load('static/assets/textures/water.jpg')
-    ri.textures.cloud = loader.load('static/assets/textures/cloud.png')
-    ri.textures.darkBlue = loader.load('static/assets/textures/darkblueTexture.png')
-    ri.textures.grey = loader.load('static/assets/textures/greyTexture.png')
-    ri.textures.target = loader.load('static/assets/textures/target.png')
+    ri.textures.darkGrey = loader.load('static/assets/textures/darkGreyTexture.png');
+    ri.textures.water = loader.load('static/assets/textures/water.jpg');
+    ri.textures.cloud = loader.load('static/assets/textures/cloud.png');
+    ri.textures.darkBlue = loader.load('static/assets/textures/darkblueTexture.png');
+    ri.textures.grey = loader.load('static/assets/textures/greyTexture.png');
+    ri.textures.target = loader.load('static/assets/textures/target.png');
+    ri.textures.darthShader = loader.load('static/assets/textures/darth_shader_16-9.png');
 
     ri.textures.heightmap1 = loader.load('static/assets/textures/heightmap5.png')
 
@@ -139,7 +143,6 @@ function addToScene() {
 
         // Three-Ammo objects:
         threeAmmoObjects();
-        createMovable();
 
         // Start animate loop
         animate(0)
@@ -263,4 +266,13 @@ function rgMachine() {
 
     position = {x: 44.7, y: 7.4, z: 29.56};
     rails(position, 90, 17, 9.8, true, 0.0);
+    steps(position,0, 8)
+
+    cannon();
+
+    cannonTarget();
+    
+    golfclub();
+
+    tv()
 }

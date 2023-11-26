@@ -1,10 +1,8 @@
 import * as THREE from "three";
 import GUI from "lil-gui";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
-import {FirstPersonControls} from "three/addons/controls/FirstPersonControls.js";
-import {PointerLockControls} from "three/addons/controls/PointerLockControls.js";
 import {ri} from "./script.js";
-import {moveRigidBody, rotateRigidBody} from "./movable.js";
+import {rotateRigidBody} from "./movable.js";
 import * as TWEEN from "@tweenjs/tween.js";
 
 

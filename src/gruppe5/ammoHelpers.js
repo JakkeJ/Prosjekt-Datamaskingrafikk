@@ -32,8 +32,7 @@ export function updatePhysics(deltaTime) {
     }
 
     // Kollisjonsdeteksjon:
-    if (phy.checkCollisions)
-        checkCollisions(deltaTime);
+    checkCollisions(deltaTime);
 }
 
 
@@ -60,19 +59,16 @@ function checkCollisions(deltaTime) {
                     let contactPoint = contactManifold.getContactPoint(j);
                     const distance = contactPoint.getDistance();
                     if (distance <= 0) {
-                        // Vi har en kollisjon og er
-                        // kun interessert i kollisjon mellom kulene:
+
                         if ((threeMesh0.name === 'ball' && threeMesh1.name === 'ball') ||
                             threeMesh1.name === 'ball' && threeMesh0.name === 'ball') {
                             console.log('Balls collide')
                             if (typeof threeMesh0.collisionResponse === 'function') {
                                 threeMesh0.collisionResponse(threeMesh0)
                             }
-                            
                             if (typeof threeMesh1.collisionResponse === 'function') {
                                 threeMesh1.collisionResponse(threeMesh1)
                             }
-                            
                         }
 
                         if ((threeMesh0.name === 'target' && threeMesh1.name === 'cannonBall') ||
@@ -91,7 +87,6 @@ function checkCollisions(deltaTime) {
                             if (typeof threeMesh0.collisionResponse === 'function') {
                                 threeMesh0.collisionResponse(threeMesh0)
                             }
-                            
                             if (typeof threeMesh1.collisionResponse === 'function') {
                                 threeMesh1.collisionResponse(threeMesh1) 
                             }
@@ -99,6 +94,38 @@ function checkCollisions(deltaTime) {
 
                         if ((threeMesh0.name === 'ball' && threeMesh1.name === 'spiral') ||
                             threeMesh0.name === 'spiral' && threeMesh1.name === 'ball') {
+                                if (typeof threeMesh0.collisionResponse === 'function') {
+                                    threeMesh0.collisionResponse(threeMesh0)
+                                }
+                                if (typeof threeMesh1.collisionResponse === 'function') {
+                                    threeMesh1.collisionResponse(threeMesh1)
+                                }
+                            }
+                        if ((threeMesh0.name === 'golfClubStopper' && threeMesh1.name === 'cannonBall') ||
+                        threeMesh1.name === 'golfClubStopper' && threeMesh0.name === 'cannonBall') {
+    
+                            if (typeof threeMesh0.collisionResponse === 'function') {
+                                threeMesh0.collisionResponse(threeMesh0)
+                            }
+                            if (typeof threeMesh1.collisionResponse === 'function') {
+                                threeMesh1.collisionResponse(threeMesh1)
+                            }
+                        }
+
+                        if ((threeMesh0.name === 'golfClub' && threeMesh1.name === 'ball') ||
+                        threeMesh1.name === 'golfClub' && threeMesh0.name === 'ball') {
+                            
+                            if (typeof threeMesh0.collisionResponse === 'function') {
+                                threeMesh0.collisionResponse(threeMesh0)
+                            }
+                            if (typeof threeMesh1.collisionResponse === 'function') {
+                                threeMesh1.collisionResponse(threeMesh1) 
+                            }
+                        }
+
+                        if ((threeMesh0.name === 'TV' && threeMesh1.name === 'ball') ||
+                            threeMesh1.name === 'TV' && threeMesh0.name === 'ball') {
+    
                             if (typeof threeMesh0.collisionResponse === 'function') {
                                 threeMesh0.collisionResponse(threeMesh0)
                             }
@@ -137,6 +164,7 @@ export function createAmmoRigidBody(shape, threeMesh, restitution=0.7, friction=
     let rigidBody = new Ammo.btRigidBody(rbInfo);
     rigidBody.setRestitution(restitution);
     rigidBody.setFriction(friction);
+
     // All remaining work using rigidBody, no return needed
     threeMesh.userData.physicsBody = rigidBody;
     phy.ammoPhysicsWorld.addRigidBody(rigidBody);  // Add to ammo physics world:
