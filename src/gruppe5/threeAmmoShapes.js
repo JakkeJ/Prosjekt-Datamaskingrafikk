@@ -1151,7 +1151,7 @@ export function tv(position = {x: -40, y: 3, z: -10}, rotation = 70) {
         };
     };
 
-    const rigidBody = createAmmoRigidBody(compoundShape, groupMesh, 0, 0.9, position, 100);
+    const rigidBody = createAmmoRigidBody(compoundShape, groupMesh, 0, 0.9, position, 0.5);
 
     // Ball for testing
     position.y += 20;

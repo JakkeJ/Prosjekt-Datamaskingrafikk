@@ -102,7 +102,6 @@ function addToScene() {
     ri.camera.add( listener );
     ri.audio.ballHit = new THREE.Audio( listener );
 
-    //https://threejs.org/docs/#api/en/audio/Audio
     const audioLoader = new THREE.AudioLoader();
     audioLoader.load('static/assets/wave/ballhit.wav', function( buffer ) {
         ri.audio.ballHit.setBuffer(buffer);
@@ -111,13 +110,7 @@ function addToScene() {
 
     const cubeLoader = new THREE.CubeTextureLoader();
     // Skybox textures: https://opengameart.org/content/cloudy-skyboxes
-    const paths = [
-        'static/assets/skybox/bluecloud',
-        'static/assets/skybox/browncloud',
-        'static/assets/skybox/graycloud',
-        'static/assets/skybox/yellowcloud'
-    ]
-    const path = paths[3]
+    const path = 'static/assets/skybox/yellowcloud'
 
     cubeLoader.load(
         [
@@ -187,83 +180,10 @@ function threeAmmoObjects() {
     ground()
     water()
     rgMachine()
-    tv()
 
-    // let ballPosition = {x: -5.2, y: 1.5, z: 10.2};
-    // let ballRadius = 0.2
-    // let ballMass = 10
-    // ball(ballPosition, ballRadius, ballMass, 0.1, 1.0)
-    //
-    //
-    // // Kan flyttes hvor som helst, kan ikke roteres
-    // let dominoPosition = {x: 9.85, y: 1.6, z: -8};
-    // let dominoPosition = {x: 0, y: 1.6, z: 0};
-    // domino(dominoPosition)
-    //
-    // position = {x: 14, y: 7.05, z: -30.5}
-    // plinko(position);
-    // position = {x:16, y:15, z:-26}
-    // arrow(position)
-    //
-    //cannon();
-    //cannonTarget();
-    //golfclub();
+    
     newtonCradle();
     spiral();
-    //
-    // // let position = {x: 10, y: 3, z: 10};
-    // position = {x: 15, y: 5, z: -10};
-    // funnel(position, 2.7, 0.3, 2)
-    // position.y +=3
-    // ball(position, 0.5, 2)
-    // ball(position, 0.5, 2)
-    //
-    // position.x -= 1
-    // position.y -= 3.7
-    // // position = {x: 15, y: 3, z: -10};
-    // rails(position, 180, 10, 7, true)
-    //
-    //
-    // position.x += 7
-    // position.y -= 1.5
-    // // rails(position, 180, -5, 15)
-    //
-    // rails(position, 180, -0, 15, false)
-    //
-    // position.y += 1
-    // position.x += 5
-    // //ball(position, 0.5, 5)
-    //
-    // position.x += 1
-    // //ball(position, 0.5, 5)
-    //
-    // position.x += 1
-    // //ball(position, 0.5, 5)
-    //
-    // position.x += 1
-    // ball(position, 0.5, 5)
-    //
-    // position = {x: -30, y: 2, z: 20};
-    // steps(position,90, 8)
-    //
-    // // position = {x: -40, y: -4, z: 20};
-    // // steps(position,90, 5)
-    //
-    //
-    // position = {x: 10, y: 0, z: 5};
-    // ball(position, 0.2, 0);
-    //
-    // position = {x: -5, y: 1.2, z: 10.2};
-    // rails(position, Math.PI, 15, 6, false, 0.0)
-    //
-    // position = {x: 0, y: 10, z: -20};
-    // ball(position, 0.3, 1, 0.97, 1);
-    //
-    // position = {x: 0, y: 1.5, z: -5};
-    // rails(position, 270, -20, 18, false);
-    //
-    // position = {x: 0, y: 1.5, z: -5};
-    // rails(position, 90, -5, 1.4, false);
 }
 
 
@@ -315,4 +235,6 @@ function rgMachine() {
     cannonTarget();
     
     golfclub();
+
+    tv()
 }
