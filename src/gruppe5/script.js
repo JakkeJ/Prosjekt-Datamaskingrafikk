@@ -42,6 +42,7 @@ import {
     newtonCradle,
     plinko,
     spiral,
+    tv,
     cube,
     tableMesh
 } from "./threeAmmoShapes.js";
@@ -124,16 +125,17 @@ function addToScene() {
     ri.textures.johnny = loader.load('static/assets/textures/johnny.png');
     // grass texture: https://opengameart.org/content/seamless-grass-texture
     ri.textures.grass = loader.load('static/assets/textures/grass.png');
-    ri.textures.darkGrey = loader.load('static/assets/textures/darkGreyTexture.png')
-    ri.textures.water = loader.load('static/assets/textures/water.jpg')
-    ri.textures.cloud = loader.load('static/assets/textures/cloud.png')
-    ri.textures.darkBlue = loader.load('static/assets/textures/darkblueTexture.png')
-    ri.textures.grey = loader.load('static/assets/textures/greyTexture.png')
-    ri.textures.target = loader.load('static/assets/textures/target.png')
+    ri.textures.darkGrey = loader.load('static/assets/textures/darkGreyTexture.png');
+    ri.textures.water = loader.load('static/assets/textures/water.jpg');
+    ri.textures.cloud = loader.load('static/assets/textures/cloud.png');
+    ri.textures.darkBlue = loader.load('static/assets/textures/darkblueTexture.png');
+    ri.textures.grey = loader.load('static/assets/textures/greyTexture.png');
+    ri.textures.target = loader.load('static/assets/textures/target.png');
+    ri.textures.darthShader = loader.load('static/assets/textures/darth_shader_16-9.png');
 
-    ri.textures.heightmap1 = loader.load('static/assets/textures/heightmap1.png')
-    ri.textures.heightmap2 = loader.load('static/assets/textures/heightmap2.png')
-    ri.textures.heightmap3 = loader.load('static/assets/textures/heightmap3.png')
+    ri.textures.heightmap1 = loader.load('static/assets/textures/heightmap1.png');
+    ri.textures.heightmap2 = loader.load('static/assets/textures/heightmap2.png');
+    ri.textures.heightmap3 = loader.load('static/assets/textures/heightmap3.png');
 
     manager.onLoad = () => {
         addLights()
@@ -172,6 +174,7 @@ function threeAmmoObjects() {
     ground()
     water()
     rgMachine()
+    tv()
 
     // let ballPosition = {x: -5.2, y: 1.5, z: 10.2};
     // let ballRadius = 0.2

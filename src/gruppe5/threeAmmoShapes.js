@@ -1039,3 +1039,96 @@ export function spiral(angle = -Math.PI/8, position = {x: -10, y: 0.1, z: 10}, t
     //ri.scene.add(stopBoxMesh);
 }
 
+
+export function tv(position = {x: -10, y: 3, z: -10}, rotation = 0) {
+    const groupMesh = new THREE.Group();
+    const tvGeometry = new THREE.Group();
+    const compoundShape = new Ammo.btCompoundShape();
+    groupMesh.name = 'TV';
+
+    const texture = ri.textures.darthShader;
+    const material = new THREE.MeshStandardMaterial({color: 0x999999,  side: THREE.DoubleSide, roughness: 0.3, metalness: 0.8});
+    const material2 = new THREE.MeshStandardMaterial({map: texture,   roughness: 0.1});
+    material2.transparent = true;
+    material2.opacity = 0;
+
+    const frameThickness = 0.3
+
+    const baseSize = {x: 5, y: 0.5, z: 2};
+    const basePosition = {x: 0, y: baseSize.y/2, z: 0};
+
+    const standSize = {x: 1, y: 0.5, z: 0.5};
+    const standPosition = {x: 0, y: baseSize.y + standSize.y/2, z: 0};
+
+    const tvSize = {x: 16, y: 9, z: 0.6};
+    const tvPosition = {x: 0, y: baseSize.y + standSize.y + (tvSize.y / 2), z: 0};
+
+
+    const baseGeometry = new THREE.BoxGeometry(baseSize.x, baseSize.y, baseSize.z);
+    const standGeometry = new THREE.BoxGeometry(standSize.x, standSize.y, standSize.z);
+    const horizontalFrameGeo = new THREE.BoxGeometry(tvSize.x, frameThickness, tvSize.z);
+    const verticalFrameGeo = new THREE.BoxGeometry(frameThickness, tvSize.y, tvSize.z);
+    const tvBackGeo = new THREE.BoxGeometry(tvSize.x, tvSize.y, tvSize.z * 0.5);
+    const screenGeometry = new THREE.PlaneGeometry(tvSize.x - 2 * frameThickness, tvSize.y  - 2 * frameThickness);
+
+    const horizontalMesh1 = new THREE.Mesh(horizontalFrameGeo, material);
+    horizontalMesh1.position.setY(tvPosition.y - tvSize.y/2 + frameThickness/2);
+    horizontalMesh1.castShadow = true;
+    horizontalMesh1.receiveShadow = true;
+
+    const horizontalMesh2 = new THREE.Mesh(horizontalFrameGeo, material);
+    horizontalMesh2.position.setY(tvPosition.y + tvSize.y/2 - frameThickness/2);
+    horizontalMesh2.castShadow = true;
+    horizontalMesh2.receiveShadow = true;
+
+    const verticalMesh1 = new THREE.Mesh(verticalFrameGeo, material);
+    verticalMesh1.position.set(-tvSize.x/2 + frameThickness/2, tvPosition.y, 0);
+    verticalMesh1.castShadow = true;
+    verticalMesh1.receiveShadow = true;
+
+    const verticalMesh2 = new THREE.Mesh(verticalFrameGeo, material);
+    verticalMesh2.position.set(tvSize.x/2 - frameThickness/2, tvPosition.y, 0);
+    verticalMesh2.castShadow = true;
+    verticalMesh2.receiveShadow = true;
+
+    const tvBackMesh = new THREE.Mesh(tvBackGeo, material);
+    tvBackMesh.position.set(tvPosition.x, tvPosition.y, tvPosition.z - tvSize.z / 4);
+    tvBackMesh.castShadow = true;
+    tvBackMesh.receiveShadow = true;
+
+    const screenMesh = new THREE.Mesh(screenGeometry, material2);
+    screenMesh.name = 'screen'
+    screenMesh.position.set(tvPosition.x, tvPosition.y, tvPosition.z + 0.01);
+
+    tvGeometry.add(horizontalMesh1);
+    tvGeometry.add(horizontalMesh2);
+    tvGeometry.add(verticalMesh1);
+    tvGeometry.add(verticalMesh2);
+    tvGeometry.add(tvBackMesh);
+    tvGeometry.add(screenMesh);
+
+    groupMesh.add(tvGeometry);
+    groupMesh.rotation.y = rotation * Math.PI / 180
+
+    createAmmoMesh('box', baseGeometry, baseSize, basePosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape, 'tvBase');
+    createAmmoMesh('box', standGeometry, standSize, standPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape, 'tvStand');
+
+    // Ammo
+    const tvShape = new Ammo.btBoxShape(new Ammo.btVector3(tvSize.x/2, tvSize.y/2, tvSize.z/2));
+    let transform = new Ammo.btTransform();
+    transform.setIdentity();
+    transform.setOrigin(new Ammo.btVector3(tvPosition.x, tvPosition.y, tvPosition.z));
+    compoundShape.addChildShape(transform, tvShape);
+
+    ri.scene.add(groupMesh);
+    groupMesh.collisionResponse = (mesh) => {
+        ri.scene.getObjectByName("screen").material.opacity = 1
+    };
+
+    const rigidBody = createAmmoRigidBody(compoundShape, groupMesh, 0.3, 0.9, position, 100);
+
+    // Ball for testing
+    position.y += 20;
+    position.x += 6;
+    ball(position, 0.3, 20)
+}

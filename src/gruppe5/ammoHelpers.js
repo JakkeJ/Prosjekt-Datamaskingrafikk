@@ -95,6 +95,17 @@ function checkCollisions(deltaTime) {
                             }
                         }
 
+                        if ((threeMesh0.name === 'TV' && threeMesh1.name === 'ball') ||
+                            threeMesh1.name === 'TV' && threeMesh0.name === 'ball') {
+                            console.log("tv hit ;)")
+                            if (typeof threeMesh0.collisionResponse === 'function') {
+                                threeMesh0.collisionResponse(threeMesh0)
+                            }
+                            if (typeof threeMesh1.collisionResponse === 'function') {
+                                threeMesh1.collisionResponse(threeMesh1)
+                            }
+                        }
+
                     }
                 }
             }
