@@ -548,7 +548,7 @@ export function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
 }
 
 
-export function golfclub(position = {x: 40, y: 16.51, z: 40}) {
+export function golfclub(position = {x: -40, y: 16.51, z: 40}) { //{x: 40, y: 16.51, z: 40}
     const rotation = -90
     const handleBarValues = {x: 0.2, y: 0.1, z: 4};
     const shaftValues = {x: 0.1, y: 0.1, z: 10};
@@ -621,7 +621,7 @@ export function golfclub(position = {x: 40, y: 16.51, z: 40}) {
     let stopperValues = {x: 0.2, y: 0.2, z: 10};
     let stopperGeo = new THREE.CylinderGeometry(stopperValues.x, stopperValues.y, stopperValues.z, 36, 1);
     let stopper = createAmmoMesh('cylinder', stopperGeo, stopperValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, lightGreyColor, golfClubStopperMesh, golfClubStopperShape);
-    let golfClubStopperRigid = createAmmoRigidBody(golfClubStopperShape, golfClubStopperMesh, 0, 1, golfClubStopperMesh.position, 2);
+    let golfClubStopperRigid = createAmmoRigidBody(golfClubStopperShape, golfClubStopperMesh, 0, 1, golfClubStopperMesh.position, 0.3);
 
     ri.scene.add(golfClubStopperMesh);
     ri.scene.add(golfClubStandMesh);
@@ -636,9 +636,9 @@ export function golfclub(position = {x: 40, y: 16.51, z: 40}) {
 
 export function cannon() {
     //Benyttet kode eksempler utgitt av Werner Farstad. Hentet fra: https://source.coderefinery.org/3d/threejs23_std/-/blob/main/src/modul7/ammoConstraints/springGeneric6DofSpringConstraint.js?ref_type=heads
-    let position = {x: 45, y: 3.76, z: -40}; //x: 47, y: 3.76, z: 20
+    let position = {x: 45, y: 3.76, z: 40}; //x: 47, y: 3.76, z: 20
     let rotationDegree =60*Math.PI/180;
-    let rotationAxis = 'X';
+    let rotationAxis = 'Z';
     let bottomSpringValues = {x: 0.45, y: 0.45, z: 0.2};
     let topSpringValues = {x: 0.45, y: 0.45, z: 0.2};
 
@@ -684,7 +684,7 @@ export function cannon() {
 
     spring.enableSpring(1, false);
     spring.setStiffness(1, 8500);
-    spring.setDamping(1, 10);
+    spring.setDamping(1, 100);
     spring.setEquilibriumPoint(1, 3);
 
     phy.ammoPhysicsWorld.addConstraint(spring, false);
@@ -776,7 +776,8 @@ export function cannon() {
     let ballRadius = 0.45
     let ballMass = 20
     ball(ballPosition, ballRadius, ballMass, 0.7, 0.8, 'cannonBall');
-    ball({x: position.x, y: position.y+150, z: position.z+2}, ballRadius, ballMass, 0.7, 0.8);
+    ball({x: position.x-3.5, y: position.y+2.5, z: position.z-2.5}, ballRadius, ballMass, 0.7, 0.8);
+    rails({x: position.x-3.5, y: position.y+1.5, z: position.z-3}, 90, 20, 2, true, 1);
 
 }
 
@@ -785,8 +786,9 @@ export function cannonTarget() {
 
     const targetTexture = new THREE.MeshStandardMaterial({map: ri.textures.target,  side: THREE.DoubleSide});
 
-    let position = {x: 45, y: 25, z: 20};
+    let position = {x: -20, y: 25.2, z: 40}; //x: 45, y: 25, z: 20
     let targetMesh = new THREE.Group();
+    targetMesh.rotateY(-90*Math.PI/180);
     targetMesh.position.set(position.x, position.y ,position.z);
     targetMesh.name = 'target'
 
@@ -802,11 +804,11 @@ export function cannonTarget() {
     };
     let targetBody = createAmmoRigidBody(targetShape, targetMesh, 0, 0.6, {x: position.x, y: position.y, z: position.z}, 0);
     position.y -= 10
-    position.z -= 3
+    position.x += 3
     funnel(position, 7, 0.5, 4);
 
-    let railPosition = {x: position.x-0.5 , y: position.y -0.5 , z: position.z-3 };
-    rails(railPosition, 97, 15, 21, true, 0);
+    let railPosition = {x: position.x+1.5 , y: position.y -1 , z: position.z-0.5 };
+    rails(railPosition, 21, 15, 21, true, 0);
 
     ri.scene.add(targetMesh);
 
