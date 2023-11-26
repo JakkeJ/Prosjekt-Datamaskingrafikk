@@ -24,7 +24,7 @@ export function createThreeScene() {
 
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     ri.camera.position.set(-15, 7, 15);
-    ri.camera.position.set(15, 7, -15); // Temp position
+    // ri.camera.position.set(40, 25, -35); // Temp position
 
     ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
 
@@ -113,12 +113,13 @@ export function onDocumentMouseDown(event) {
     if (intersects.length > 0) {
         //Endrer farge på det første objektet som er klikket på som strålen treffer:
         let ball = intersects[0].object
-        ball.material.color.setHex(Math.random() * 0xffffff);
+        // ball.material.color.setHex(Math.random() * 0xffffff);
 
         // Can only click a ball 1 time
-        if (ball.name === 'ball'){
-            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(-3, 0, 0 ));
-            ball.name = 'ball_'
+        if (ball.name === 'starterBall'){
+            ball.material.color.setHex(Math.random() * 0xffffff);
+            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(0, 0, -20 ));
+            ball.name = 'ball'
         }
     }
 }

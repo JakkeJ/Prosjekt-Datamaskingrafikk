@@ -474,7 +474,7 @@ export function domino(position, starter = true) {
 export function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
 
 
-    ball({x: position.x+4.5, y: position.y+4.5, z: position.z+5}, 0.20, 8)
+    // ball({x: position.x+4.5, y: position.y+4.5, z: position.z+5}, 0.20, 8)
 
     const boardValues = {x: 20, y: 0.2, z: 12};
     const pegValues = {x: 0.08, y: 0.04, z: 0.5};
@@ -548,12 +548,12 @@ export function plinko(position = {x: 14, y: 7.05, z: -30.5}) {
 }
 
 
-export function golfclub() {
-    let position = {x: 40, y: 16.51, z: 40}; //x: 40, y: 16.51, z: 40}
-    let handleBarValues = {x: 0.2, y: 0.1, z: 4};
-    let shaftValues = {x: 0.1, y: 0.1, z: 10};
-    let connectorValues = {x: 0.15, y: 0.15, z: 0.4};
-    let clubValues = {x: 0.3, y: 0.5, z: 1.5};
+export function golfclub(position = {x: 40, y: 16.51, z: 40}) {
+    const rotation = -90
+    const handleBarValues = {x: 0.2, y: 0.1, z: 4};
+    const shaftValues = {x: 0.1, y: 0.1, z: 10};
+    const connectorValues = {x: 0.15, y: 0.15, z: 0.4};
+    const clubValues = {x: 0.3, y: 0.5, z: 1.5};
 
     const lightGreyColor = new THREE.MeshStandardMaterial({color: 0xFCFCFF, side: THREE.DoubleSide, roughness: 0.7, metalness: 0.5});
     const brownColor = new THREE.MeshStandardMaterial({color: 0xBC6A00,  side: THREE.DoubleSide, roughness: 0.3});
@@ -561,7 +561,9 @@ export function golfclub() {
 
     let golfClubMesh = new THREE.Group();
     golfClubMesh.position.set( position.x, position.y, position.z);
-    golfClubMesh.rotateZ(46.8*Math.PI/180);
+    golfClubMesh.rotateY(rotation * Math.PI/180);
+    golfClubMesh.rotateZ(46.8 * Math.PI/180);
+
     let golfClubShape = new Ammo.btCompoundShape();
 
     let handleBarGeo = new THREE.CylinderGeometry(handleBarValues.x, handleBarValues.y, handleBarValues.z, 36, 1);
@@ -578,6 +580,7 @@ export function golfclub() {
 
     let golfClubStandMesh = new THREE.Group();
     golfClubStandMesh.position.set( position.x, position.y, position.z);
+    golfClubStandMesh.rotateY(rotation * Math.PI/180); // ?
     let golfClubStandShape = new Ammo.btCompoundShape();
 
     let hingeValues = {x: 0.4, y: 0.4, z: 8};
@@ -612,13 +615,13 @@ export function golfclub() {
     phy.ammoPhysicsWorld.addConstraint(ClubHinge, true);
 
     let golfClubStopperMesh = new THREE.Group();
-    golfClubStopperMesh.position.set(position.x + 7.2, position.y -7, position.z);
+    golfClubStopperMesh.position.set(position.x, position.y -7, position.z + 7);
+    golfClubStopperMesh.rotateY(rotation * Math.PI/180); // ?
     let golfClubStopperShape = new Ammo.btCompoundShape();
     let stopperValues = {x: 0.2, y: 0.2, z: 10};
     let stopperGeo = new THREE.CylinderGeometry(stopperValues.x, stopperValues.y, stopperValues.z, 36, 1);
     let stopper = createAmmoMesh('cylinder', stopperGeo, stopperValues, {x: 0, y: 0, z: 0}, {x: 90*Math.PI/180, y: 0, z: 0}, lightGreyColor, golfClubStopperMesh, golfClubStopperShape);
     let golfClubStopperRigid = createAmmoRigidBody(golfClubStopperShape, golfClubStopperMesh, 0, 1, golfClubStopperMesh.position, 2);
-
 
     ri.scene.add(golfClubStopperMesh);
     ri.scene.add(golfClubStandMesh);
