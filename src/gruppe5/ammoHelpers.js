@@ -90,27 +90,33 @@ function checkCollisions(deltaTime) {
                                     localPos: {x: localPos1.x(), y: localPos1.y(), z: localPos1.z()}
                                 }
                             });*/
-                            if (typeof threeMesh0.collisionResponse === 'function')
-                                threeMesh0.collisionResponse(threeMesh0);
-                            if (typeof threeMesh1.collisionResponse === 'function')
-                                threeMesh1.collisionResponse(threeMesh1);
+                            if (typeof threeMesh0.collisionResponse === 'function') {
+                                threeMesh0.collisionResponse(threeMesh0)
+                            };
+                            if (typeof threeMesh1.collisionResponse === 'function') {
+                                threeMesh1.collisionResponse(threeMesh1)
+                            };
                         }
                         if ((threeMesh0.name === 'target' && threeMesh1.name === 'cannonBall') ||
                         threeMesh1.name === 'target' && threeMesh0.name === 'cannonBall') {
                             console.log("target hit ;)")
-                            if (typeof threeMesh0.collisionResponse === 'function')
-                                threeMesh0.collisionResponse(threeMesh0);
-                            if (typeof threeMesh1.collisionResponse === 'function')
-                                threeMesh1.collisionResponse(threeMesh1);
+                            if (typeof threeMesh0.collisionResponse === 'function'){
+                                threeMesh0.collisionResponse(threeMesh0)
+                            };
+                            if (typeof threeMesh1.collisionResponse === 'function') {
+                                threeMesh1.collisionResponse(threeMesh1)
+                            };
                         };
 
                         if ((threeMesh0.name === 'cannonBody' && threeMesh1.name === 'ball') ||
                         threeMesh1.name === 'cannonBody' && threeMesh0.name === 'ball') {
                             console.log("cannon printer hit ;)")
-                            if (typeof threeMesh0.collisionResponse === 'function')
-                                threeMesh0.collisionResponse(threeMesh0);
-                            if (typeof threeMesh1.collisionResponse === 'function')
-                                threeMesh1.collisionResponse(threeMesh1);
+                            if (typeof threeMesh0.collisionResponse === 'function') {
+                                threeMesh0.collisionResponse(threeMesh0)
+                            };
+                            if (typeof threeMesh1.collisionResponse === 'function') {
+                                threeMesh1.collisionResponse(threeMesh1)
+                            };
                         };
                         
                     }
