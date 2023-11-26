@@ -34,6 +34,208 @@ export function ground() {
 }
 
 
+export function ball(position, radius = 0.3, mass = 5, restitution = 0.7, friction = 0.8, name = "ball") {
+    // THREE
+    const geometry = new THREE.SphereGeometry(radius, 32, 32);
+    const material = new THREE.MeshStandardMaterial({
+        color: 0xFFFFFF,
+        metalness: 0.5,
+        roughness: 0.3});
+    const mesh = new THREE.Mesh(geometry, material);
+
+    mesh.name = name;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    ri.scene.add(mesh);
+    ri.balls.push(mesh)
+
+    // AMMO
+    const shape = new Ammo.btSphereShape(radius);
+    const rigidBody = createAmmoRigidBody(shape, mesh, restitution, friction, position, mass);
+
+    rigidBody.setActivationState(4)
+}
+
+
+export function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0xFF00FF, restitution = 0.5, friction = 0.8) {
+    // THREE
+    const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+    const material = new THREE.MeshStandardMaterial({
+        color: color,
+        side: THREE.DoubleSide});
+    const mesh = new THREE.Mesh(geometry, material);
+
+    mesh.name = name
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.rotation.y = rotation * Math.PI / 180
+
+    ri.scene.add(mesh);
+
+    // AMMO
+    const shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
+    createAmmoRigidBody(shape, mesh, restitution, friction, position, mass);
+}
+
+
+export function tableMesh(groupMesh, compoundShape, size, rotation, height, name = 'table', color = 0xFFFFFF) {
+    const material = new THREE.MeshStandardMaterial({
+        color: color,
+        side: THREE.DoubleSide});
+    const position = {x: 0, y: 0, z: 0};
+
+    groupMesh.name = name;
+
+    // tabletop
+    let geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+    createAmmoMesh('box', geometry, size, position, rotation, material, groupMesh, compoundShape );
+
+    // legs
+    const width = (size.x + size.z) / 2 / 20;
+    position.y = -height/2;
+    const xOffset = size.x/2 - width;
+    const zOffset = size.z/2 - width;
+    const legSize = {x: width, y: height, z: width};
+
+    position.x = xOffset;
+    position.z = zOffset;
+    geometry = new THREE.BoxGeometry(width, height, width);
+    createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
+
+    position.x = -xOffset;
+    geometry = new THREE.BoxGeometry(width, height, width);
+    createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
+
+    position.z = -zOffset;
+    geometry = new THREE.BoxGeometry(width, height, width);
+    createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
+
+    position.x = xOffset;
+    geometry = new THREE.BoxGeometry(width, height, width);
+    createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
+}
+
+
+export function rails(position, rotation = 180, tilt = 20, length = 4, guardrails = false, friction = 0.8) {
+    let material = new THREE.MeshStandardMaterial({
+        color: 0xFFFFFF,
+        metalness: 0.5,
+        roughness: 0.3});
+
+    const groupMesh = new THREE.Group();
+    groupMesh.rotateY(degToRad(rotation));
+    groupMesh.rotateZ(degToRad(90 + tilt));
+    groupMesh.name = 'rails';
+
+    const width = 0.05;
+    const distance = 0.4;
+    const size = {radius1: width, radius2: width, height: length};
+
+    const compoundShape = new Ammo.btCompoundShape();
+    const geometry = new THREE.CylinderGeometry(width, width, length, 36, 1);
+
+    let railPosition = {x: 0, y: length/2, z: distance/2};
+
+    // Rail 1:
+    createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
+
+    // Rail 2:
+    railPosition.z = -distance/2;
+    createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
+
+    if (guardrails) {
+        railPosition = {x: distance, y: length/2, z: distance};
+        // Guardrail 1:
+        createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
+
+        // Guardrail 2:
+        railPosition.z = -distance;
+        createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
+    }
+
+    ri.scene.add(groupMesh);
+
+    createAmmoRigidBody(compoundShape, groupMesh, 0, friction, position, 0);
+}
+
+
+export function domino(position, starter = true) {
+    const tableSize = {x: 5, y: 0.2, z: 10};
+
+    const groupMesh = new THREE.Group();
+    const compoundShape = new Ammo.btCompoundShape();
+
+    tableMesh(groupMesh, compoundShape, tableSize, {x: 0, y: 0, z: 0}, position.y, 'dominoTable',  0x823c17)
+
+    ri.scene.add(groupMesh);
+
+    createAmmoRigidBody(compoundShape, groupMesh, 0.5, 0.5, position, 0);
+
+    const dominoSize = {x: 0.4, y: 0.8, z: 0.08};
+    const posX = position.x - 2.5;
+    const posY = position.y + 0.5 + tableSize.y / 2;
+    const posZ = position.z - 5;
+    const dominoPositions = [
+        {x: posX + 2.5, y: posY, z: posZ + 0.1, rot: 0},
+        {x: posX + 2.5, y: posY, z: posZ + 0.5, rot: 0},
+        {x: posX + 2.5, y: posY, z: posZ + 0.9, rot: 0},
+        {x: posX + 2.5, y: posY, z: posZ + 1.3, rot: 0},
+        {x: posX + 2.55, y: posY, z: posZ + 1.7, rot: 10},
+        {x: posX + 2.65, y: posY, z: posZ + 2.1, rot: 20},
+        {x: posX + 2.8, y: posY, z: posZ + 2.5, rot: 25},
+        {x: posX + 3.0, y: posY, z: posZ + 2.9, rot: 25},
+        {x: posX + 3.2, y: posY, z: posZ + 3.3, rot: 25},
+        {x: posX + 3.35, y: posY, z: posZ + 3.7, rot: 20},
+        {x: posX + 3.45, y: posY, z: posZ + 4.1, rot: 10},
+        {x: posX + 3.5, y: posY, z: posZ + 4.5, rot: 0},
+        {x: posX + 3.5, y: posY, z: posZ + 4.9, rot: 0},
+        {x: posX + 3.5, y: posY, z: posZ + 5.3, rot: 0},
+        {x: posX + 3.40, y: posY, z: posZ + 5.7, rot: -10},
+        {x: posX + 3.30, y: posY, z: posZ + 6.1, rot: -10},
+        {x: posX + 3.20, y: posY, z: posZ + 6.5, rot: -10},
+        {x: posX + 3.10, y: posY, z: posZ + 6.9, rot: -10},
+        {x: posX + 3.0, y: posY, z: posZ + 7.3, rot: -10},
+        {x: posX + 2.9, y: posY, z: posZ + 7.7, rot: -10},
+        {x: posX + 2.8, y: posY, z: posZ + 8.1, rot: -10},
+        {x: posX + 2.7, y: posY, z: posZ + 8.5, rot: -10},
+        {x: posX + 2.6, y: posY, z: posZ + 8.9, rot: -10},
+        {x: posX + 2.5, y: posY, z: posZ + 9.3, rot: -10},
+        {x: posX + 2.5, y: posY, z: posZ + 9.7, rot: 0},
+    ]
+
+    for (let i = 0; i < dominoPositions.length; i++) {
+        cube(dominoPositions[i], dominoSize, dominoPositions[i].rot , 'dominoPiece', 20, 0x303030, 0.3, 0.8)
+    }
+
+    if (starter){
+        // Ball to start first domino:
+        let ballPosition = {x: position.x + 0, y: position.y + 1, z: position.z - 5.6};
+        rails(ballPosition, -90, -20, 1);
+
+        ballPosition.y += 0.35;
+        ballPosition.z -= 0.9;
+        rails(ballPosition, -90, 0.5, 1);
+
+        ballPosition.y += 0.5;
+        ballPosition.z -= 0.5;
+        ball(ballPosition, 0.3, 10);
+
+        // Ball to end domino:
+        ballPosition = {x: position.x + 0, y: position.y + 0, z: position.z + 5.2};
+        rails(ballPosition, 90, -0.5, 1);
+
+        ballPosition.y += 0.5;
+        ballPosition.z += 0.3;
+        ball(ballPosition, 0.3, 10, 0.7, 0.1);
+
+        ballPosition.y -= 0.5;
+        ballPosition.z += 0.7;
+        rails(ballPosition, 90, 20, 1);
+    }
+}
+
+
 // Basert på kode hentet fra kodeeksempel modul8/ammoTerrain1
 export function terrain(position = {x: 37, y: 15, z: 0.5}) {
     const planeLength = 10;
@@ -219,89 +421,6 @@ export function steps(position, rotation = 0, numberOfSteps = 6) {
 }
 
 
-export function ball(position, radius = 0.3, mass = 5, restitution = 0.7, friction = 0.8, name = "ball") {
-    // THREE
-    const geometry = new THREE.SphereGeometry(radius, 32, 32);
-    const material = new THREE.MeshStandardMaterial({
-        color: 0xFFFFFF,
-        metalness: 0.5,
-        roughness: 0.3});
-    const mesh = new THREE.Mesh(geometry, material);
-
-    mesh.name = name;
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-
-    ri.scene.add(mesh);
-    ri.balls.push(mesh)
-
-    // AMMO
-    const shape = new Ammo.btSphereShape(radius);
-    const rigidBody = createAmmoRigidBody(shape, mesh, restitution, friction, position, mass);
-
-    rigidBody.setActivationState(4)
-}
-
-
-export function cube(position, size, rotation = 0 , name = 'cube', mass = 0, color = 0xFF00FF, restitution = 0.5, friction = 0.8) {
-    // THREE
-    const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
-    const material = new THREE.MeshStandardMaterial({
-        color: color,
-        side: THREE.DoubleSide});
-    const mesh = new THREE.Mesh(geometry, material);
-
-    mesh.name = name
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.rotation.y = rotation * Math.PI / 180
-
-    ri.scene.add(mesh);
-
-    // AMMO
-    const shape = new Ammo.btBoxShape(new Ammo.btVector3(size.x/2, size.y/2, size.z/2));
-    createAmmoRigidBody(shape, mesh, restitution, friction, position, mass);
-}
-
-
-export function tableMesh(groupMesh, compoundShape, size, rotation, height, name = 'table', color = 0xFFFFFF) {
-    const material = new THREE.MeshStandardMaterial({
-        color: color,
-        side: THREE.DoubleSide});
-    const position = {x: 0, y: 0, z: 0};
-
-    groupMesh.name = name;
-
-    // tabletop
-    let geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
-    createAmmoMesh('box', geometry, size, position, rotation, material, groupMesh, compoundShape );
-
-    // legs
-    const width = (size.x + size.z) / 2 / 20;
-    position.y = -height/2;
-    const xOffset = size.x/2 - width;
-    const zOffset = size.z/2 - width;
-    const legSize = {x: width, y: height, z: width};
-
-    position.x = xOffset;
-    position.z = zOffset;
-    geometry = new THREE.BoxGeometry(width, height, width);
-    createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
-
-    position.x = -xOffset;
-    geometry = new THREE.BoxGeometry(width, height, width);
-    createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
-
-    position.z = -zOffset;
-    geometry = new THREE.BoxGeometry(width, height, width);
-    createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
-
-    position.x = xOffset;
-    geometry = new THREE.BoxGeometry(width, height, width);
-    createAmmoMesh('box', geometry, legSize, position, rotation, material, groupMesh, compoundShape );
-}
-
-
 export function funnel(position, upperRadius = 2.7, lowerRadius = 0.5, height = 2) {
     const compoundShape = new Ammo.btCompoundShape();
 
@@ -331,125 +450,6 @@ export function funnel(position, upperRadius = 2.7, lowerRadius = 0.5, height = 
 
     createTriangleShapeAddToCompound(compoundShape, mesh);
     createAmmoRigidBody(compoundShape, mesh, 0.4, 0.6, position, 0);
-}
-
-
-export function rails(position, rotation = 180, tilt = 20, length = 4, guardrails = false, friction = 0.8) {
-    let material = new THREE.MeshStandardMaterial({
-        color: 0xFFFFFF,
-        metalness: 0.5,
-        roughness: 0.3});
-
-    const groupMesh = new THREE.Group();
-    groupMesh.rotateY(degToRad(rotation));
-    groupMesh.rotateZ(degToRad(90 + tilt));
-    groupMesh.name = 'rails';
-
-    const width = 0.05;
-    const distance = 0.4;
-    const size = {radius1: width, radius2: width, height: length};
-
-    const compoundShape = new Ammo.btCompoundShape();
-    const geometry = new THREE.CylinderGeometry(width, width, length, 36, 1);
-
-    let railPosition = {x: 0, y: length/2, z: distance/2};
-
-    // Rail 1:
-    createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
-
-    // Rail 2:
-    railPosition.z = -distance/2;
-    createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
-
-    if (guardrails) {
-        railPosition = {x: distance, y: length/2, z: distance};
-        // Guardrail 1:
-        createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
-
-        // Guardrail 2:
-        railPosition.z = -distance;
-        createAmmoMesh('cylinder', geometry, size, railPosition, {x: 0, y: 0, z: 0}, material, groupMesh, compoundShape );
-    }
-
-    ri.scene.add(groupMesh);
-
-    createAmmoRigidBody(compoundShape, groupMesh, 0, friction, position, 0);
-}
-
-
-export function domino(position, starter = true) {
-    const tableSize = {x: 5, y: 0.2, z: 10};
-
-    const groupMesh = new THREE.Group();
-    const compoundShape = new Ammo.btCompoundShape();
-
-    tableMesh(groupMesh, compoundShape, tableSize, {x: 0, y: 0, z: 0}, position.y, 'dominoTable',  0x823c17)
-
-    ri.scene.add(groupMesh);
-
-    createAmmoRigidBody(compoundShape, groupMesh, 0.5, 0.5, position, 0);
-
-    const dominoSize = {x: 0.4, y: 0.8, z: 0.08};
-    const posX = position.x - 2.5;
-    const posY = position.y + 0.5 + tableSize.y / 2;
-    const posZ = position.z - 5;
-    const dominoPositions = [
-        {x: posX + 2.5, y: posY, z: posZ + 0.1, rot: 0},
-        {x: posX + 2.5, y: posY, z: posZ + 0.5, rot: 0},
-        {x: posX + 2.5, y: posY, z: posZ + 0.9, rot: 0},
-        {x: posX + 2.5, y: posY, z: posZ + 1.3, rot: 0},
-        {x: posX + 2.55, y: posY, z: posZ + 1.7, rot: 10},
-        {x: posX + 2.65, y: posY, z: posZ + 2.1, rot: 20},
-        {x: posX + 2.8, y: posY, z: posZ + 2.5, rot: 25},
-        {x: posX + 3.0, y: posY, z: posZ + 2.9, rot: 25},
-        {x: posX + 3.2, y: posY, z: posZ + 3.3, rot: 25},
-        {x: posX + 3.35, y: posY, z: posZ + 3.7, rot: 20},
-        {x: posX + 3.45, y: posY, z: posZ + 4.1, rot: 10},
-        {x: posX + 3.5, y: posY, z: posZ + 4.5, rot: 0},
-        {x: posX + 3.5, y: posY, z: posZ + 4.9, rot: 0},
-        {x: posX + 3.5, y: posY, z: posZ + 5.3, rot: 0},
-        {x: posX + 3.40, y: posY, z: posZ + 5.7, rot: -10},
-        {x: posX + 3.30, y: posY, z: posZ + 6.1, rot: -10},
-        {x: posX + 3.20, y: posY, z: posZ + 6.5, rot: -10},
-        {x: posX + 3.10, y: posY, z: posZ + 6.9, rot: -10},
-        {x: posX + 3.0, y: posY, z: posZ + 7.3, rot: -10},
-        {x: posX + 2.9, y: posY, z: posZ + 7.7, rot: -10},
-        {x: posX + 2.8, y: posY, z: posZ + 8.1, rot: -10},
-        {x: posX + 2.7, y: posY, z: posZ + 8.5, rot: -10},
-        {x: posX + 2.6, y: posY, z: posZ + 8.9, rot: -10},
-        {x: posX + 2.5, y: posY, z: posZ + 9.3, rot: -10},
-        {x: posX + 2.5, y: posY, z: posZ + 9.7, rot: 0},
-    ]
-
-    for (let i = 0; i < dominoPositions.length; i++) {
-        cube(dominoPositions[i], dominoSize, dominoPositions[i].rot , 'dominoPiece', 20, 0x303030, 0.3, 0.8)
-    }
-
-    if (starter){
-        // Ball to start first domino:
-        let ballPosition = {x: position.x + 0, y: position.y + 1, z: position.z - 5.6};
-        rails(ballPosition, -90, -20, 1);
-
-        ballPosition.y += 0.35;
-        ballPosition.z -= 0.9;
-        rails(ballPosition, -90, 0.5, 1);
-
-        ballPosition.y += 0.5;
-        ballPosition.z -= 0.5;
-        ball(ballPosition, 0.3, 10);
-
-        // Ball to end domino:
-        ballPosition = {x: position.x + 0, y: position.y + 0, z: position.z + 5.2};
-        rails(ballPosition, 90, -0.5, 1);
-
-        ballPosition.y += 0.5;
-        ballPosition.z += 0.3;
-        ball(ballPosition, 0.3, 10, 0.7, 0.1);
-
-        ballPosition.y -= 0.5;
-        ballPosition.z += 0.7;
-        rails(ballPosition, 90, 20, 1);
-    }
 }
 
 

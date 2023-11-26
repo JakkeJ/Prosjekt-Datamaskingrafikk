@@ -199,10 +199,6 @@ function rgMachine() {
     let plinkoPosition = position
     plinko(plinkoPosition);
 
-    newtonCradle();
-
-    spiral();
-
     // Starter ball
     position = {x: position.x + 4.9, y: position.y + 4.5, z: position.z + 5};
     rails(position, 180, -5, 3, true);
@@ -258,6 +254,10 @@ function rgMachine() {
 
     position = {x: 45, y: 3.4, z: 17.5};
     ball(position, 0.2, 5, 0.0, 1.0);
+
+    newtonCradle();
+
+    spiral();
 
     //rail doesn't keep the ball still, emergency box created
     const boxMesh = new THREE.Group();
