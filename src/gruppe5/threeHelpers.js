@@ -24,13 +24,14 @@ export function createThreeScene() {
 
     ri.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     ri.camera.position.set(-15, 7, 15);
-    ri.camera.position.set(15, 7, -15); // Temp position
+    // ri.camera.position.set(40, 25, -35); // Temp position
 
-    ri.controls = new PointerLockControls(ri.camera, ri.renderer.domElement);
-    ri.controls.movementSpeed = 10;
-    ri.controls.lookSpeed = 1.0;
-    ri.controls.lookVertical = true;
-    //ri.controls.enableDamping = false;
+    ri.controls = new OrbitControls(ri.camera, ri.renderer.domElement);
+
+    // ri.controls = new FirstPersonControls(ri.camera, ri.renderer.domElement);
+    // ri.controls.movementSpeed = 10;
+    // ri.controls.lookSpeed = 0.4;
+    // ri.controls.lookVertical = true;
 }
 
 
@@ -54,7 +55,7 @@ export function keyPresses() {
     if (ri.currentlyPressedKeys['KeyW']) {
         ri.controls.moveForward = true;
     }
-    if (ri.currentlyPressedKeys['mousedown']) {
+    if (ri.currentlyPressedKeys['KeyL'] && (ri.controls.isLocked) ) {
         ri.controls.lock();
     }
     if (ri.currentlyPressedKeys['KeyS']) {
@@ -82,15 +83,6 @@ export function keyPresses() {
 
         // Apply the rotation to the rigid body
         rotateRigidBody(spiral, eulerRotation);
-    }
-
-    const steps =  ri.scene.getObjectByName("steps");
-    let stepsStarted = false
-    if (ri.currentlyPressedKeys['KeyE']) {	//E
-        if (!stepsStarted) {
-            stepsStarted = true;
-            steps.tween.start();}
-
     }
 }
 
@@ -121,12 +113,13 @@ export function onDocumentMouseDown(event) {
     if (intersects.length > 0) {
         //Endrer farge på det første objektet som er klikket på som strålen treffer:
         let ball = intersects[0].object
-        ball.material.color.setHex(Math.random() * 0xffffff);
+        // ball.material.color.setHex(Math.random() * 0xffffff);
 
         // Can only click a ball 1 time
-        if (ball.name === 'ball'){
-            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(0, 0, 3 ));
-            ball.name = 'ball_'
+        if (ball.name === 'starterBall'){
+            ball.material.color.setHex(Math.random() * 0xffffff);
+            ball.userData.physicsBody.applyCentralImpulse( new Ammo.btVector3(0, 0, -20 ));
+            ball.name = 'ball'
         }
     }
 }
@@ -390,38 +383,3 @@ export function addLineBetweenObjects(nameMeshStart, nameMeshEnd, meshPositionSt
 }
 
 
-export function updateLines() {
-    for (let i = 0; i < 8; ++i) {
-        let ballMesh = ri.scene.getObjectByName("ball" + i + "Mesh");
-        if (ballMesh && ballMesh.userData.physicsBody) {
-            let ballPhysicsBody = ballMesh.userData.physicsBody;
-            let ballMotionState = ballPhysicsBody.getMotionState();
-
-            if (ballMotionState) {
-                let ballTransform = new Ammo.btTransform();
-                ballMotionState.getWorldTransform(ballTransform);
-                let ballPosition = ballTransform.getOrigin();
-
-                // Update the line connected to this ball
-                let line1 = ri.scene.getObjectByName("lineToTopBar1_" + i);
-                let line2 = ri.scene.getObjectByName("lineToTopBar2_" + i);
-                if (line1) {
-                    let points = line1.geometry.attributes.position.array;
-                    points[0] = ballPosition.x();
-                    points[1] = ballPosition.y();
-                    points[2] = ballPosition.z();
-                    line1.geometry.attributes.position.needsUpdate = true;
-                }
-                if (line2) {
-                    let points = line2.geometry.attributes.position.array;
-                    points[0] = ballPosition.x();
-                    points[1] = ballPosition.y();
-                    points[2] = ballPosition.z();
-                    line2.geometry.attributes.position.needsUpdate = true;
-                }
-
-                Ammo.destroy(ballTransform);
-            }
-        }
-    }
-}

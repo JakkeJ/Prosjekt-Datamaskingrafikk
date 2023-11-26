@@ -5,7 +5,7 @@ export function createAmmoWorld() {
     phy.transform = new Ammo.btTransform();
 
     // Initialiserer phy.ammoPhysicsWorld:
-    let collisionConfiguration = new Ammo.btDefaultCollisionConfiguration(),
+    const collisionConfiguration = new Ammo.btDefaultCollisionConfiguration(),
         dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration),
         overlappingPairCache = new Ammo.btDbvtBroadphase(),
         solver = new Ammo.btSequentialImpulseConstraintSolver();
@@ -65,43 +65,48 @@ function checkCollisions(deltaTime) {
                         if ((threeMesh0.name === 'ball' && threeMesh1.name === 'ball') ||
                             threeMesh1.name === 'ball' && threeMesh0.name === 'ball') {
                             console.log('Balls collide')
-                            // Debuginfo:
-                            let velocity0 = rbObject0.getLinearVelocity();
-                            let velocity1 = rbObject1.getLinearVelocity();
-                            let worldPos0 = contactPoint.get_m_positionWorldOnA();
-                            let worldPos1 = contactPoint.get_m_positionWorldOnB();
-                            let localPos0 = contactPoint.get_m_localPointA();
-                            let localPos1 = contactPoint.get_m_localPointB();
-                            //console.log('Kollisjon mellom ' + threeMesh0.name + " og " + threeMesh1.name);
-                            console.log({
-                                manifoldIndex: i,
-                                contactIndex: j,
-                                distance: distance,
-                                object0:{
-                                    tag: threeMesh0.name,
-                                    velocity: {x: velocity0.x(), y: velocity0.y(), z: velocity0.z()},
-                                    worldPos: {x: worldPos0.x(), y: worldPos0.y(), z: worldPos0.z()},
-                                    localPos: {x: localPos0.x(), y: localPos0.y(), z: localPos0.z()}
-                                },
-                                object1:{
-                                    tag: threeMesh1.name,
-                                    velocity: {x: velocity1.x(), y: velocity1.y(), z: velocity1.z()},
-                                    worldPos: {x: worldPos1.x(), y: worldPos1.y(), z: worldPos1.z()},
-                                    localPos: {x: localPos1.x(), y: localPos1.y(), z: localPos1.z()}
-                                }
-                            });
-                            if (typeof threeMesh0.collisionResponse === 'function')
-                                threeMesh0.collisionResponse(threeMesh0);
-                            if (typeof threeMesh1.collisionResponse === 'function')
-                                threeMesh1.collisionResponse(threeMesh1);
+                            if (typeof threeMesh0.collisionResponse === 'function') {
+                                threeMesh0.collisionResponse(threeMesh0)
+                            };
+                            
+                            if (typeof threeMesh1.collisionResponse === 'function') {
+                                threeMesh1.collisionResponse(threeMesh1)
+                            };
+                            
                         }
+
+                        if ((threeMesh0.name === 'target' && threeMesh1.name === 'cannonBall') ||
+                        threeMesh1.name === 'target' && threeMesh0.name === 'cannonBall') {
+    
+                            if (typeof threeMesh0.collisionResponse === 'function') {
+                                threeMesh0.collisionResponse(threeMesh0)
+                            };
+                            
+                            if (typeof threeMesh1.collisionResponse === 'function') {
+                                threeMesh1.collisionResponse(threeMesh1)
+                            };
+                            
+                        }
+
+                        if ((threeMesh0.name === 'cannonBody' && threeMesh1.name === 'ball') ||
+                        threeMesh1.name === 'cannonBody' && threeMesh0.name === 'ball') {
+                            
+                            if (typeof threeMesh0.collisionResponse === 'function') {
+                                threeMesh0.collisionResponse(threeMesh0)
+                            };
+                            
+                            if (typeof threeMesh1.collisionResponse === 'function') {
+                                threeMesh1.collisionResponse(threeMesh1) 
+                            };
+                            
+                        }
+
                     }
                 }
             }
         }
     }
 }
-
 
 
 // Hentet fra kodeeksempel modul7/ammoShapes1, modifisert

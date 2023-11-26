@@ -1,6 +1,5 @@
 import {generateTriangleShape} from "./triangleMeshHelpers.js";
 import * as THREE from "three";
-import {createAmmoRigidBody} from "./ammoHelpers.js";
 import {ri} from "./script.js";
 
 
@@ -28,6 +27,7 @@ export function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRota
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.position.set(meshPosition.x, meshPosition.y, meshPosition.z);
+
     if (rotateType === 'quaternion_norm') {
         mesh.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), meshRotation);
     } else {
@@ -35,7 +35,6 @@ export function createAmmoMesh(shapeType, geometry, size, meshPosition, meshRota
         mesh.rotateY(meshRotation.y);
         mesh.rotateZ(meshRotation.z);
     }
-
 
     let rotation = new THREE.Quaternion();
     if (meshRotation.x !== 0) {
@@ -98,7 +97,6 @@ export function getHeigtdataFromImage(image, width, height, divisor= 3) {
 
 // Kode hentet fra kodeeksempel modul8/ammoTerrain1
 export function createHeightFieldShape(heightData, heightMapPixelWidth, heightMapPixelHeight) {
-
     // This parameter is not really used, since we are using PHY_FLOAT height data type and hence it is ignored
     let heightScale = 1;
 
@@ -153,4 +151,77 @@ export function createHeightFieldShape(heightData, heightMapPixelWidth, heightMa
     };
 }
 
+
+export function updateLines() {
+    for (let i = 0; i < 8; ++i) {
+        let ballMesh = ri.scene.getObjectByName("ball" + i + "Mesh");
+        if (ballMesh && ballMesh.userData.physicsBody) {
+            let ballPhysicsBody = ballMesh.userData.physicsBody;
+            let ballMotionState = ballPhysicsBody.getMotionState();
+
+            if (ballMotionState) {
+                let ballTransform = new Ammo.btTransform();
+                ballMotionState.getWorldTransform(ballTransform);
+                let ballPosition = ballTransform.getOrigin();
+
+                // Update the line connected to this ball
+                let line1 = ri.scene.getObjectByName("lineToTopBar1_" + i);
+                let line2 = ri.scene.getObjectByName("lineToTopBar2_" + i);
+                if (line1) {
+                    let points = line1.geometry.attributes.position.array;
+                    points[0] = ballPosition.x();
+                    points[1] = ballPosition.y();
+                    points[2] = ballPosition.z();
+                    line1.geometry.attributes.position.needsUpdate = true;
+                }
+                if (line2) {
+                    let points = line2.geometry.attributes.position.array;
+                    points[0] = ballPosition.x();
+                    points[1] = ballPosition.y();
+                    points[2] = ballPosition.z();
+                    line2.geometry.attributes.position.needsUpdate = true;
+                }
+
+                Ammo.destroy(ballTransform);
+            }
+        }
+    }
+}
+
+
+export function updateHingeMarkers() {
+    for (let i = 0; i < 8; ++i) {
+        let anchorMesh = ri.scene.getObjectByName("anchor1Mesh" + i);
+        let ballMesh = ri.scene.getObjectByName("ball" + i + "Mesh");
+
+        if (anchorMesh && ballMesh) {
+            let anchorBody = anchorMesh.userData.physicsBody;
+            let ballBody = ballMesh.userData.physicsBody;
+
+            if (anchorBody && ballBody) {
+                let anchorTransform = new Ammo.btTransform();
+                let ballTransform = new Ammo.btTransform();
+
+                anchorBody.getMotionState().getWorldTransform(anchorTransform);
+                ballBody.getMotionState().getWorldTransform(ballTransform);
+
+                let anchorPosition = anchorTransform.getOrigin();
+                let ballPosition = ballTransform.getOrigin();
+
+                let anchorMarker = ri.scene.getObjectByName("anchorMarker_" + i);
+                let ballMarker = ri.scene.getObjectByName("ballMarker_" + i);
+
+                if (anchorMarker) {
+                    anchorMarker.position.set(0, 4, anchorPosition.z());
+                }
+                if (ballMarker) {
+                    ballMarker.position.set(0, 4, ballPosition.z());
+                }
+
+                Ammo.destroy(anchorTransform);
+                Ammo.destroy(ballTransform);
+            }
+        }
+    }
+}
 
